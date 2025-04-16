@@ -1,5 +1,5 @@
 <p align="center">
-<img src="src/assets/yr_main.png" width="100%"/>
+<img src="src/assets/main.png" width="100%"/>
 </p>
 
 # 🧩 Your Rapport – Collect, Reflect, and Collaborate.

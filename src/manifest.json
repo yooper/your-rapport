@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "your-rapport",
+  "name": "Your Rapport",
   "description": "An open source chrome extension for grabbing screenshots from the internet and making them searchable and downloadable.",
   "options_page": "options.html",
   "background": { "service_worker": "background.bundle.js" },
@@ -8,7 +8,7 @@
     "default_icon": "icon-48.png",
     "default_title": "Your Rapport is a screenshot tool. Right click, select Collect or Ctrl+Shift+S to save."
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "icons": {
     "128": "icon-128.png",
     "48": "icon-48.png",
