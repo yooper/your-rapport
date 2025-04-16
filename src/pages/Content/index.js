@@ -1,0 +1,15 @@
+/*
+ * @license
+ * @Copyright Baker Street Enterprises LLC
+ * All rights reserved. Copying, distributing or modifying of software is prohibited.
+ * Please contact support@bakerstreet.llc for assistance
+ *
+ */
+
+import {initAutoScrollerHandler} from "./modules/autoScroller";
+
+initAutoScrollerHandler();
+
+
+
+
