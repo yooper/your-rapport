@@ -4,7 +4,7 @@
 
 # 🧩 Your Rapport – Collect, Reflect, and Collaborate.
 
-Your Rapport is a "Chrome Extension" digital archiving and intelligence tool that collects online conversations using intelligent screenshot automation 
+Your Rapport is an open source "Chrome Extension" digital archiving and intelligence tool that collects online conversations using intelligent screenshot automation 
 and makes the content fully searchable for professionals, amateurs, and archivists who need to preserve, analyze, or audit digital 
 dialogue across platforms, Your Rapport bridges visual capture with text-based search, turning ephemeral interactions 
 into permanent, searchable records. Your Rapport is an Open Source tool that implements the best practices for 
@@ -47,12 +47,7 @@ Your captured content stays on your machine utilizing your browser's security an
 🔗 Share Your Rapport Collection 
 The data exported from Your Rapport is in a Non-Proprietary format known as JSON.
 Your collection can be downloaded as "json" file(s) which lets you easily share them with
-others using email or other file sharing apps. 
-
-🔗 Share Your Rapport Collection 
-The data exported from Your Rapport is in a Non-Proprietary format known as JSON.
-Your collection can be downloaded as "json" file(s) which lets you easily share them with
-others using email or other file sharing apps. 
+others using email or other file sharing apps.
 
 🧠 Best Data Integrity Practices, so far:
 * Signed Hash for verifying the screenshot's integrity
