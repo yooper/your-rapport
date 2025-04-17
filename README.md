@@ -14,7 +14,7 @@ your collection.
 ### Getting Started 
 After installing the Chrome extension from URL HERE, "Your Rapport" will automatically be ready to collect.
 There are three options for collecting a screenshot of a web page:
- * `Mouse - Right Click` and select the **Collect** menu option with the "your rapport" logo
+ * `Mouse - Right Click` and select the **Collect** menu option with the "Your Rapport" logo
  * `Ctrl+Shift+S` collects a single screenshot.
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
