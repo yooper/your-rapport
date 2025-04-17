@@ -25,6 +25,7 @@ export default function PreviewImageDialog(props) {
 
   const handleClose = () => {
     setOpen(false);
+    props.setIsOpen(false);
   };
 
 
