@@ -9,6 +9,7 @@ import {useState} from "react";
 import SearchTableOptionMenu from "./menus/SearchTableOptionMenu";
 import PreviewImageDialog from "./PreviewImageDialog";
 import UploadDataDialog from "./dialogs/UploadDataDialog";
+import {downloadJsonData} from "../utilities/transformers";
 
 export default function SearchDataTable(props) {
 
@@ -145,10 +146,11 @@ export default function SearchDataTable(props) {
             downloadCsv: 'Export as JSON file',
         },
     },
-    onDownload: async(buildHead, buildBody, columns, data) => {
-        let screenshotRegistry = await getLocalItem('screenshots')
-        downloadJsonData(screenshotRegistry.records, 'your-rapport.json');
-        return false
+    onDownload: (buildHead, buildBody, columns, data) => {
+        getLocalItem('screenshots').then(registry => {
+            downloadJsonData(registry.records, 'your-rapport.json');
+        })
+        return false;
     },
     searchOpen: true,
     onRowsDelete: rowsDelete,
