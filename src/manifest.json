@@ -8,7 +8,7 @@
     "default_icon": "icon-48.png",
     "default_title": "Your Rapport is a screenshot tool. Right click, select Collect or Ctrl+Shift+S to save."
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "icons": {
     "128": "icon-128.png",
     "48": "icon-48.png",
