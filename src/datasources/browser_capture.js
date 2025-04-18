@@ -16,14 +16,14 @@ export async function capture(tab, message = {}){
     const isProVersion = configurationRegistry.productVersion === 'pro';
     // get/set the record count
     configurationRegistry.recordCount = configurationRegistry?.recordCount ?? 0
-    // You must be authenticated to use the capture feature for over a 100 captures.
-    if(!isAuthenticated && configurationRegistry.recordCount >= 100){
+    // You must be authenticated to use the capture feature for over 200 captures.
+    if(!isAuthenticated && configurationRegistry.recordCount >= 200){
         await createTab('https://osintliar.com/your-rapport-authentication-error/', true);
         throw new Error("You MUST register if you want to collect more than 100 captures.");
     }
-    if(isAuthenticated && configurationRegistry.recordCount >= 200 && !isProVersion){
-        await createTab('https://osintliar.com/your-rapport-authentication-error/', true);
-        throw new Error("You MUST register and have the PRO paid version if you want to collect more than 200 captures.");
+    if(isAuthenticated && configurationRegistry.recordCount >= 400 && !isProVersion){
+        await createTab('https://osintliar.com/pro-license-required/', true);
+        throw new Error("You MUST register and have the PRO paid version if you want to collect more than 400 captures.");
     }
 
     const screenShot = await chrome.tabs.captureVisibleTab();

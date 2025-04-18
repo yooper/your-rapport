@@ -6,9 +6,9 @@
   "background": { "service_worker": "background.bundle.js" },
   "action": {
     "default_icon": "icon-48.png",
-    "default_title": "Your Rapport is a screenshot tool. Right click, select Collect or Ctrl+Shift+S to save."
+    "default_title": "Your Rapport is a screenshot tool. Right click, select Collect or Ctrl+Shift+S to save. Ctrl+Shift+X open the dashboard."
   },
-  "version": "0.1.3",
+  "version": "0.1.4",
   "icons": {
     "128": "icon-128.png",
     "48": "icon-48.png",
@@ -26,7 +26,6 @@
       "js": ["contentScript.bundle.js"]
     }
   ],
-  "host_permissions": [],
   "permissions": ["unlimitedStorage", "storage", "contextMenus", "activeTab"],
   "commands": {
     "singleCapture": {

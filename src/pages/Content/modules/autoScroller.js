@@ -9,8 +9,6 @@ let capturedHeight = 0;
  */
 export function initAutoScrollerHandler() {
 
-    console.log('initAutoScrollerHandler started');
-
     // stop scrolling and auto capture is turned off in another module
     window.addEventListener('scroll', () => {
 
@@ -76,7 +74,6 @@ function getElementByXPath(xpath) {
  */
 function getScrollDetailsByHostName(){
     const path = window.location.pathname;
-    const fullUrlWithoutParams = window.location.origin + path;
     switch(window.location.host){
         case 'web.telegram.org':
             return { scrollElement: document.querySelector('#column-center > div > div > div.bubbles.is-chat-input-hidden.has-groups.has-sticky-dates > div.scrollable.scrollable-y'), direction: 'up' };
@@ -101,7 +98,7 @@ export function autoScroller(){
       const {scrollElement, direction} = getScrollDetailsByHostName();
       // Get the initial values for the height
       const { scrollHeight, clientHeight } = scrollElement;
-      const scrollAmount = clientHeight * devicePixelRatio;
+      const scrollAmount = clientHeight;
 
       // after moving the scrollbar send a message to capture the tab
       chrome.runtime.sendMessage({

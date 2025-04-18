@@ -47,13 +47,13 @@ export default function UploadDataDialog() {
         screenshotRegistry.records = records.concat(newRecords);
         configurationRegistry.recordCount = screenshotRegistry.records.length;
 
-        if(!isAuthenticated && configurationRegistry.recordCount >= 100){
+        if(!isAuthenticated && configurationRegistry.recordCount >= 200){
             await createTab('https://osintliar.com/your-rapport-authentication-error/', true);
-            throw new Error("You MUST register if you want to collect more than 100 captures.");
+            throw new Error("You MUST register if you want to collect more than 200 captures.");
         }
-        if(isAuthenticated && configurationRegistry.recordCount >= 200 && !isProVersion){
-            await createTab('https://osintliar.com/your-rapport-authentication-error/', true);
-            throw new Error("You MUST register and have the PRO paid version if you want to collect more than 200 captures.");
+        if(isAuthenticated && configurationRegistry.recordCount >= 400 && !isProVersion){
+            await createTab('https://osintliar.com/pro-license-required/', true);
+            throw new Error("You MUST register and have the PRO paid version if you want to collect more than 400 captures.");
         }
         await setLocalItem('screenshots', screenshotRegistry);
         // update the configuration last

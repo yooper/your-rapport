@@ -19,8 +19,8 @@ There are three options for collecting a screenshot of a web page:
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
 
-Your Rapport limits your collection to 100 screenshots if you are not registered. If you are registered, you
-can collect up to 200 screenshots. A pro version license gets you access to unlimited captures. Your Rapport 
+Your Rapport limits your collection to 200 screenshots if you are not registered. If you are registered, you
+can collect up to 400 screenshots. A pro version license gets you access to unlimited captures. Your Rapport 
 is an open source commercial tool for the following reasons:
  * Transparency in how software works and where the data goes is an important security and privacy concern
  * A commercial tool is the only viable way to support developing a standard set of opensource tools, useful for doing online research
