@@ -25,7 +25,7 @@ export function hideLoader() {
  * Used to display notifications to the user
  * @param data
  */
-export function processNotification(data)
+export function processNotification(data, duration = 5000)
 {
   Store.addNotification({
       title: data.title,
@@ -36,7 +36,7 @@ export function processNotification(data)
       animationIn: ["animate__animated", "animate__fadeIn"],
       animationOut: ["animate__animated", "animate__fadeOut"],
       dismiss: {
-        duration: 5000,
+        duration: duration,
         onScreen: true
       }
   })
@@ -48,36 +48,17 @@ export function getDarkTheme()
         palette: {
             mode: 'dark',
             primary: {
-                main: '#2C81AB',
+                main: '#ffe88b',
             },
             secondary: {
                 main: '#619657',
             },
             cancel: {
-                main: '#6F7678',
+                main: '#E86E69',
             }
         }
     }
 }
-
-export function getLightTheme()
-{
-    return {
-        palette: {
-            mode: 'dark',
-            primary: {
-                main: '#2C81AB',
-            },
-            secondary: {
-                main: '#619657',
-            },
-            cancel: {
-                main: '#6F7678',
-            }
-        },
-    }
-}
-
 
 /**
  * Opens a tab using the chrome api

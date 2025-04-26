@@ -7,7 +7,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import JsonView from "react18-json-view";
 
 export default function JsonAttributeViewerDialog(props) {
-  const [record, setRecord] = useState({})
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ export default function JsonAttributeViewerDialog(props) {
       >
         <DialogTitle id="form-dialog-title">Debug Data Attributes</DialogTitle>
         <DialogContent>
-            <JsonView src={record} theme="default" />
+            <JsonView src={props.record} theme="vscode" />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="cancel" variant={'contained'}>

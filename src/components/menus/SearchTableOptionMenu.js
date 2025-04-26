@@ -35,12 +35,10 @@ export default function SearchTableOptionMenu(props){
     setAnchorEl(null);
   }
 
-
-
   /**
    * Debug the data
   */
-  const handleDebugData = () => {
+  const handleMetadata = () => {
     setIsOpen(true)
     setAnchorEl(null);
   }
@@ -65,7 +63,7 @@ export default function SearchTableOptionMenu(props){
         }}
       >
         <MenuItem onClick={handlePrintPdf}>Print</MenuItem>
-        <MenuItem onClick={handleDebugData}>Debug Data</MenuItem>
+        <MenuItem onClick={handleMetadata}>View Metadata</MenuItem>
         <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>
         <MenuItem onClick={handleDownloadRecord}>Download Record</MenuItem>
       </Menu>

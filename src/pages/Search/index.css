@@ -34,3 +34,7 @@ body {
 .clickable{
   cursor: pointer;
 }
+
+.page_title{
+  font-weight: bolder;
+}

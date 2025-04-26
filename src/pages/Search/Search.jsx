@@ -18,8 +18,8 @@ export default function Search()
        async function fetchData(){
            showLoader();
            setIsLoading(true);
-           const screenshotRegistry = await getLocalItem('screenshots')
-           setRows(screenshotRegistry?.records ?? []);
+           const screenshots = await getLocalItem('screenshots') ?? []
+           setRows(screenshots ?? []);
            setIsLoading(false);
            hideLoader();
        }

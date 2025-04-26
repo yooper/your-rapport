@@ -19,14 +19,12 @@ There are three options for collecting a screenshot of a web page:
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
 
-Your Rapport limits your collection to 200 screenshots if you are not registered. If you are registered, you
-can collect up to 400 screenshots. A pro version license gets you access to unlimited captures. Your Rapport 
-is an open source commercial tool for the following reasons:
- * Transparency in how software works and where the data goes is an important security and privacy concern
- * A commercial tool is the only viable way to support developing a standard set of opensource tools, useful for doing online research
- * Keeps the infrastructure costs lower by not having additional overhead with privatized Software as a service
- * The target price for the Pro license can be set to $3 a month
+Your Rapport is an open source commercial tool for the following reasons:
+ * Transparency in how software works and where the data goes is an important security and privacy concern to all of us
+ * A commercial tool is the only viable way to support developing a standard set of open source tools, useful for doing online research
+ * Keeps the infrastructure costs lower by not having additional overhead with privatized Software as a Service approach
  * Implement best practices based on community feedback
+ * The target price for the Pro license can be set to $3 a month
 
 
 🌟 Key Features
@@ -50,11 +48,7 @@ Your collection can be downloaded as "json" file(s) which lets you easily share 
 others using email or other file sharing apps.
 
 🧠 Best Data Integrity Practices, so far:
-* Signed Hash for verifying the screenshot's integrity
+* Signed Hash for verifying each screenshot's integrity
 * Multiple timestamps are collected
 * Multiple attributes about the computer that took the screenshot are captured
-
-
-# Registering an account with Your Rapport
-You can register for a free account at https://osintliar.com/. Look for the "Your Rapport" product, from there buy the
-free version. 
+* Source code is Open Source

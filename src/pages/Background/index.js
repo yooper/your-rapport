@@ -1,5 +1,6 @@
 import {capture} from "../../datasources/browser_capture";
 import {createTab, getActiveTab} from "../../utilities/loaders";
+import {updateRecord} from "../../models/db/local";
 
 /**
  * When Icon in top right is clicked it opens the search option
@@ -56,13 +57,17 @@ chrome.commands.onCommand.addListener(async(command) => {
 
 
 /**
- * Receive messages from the content script
+ * Receive messages from the content script or the extension page
  */
 chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
     switch(message.cmd){
         case 'captureVisibleTab':
           await capture(sender.tab, message)
           sendResponse({flag: true});
+          return true;
+        case 'updateScreenShotRecord':
+          await updateRecord('screenshots', 'uuid', message.record);
+          sendResponse({completed: true});
           return true;
         default:
             console.log(`Unknown cmd ${message.cmd}`);

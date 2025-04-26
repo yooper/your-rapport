@@ -44,10 +44,10 @@ export function initAutoScrollerHandler() {
             sendResponse({text: getVisibleText()});
         }
         else if (message.cmd === "singleCapture") {
+            const text = getVisibleText();
             chrome.runtime.sendMessage({
                 cmd: "captureVisibleTab",
-                pixelRatio: devicePixelRatio,
-                text: getVisibleText()
+                text: text
             }, (dataUrl) => {
             });
         }
@@ -89,7 +89,6 @@ function getScrollDetailsByHostName(){
  * @returns {boolean}
  */
 export function autoScroller(){
-    const devicePixelRatio = window.devicePixelRatio || 1;
     const autoScroll = () => {
       if(state !== 'startCapture'){
           console.log('capture stopped');
@@ -100,11 +99,17 @@ export function autoScroller(){
       const { scrollHeight, clientHeight } = scrollElement;
       const scrollAmount = clientHeight;
 
+      const text = getVisibleText();
+
+      if(!text){
+          state = 'stopped'; // stops the scrolling capture if the text is not being read in
+          return;
+      }
+
       // after moving the scrollbar send a message to capture the tab
       chrome.runtime.sendMessage({
           cmd: "captureVisibleTab",
-          pixelRatio: devicePixelRatio,
-          text: getVisibleText()
+          text: text
       }, (dataUrl) => {
 
         // TODO fix this so auto scroll doesn't fire
@@ -119,7 +124,7 @@ export function autoScroller(){
             if(state !== 'startCapture') {
               console.log('capture stopped')
             }
-            else if (capturedHeight < scrollHeight * devicePixelRatio) {
+            else if (capturedHeight < scrollHeight) {
               // Scroll to the next part of the page
               scrollElement.scrollTo(0, capturedHeight)
             }
