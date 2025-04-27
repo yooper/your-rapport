@@ -6,6 +6,11 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Unstable_Grid2";
 import SettingsIcon from '@mui/icons-material/Settings';
 
+/**
+ * TODO: Implement Options
+ * @returns {JSX.Element}
+ * @constructor
+ */
 export default function Options()
 {
       const urlParams = new URL(window.location.href).searchParams;
