@@ -1,3 +1,15 @@
+body {
+  width: 600px;
+  height: 180px;
+  margin: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
 .loader {
   position: absolute;
   top: calc(50% - 4em);
@@ -16,6 +28,10 @@
   z-index: -1;
 }
 
+.component--hide {
+  visibility: hidden;
+}
+
 @keyframes load8 {
   0% {
     transform: rotate(0deg);
@@ -25,16 +41,6 @@
   }
 }
 
-a, a:hover, a:active, a:visited { color: white; }
-
 body {
   background-color: #121212;
-}
-
-.clickable{
-  cursor: pointer;
-}
-
-.page_title{
-  font-weight: bolder;
 }

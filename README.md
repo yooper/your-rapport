@@ -9,24 +9,26 @@ and makes the content fully searchable for professionals, amateurs, and archivis
 dialogue across platforms, Your Rapport bridges visual capture with text-based search, turning ephemeral interactions 
 into permanent, searchable records. Your Rapport is an Open Source tool that implements the best practices for 
 protecting your privacy and documenting online content. You can easily import, export, or print screenshots from 
-your collection. 
+your collection. Your Rapport is free to use, but does require purchasing a subscription if you want to collect more than
+400 screenshots. This enables us to continue development and support for this product. 
 
 ### Getting Started 
-After installing the Chrome extension from URL HERE, "Your Rapport" will automatically be ready to collect.
-There are three options for collecting a screenshot of a web page:
+After installing the Chrome extension from https://chromewebstore.google.com/detail/your-rapport/clkaalonjdkliiaadkgodlfbiipidjmn, 
+"Your Rapport" will automatically be ready to collect.
+
+There are several options for collecting a screenshot of a web page:
  * `Mouse - Right Click` and select the **Collect** menu option with the "Your Rapport" logo
  * `Ctrl+Shift+S` collects a single screenshot.
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
+ * Click the "Your Rapport" pin in your extension tab and select the action you want performed.  
 
-Your Rapport limits your collection to 100 screenshots if you are not registered. If you are registered, you
-can collect up to 200 screenshots. A pro version license gets you access to unlimited captures. Your Rapport 
-is an open source commercial tool for the following reasons:
- * Transparency in how software works and where the data goes is an important security and privacy concern
- * A commercial tool is the only viable way to support developing a standard set of opensource tools, useful for doing online research
- * Keeps the infrastructure costs lower by not having additional overhead with privatized Software as a service
- * The target price for the Pro license can be set to $3 a month
+Your Rapport is an open source commercial tool for the following reasons:
+ * Transparency in how software works and where the data goes is an important security and privacy concern to all of us
+ * A commercial tool is the only viable way to support developing a standard set of open source tools, useful for doing online research
+ * Keeps the infrastructure costs lower by not having additional overhead with privatized Software as a Service approach
  * Implement best practices based on community feedback
+ * The target price for the Pro license can be set to $3 a month
 
 
 🌟 Key Features
@@ -50,11 +52,7 @@ Your collection can be downloaded as "json" file(s) which lets you easily share 
 others using email or other file sharing apps.
 
 🧠 Best Data Integrity Practices, so far:
-* Signed Hash for verifying the screenshot's integrity
+* Signed Hash for verifying each screenshot's integrity
 * Multiple timestamps are collected
 * Multiple attributes about the computer that took the screenshot are captured
-
-
-# Registering an account with Your Rapport
-You can register for a free account at https://osintliar.com/. Look for the "Your Rapport" product, from there buy the
-free version. 
+* Source code is Open Source

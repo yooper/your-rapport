@@ -1,10 +1,7 @@
-/**
- * @param excludeKeys
- */
-import {isEmptyObj} from "../../common/transformers";
 
 /**
  * Takes a key and javascript object
+ * TODO: Add observer pattern to create hooks for actions when specific data elements are saved
  * @param key
  * @param obj
  * @returns {Promise<void>}
@@ -12,8 +9,11 @@ import {isEmptyObj} from "../../common/transformers";
 export async function setLocalItem(key, obj)
 {
     let instance = {}
+    // TODO: add pre-save hook
     instance[key] = JSON.stringify(obj)
-    return await chrome.storage.local.set(instance);
+    const result = await chrome.storage.local.set(instance);
+    // TODO: add post-save hook
+    return result;
 }
 
 
@@ -21,24 +21,30 @@ export async function setLocalItem(key, obj)
  * Fetches the value you from the database. Specifying a null key will return all the values in the database, which
  * may not be very performant.
  * @param key
- * @returns {Promise<{}|null|any>}
+ * @returns {Promise<{}|null|[]|any>}
  */
 export async function getLocalItem(key)
 {
     const value = await chrome.storage.local.get(key)
     if(value){
-        //console.log(`key is ${key}, value is ${value}`)
         try{
-            if(isEmptyObj(value)){
-                return {}
-            }
             const data = JSON.parse(value[key])
-            return data
+            return data;
         }
         catch(e){
             console.error(`Error parsing: key is ${key}, value is ${JSON.stringify(value)}`)
-            return null
+            return null;
         }
     }
-    return null
+    return null;
+}
+
+
+export async function updateRecord(key, idFieldName, record){
+    let records = await getLocalItem(key);
+    const index = records.findIndex(r => r[idFieldName] === record[idFieldName]);
+    if(index !== -1){
+        records[index] = record;
+        await setLocalItem(key, records);
+    }
 }

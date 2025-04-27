@@ -3,48 +3,38 @@
  * @returns {string}
  */
 export function getVisibleText() {
-    /**
-     * These tags should not have text data in them.
-     * @type {{COL: boolean, HEAD: boolean, META: boolean, IMG: boolean, INPUT: boolean, COLGROUP: boolean, WBR: boolean, STYLE: boolean, EMBED: boolean, HR: boolean, HTML: boolean, PARAM: boolean, TRACK: boolean, BASE: boolean, BR: boolean, AREA: boolean, SCRIPT: boolean, SOURCE: boolean, LINK: boolean}}
-     */
     const nonTextHtmlTags = {
-        'AREA': false,
-        'BASE': false,
-        'BR': false,
-        'COL': false,
-        'COLGROUP': false,
-        'EMBED': false,
-        'HEAD': false,
-        'HR': false,
-        'HTML': false,
-        'IMG': false,
-        'INPUT': false,
-        'LINK': false,
-        'META': false,
-        'PARAM': false,
-        'SCRIPT': false,
-        'STYLE': false,
-        'SOURCE': false,
-        'TRACK': false,
-        'WBR': false
+        'AREA': false, 'BASE': false, 'BR': false, 'COL': false, 'COLGROUP': false,
+        'EMBED': false, 'HEAD': false, 'HR': false, 'HTML': false, 'IMG': false,
+        'INPUT': false, 'LINK': false, 'META': false, 'PARAM': false, 'SCRIPT': false,
+        'STYLE': false, 'SOURCE': false, 'TRACK': false, 'WBR': false
     };
-    const visibleTexts = [];
+
+    const seenText = new Set();
+    const outputTexts = [];
     const visibleElements = findAllVisibleElements();
+
     visibleElements.forEach(element => {
-        // Exclude elements within script tags
-        if (!isNonStandardTag(element) && !(element.tagName.toUpperCase() in nonTextHtmlTags) && isElementVisible(element)) {
-            const text = element.innerText?.trim();
-            if (text && text.length > 0) {
-                // add a space to each side
-                visibleTexts.push(` ${text} `);
-            }
+        const tag = element.tagName.toUpperCase();
+        if (nonTextHtmlTags[tag] === false || isNonStandardTag(element) || !isElementVisible(element)) {
+            return;
+        }
+
+        const text = element.innerText?.trim();
+        if (!text || text.length === 0) return;
+
+        // Normalize whitespace and remove repeated inner spaces
+        const cleaned = text.replace(/\s+/g, ' ').trim();
+
+        // Avoid adding if this exact cleaned text is already seen
+        if (!seenText.has(cleaned)) {
+            seenText.add(cleaned);
+            outputTexts.push(cleaned);
         }
     });
-    // filter duplicates
-    const filtered = visibleTexts.filter((value, index, self) => self.indexOf(value) === index);
-    // Join all texts with a space and a newline
-    return filtered.join('\n');
+    return outputTexts.join(" || ");
 }
+
 
 
 /**

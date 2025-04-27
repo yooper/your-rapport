@@ -7,15 +7,15 @@ const CopyToClipboardIcon = (props) => {
     const handleClick = async() => {
       await navigator.clipboard.writeText(props.record[props.copyFieldName])
       processNotification({
-          Title: 'Copy to Clipboard',
-          Message: `The value '${props.record[props.copyFieldName]}' to your clipboard`,
-          Type: 'success'
+          title: 'Copy to Clipboard',
+          message: `The value '${props.record[props.copyFieldName]}' to your clipboard`,
+          type: 'success'
       })
     }
 
     return (
         <>
-          <ContentCopyIcon  onClick={ handleClick } />
+          <ContentCopyIcon onClick={ handleClick } />
         </>
     )
 }

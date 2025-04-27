@@ -9,8 +9,6 @@ let capturedHeight = 0;
  */
 export function initAutoScrollerHandler() {
 
-    console.log('initAutoScrollerHandler started');
-
     // stop scrolling and auto capture is turned off in another module
     window.addEventListener('scroll', () => {
 
@@ -46,10 +44,10 @@ export function initAutoScrollerHandler() {
             sendResponse({text: getVisibleText()});
         }
         else if (message.cmd === "singleCapture") {
+            const text = getVisibleText();
             chrome.runtime.sendMessage({
                 cmd: "captureVisibleTab",
-                pixelRatio: devicePixelRatio,
-                text: getVisibleText()
+                text: text
             }, (dataUrl) => {
             });
         }
@@ -76,7 +74,6 @@ function getElementByXPath(xpath) {
  */
 function getScrollDetailsByHostName(){
     const path = window.location.pathname;
-    const fullUrlWithoutParams = window.location.origin + path;
     switch(window.location.host){
         case 'web.telegram.org':
             return { scrollElement: document.querySelector('#column-center > div > div > div.bubbles.is-chat-input-hidden.has-groups.has-sticky-dates > div.scrollable.scrollable-y'), direction: 'up' };
@@ -92,7 +89,6 @@ function getScrollDetailsByHostName(){
  * @returns {boolean}
  */
 export function autoScroller(){
-    const devicePixelRatio = window.devicePixelRatio || 1;
     const autoScroll = () => {
       if(state !== 'startCapture'){
           console.log('capture stopped');
@@ -101,13 +97,19 @@ export function autoScroller(){
       const {scrollElement, direction} = getScrollDetailsByHostName();
       // Get the initial values for the height
       const { scrollHeight, clientHeight } = scrollElement;
-      const scrollAmount = clientHeight * devicePixelRatio;
+      const scrollAmount = clientHeight;
+
+      const text = getVisibleText();
+
+      if(!text){
+          state = 'stopped'; // stops the scrolling capture if the text is not being read in
+          return;
+      }
 
       // after moving the scrollbar send a message to capture the tab
       chrome.runtime.sendMessage({
           cmd: "captureVisibleTab",
-          pixelRatio: devicePixelRatio,
-          text: getVisibleText()
+          text: text
       }, (dataUrl) => {
 
         // TODO fix this so auto scroll doesn't fire
@@ -122,7 +124,7 @@ export function autoScroller(){
             if(state !== 'startCapture') {
               console.log('capture stopped')
             }
-            else if (capturedHeight < scrollHeight * devicePixelRatio) {
+            else if (capturedHeight < scrollHeight) {
               // Scroll to the next part of the page
               scrollElement.scrollTo(0, capturedHeight)
             }

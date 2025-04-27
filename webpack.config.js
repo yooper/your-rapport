@@ -38,10 +38,11 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 var options = {
   mode: process.env.NODE_ENV || 'development',
   entry: {
-    options: path.join(__dirname, 'src', 'pages', 'Options', 'index.jsx'),
+    options: path.join(__dirname, 'src', 'pages', 'Options', 'index.js'),
     background: path.join(__dirname, 'src', 'pages', 'Background', 'index.js'),
-    search: path.join(__dirname, 'src', 'pages', 'Search', 'index.jsx'),
+    search: path.join(__dirname, 'src', 'pages', 'Search', 'index.js'),
     contentScript: path.join(__dirname, 'src', 'pages', 'Content', 'index.js'),
+    popup: path.join(__dirname, 'src', 'pages', 'Popup', 'index.js'),
   },
   chromeExtensionBoilerplate: {
     notHotReload: ['background', 'contentScript'],
@@ -193,6 +194,12 @@ var options = {
       template: path.join(__dirname, 'src', 'pages', 'Search', 'index.html'),
       filename: 'search.html',
       chunks: ['search'],
+      cache: false,
+    }),
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, 'src', 'pages', 'Popup', 'index.html'),
+      filename: 'popup.html',
+      chunks: ['popup'],
       cache: false,
     }),
   ].filter(Boolean),

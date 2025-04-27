@@ -10,22 +10,13 @@ import SearchTableOptionMenu from "./menus/SearchTableOptionMenu";
 import PreviewImageDialog from "./PreviewImageDialog";
 import UploadDataDialog from "./dialogs/UploadDataDialog";
 import {downloadJsonData} from "../utilities/transformers";
+import NotesDialog from "./dialogs/NoteDialog";
 
 export default function SearchDataTable(props) {
 
   const [isLoading, setIsLoading] = useState(false);
 
   const columns = [
-  {
-    name: 'uuid',
-    label: 'Uuid',
-    options: {
-      filter: false,
-      sort: false,
-      searchable: false,
-      display: 'excluded'
-    },
-  },
   {
     name: 'screenshot',
     label: 'Screenshot',
@@ -40,8 +31,8 @@ export default function SearchDataTable(props) {
             <>
             <img
                 className={'clickable'}
-                width="150"
-                height="150"
+                width="175"
+                height="125"
                 src={props.rows[dataIndex].screenshot}
                 onClick={() => { setIsOpen(true); }}
             />
@@ -55,18 +46,37 @@ export default function SearchDataTable(props) {
     name: 'url',
     label: 'Url',
     options: {
-      filter: false,
-      sort: true,
+      filter: true,
+      sort: false,
       searchable: true,
-      customBodyRenderLite: (dataIndex) => {
-        let text = props.rows[dataIndex].url
-        if (text.length > 64) {
-          text = props.rows[dataIndex].url.substring(0, 32) + '...';
+      customBodyRender: (value, tableMeta, updateValue) => {
+        const record = getRecord(tableMeta.rowData);
+        let url = record.url;
+        if (url.length > 32) {
+          url = record.url.substring(0, 32) + '...';
         }
+
+        let title = record.title;
+        if (title.length > 40) {
+          title = title.substring(0, 40) + '...';
+        }
+
         return <div>
-          <a href={props.rows[dataIndex].url} target={'_blank'} rel={'noreferrer'} alt={props.rows[dataIndex].url} >{text}</a>
-          <CopyToClipboardIcon record={props.rows[dataIndex]} copyFieldName={'url'}/>
-        </div>;
+            <span>
+                <span><CopyToClipboardIcon record={record} copyFieldName={'url'}/></span>
+                <span className={'page_title'}>Url: </span><a href={record.url} target={'_blank'} rel={'noreferrer'} alt={record.url} >{url}</a>
+            </span>
+            <div>
+                <span><CopyToClipboardIcon record={record} copyFieldName={'title'}/></span>
+              <span className={'page_title'}>Title: </span><span>{title}</span>
+            </div>
+            <div>
+                <span>
+                      <NotesDialog record={record} rows={props.rows} setRows={props.setRows}/>
+                </span>
+                <span className={'page_title'}>Notes:</span><span> {record.note ?? ''}</span>
+            </div>
+        </div>
       },
     },
   },
@@ -81,7 +91,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'createdOn',
-    label: 'Captured On',
+    label: 'Collected On',
     options: {
       filter: false,
       sort: true,
@@ -93,20 +103,59 @@ export default function SearchDataTable(props) {
     },
   },
   {
-    name: 'text',
+    name: 'uuid',
     label: 'Options',
     options: {
       print: false,
       filter: false,
-      sort: true,
+      sort: false,
       searchable: true,
       customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
           return <SearchTableOptionMenu record={record}/>
       },
     },
-  }
-  ]
+  },
+  {
+      name: 'title',
+      label: 'Title',
+      options: {
+          display: 'excluded',
+          filter: false,
+          sort: false,
+      },
+  },
+  {
+      name: 'text',
+      label: 'Text',
+      options: {
+          display: 'excluded',
+          filter: false,
+          sort: false,
+      },
+  },
+  {
+      name: 'note',
+      label: 'Note',
+      options: {
+          display: 'excluded',
+          filter: false,
+          sort: false,
+      },
+  },
+  ].concat(['updatedOn','hash','length','attributes','selectors','tags','caseManagementUuid', 'createdOnLocalTime'].map(fieldName => {
+      return {
+            name: fieldName,
+            label: fieldName,
+            options: {
+                display: false,
+                filter: false,
+                sort: false,
+                searchable: false
+            }
+        }
+  }))
+
   const getRecord = (rowData) => {
     let record = {}
     for(let idx=0; idx < columns.length; idx++)
@@ -127,17 +176,14 @@ export default function SearchDataTable(props) {
       const deleteSet = new Set(uuids);
       const filteredResults =  props.rows.filter(record => !deleteSet.has(record.uuid));
       props.setRows(filteredResults);
-
-      let screenshotRegistry = await getLocalItem('screenshots')
-      screenshotRegistry.records = filteredResults;
-      await setLocalItem('screenshots', screenshotRegistry);
+      await setLocalItem('screenshots', filteredResults);
       // update the configuration last
       let configurationRegistry = await getLocalItem('configuration') ?? {};
       configurationRegistry.lastSavedOn = Date.now().toString();
-      configurationRegistry.recordCount = records.length;
+      configurationRegistry.screenShotCount = filteredResults.length;
       await setLocalItem('configuration', configurationRegistry);
-       setIsLoading(false)
-       hideLoader()
+      setIsLoading(false)
+      hideLoader()
    }
 
   const options = {
@@ -147,8 +193,8 @@ export default function SearchDataTable(props) {
         },
     },
     onDownload: (buildHead, buildBody, columns, data) => {
-        getLocalItem('screenshots').then(registry => {
-            downloadJsonData(registry.records, 'your-rapport.json');
+        getLocalItem('screenshots').then(screenshots => {
+            downloadJsonData(screenshots, 'your-rapport.json');
         })
         return false;
     },
@@ -162,6 +208,15 @@ export default function SearchDataTable(props) {
         }
     },
     print: false,
+    customSearch: (searchQuery, currentRow, columns) => {
+        let isFound = false
+        columns.forEach((col, i) => {
+            if (col.searchable && currentRow[i] != null && currentRow[i].toString().toLowerCase().includes(searchQuery.toLowerCase())) {
+                isFound = true;
+            }
+        });
+        return isFound;
+    },
     customToolbar: () => {
       return (
        <>

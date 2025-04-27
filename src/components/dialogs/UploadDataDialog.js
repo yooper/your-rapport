@@ -12,13 +12,14 @@ import {CloudUpload} from "@mui/icons-material";
 import {Fragment} from "@emotion/react/jsx-runtime";
 import IconButton from "@mui/material/IconButton";
 import {getLocalItem, setLocalItem} from "../../models/db/local";
-import {createTab} from "../../utilities/loaders";
+import {createTab, hideLoader, showLoader} from "../../utilities/loaders";
 
 export default function UploadDataDialog() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
 
   const handleFileChange = (event) => {
+    showLoader();
     const file = event.target.files[0];
     setError('');
     if (!file) return;
@@ -31,38 +32,24 @@ export default function UploadDataDialog() {
     const reader = new FileReader();
     reader.onload = async(e) => {
       try {
-        // copy and pasted from browser_capture.js
-        // TODO: refactor adding and removing screenshots.
         let configurationRegistry = await getLocalItem('configuration') ?? { authToken: false, productVersion: 'trial'};
-        const isAuthenticated = configurationRegistry.authToken ?? false;
-        const isProVersion = configurationRegistry.productVersion === 'pro';
         // get/set the record count
         configurationRegistry.recordCount = configurationRegistry?.recordCount ?? 0
-        // You must be authenticated to use the capture feature for over a 100 captures.
-
         const newRecords = JSON.parse(e.target.result);
-        // TODO: fix issue with add duplicates
-        let screenshotRegistry = await getLocalItem('screenshots');
-        let records = screenshotRegistry?.records ?? [];
-        screenshotRegistry.records = records.concat(newRecords);
-        configurationRegistry.recordCount = screenshotRegistry.records.length;
-
-        if(!isAuthenticated && configurationRegistry.recordCount >= 100){
-            await createTab('https://osintliar.com/your-rapport-authentication-error/', true);
-            throw new Error("You MUST register if you want to collect more than 100 captures.");
-        }
-        if(isAuthenticated && configurationRegistry.recordCount >= 200 && !isProVersion){
-            await createTab('https://osintliar.com/your-rapport-authentication-error/', true);
-            throw new Error("You MUST register and have the PRO paid version if you want to collect more than 200 captures.");
-        }
-        await setLocalItem('screenshots', screenshotRegistry);
+        // TODO: fix issue with adding duplicates, the uuid is the unique key
+        let screenshots = await getLocalItem('screenshots') ?? [];
+        // TODO: sort by dates.
+        configurationRegistry.screenShotCount = screenshots.length;
+        await setLocalItem('screenshots', screenshots.concat(newRecords));
         // update the configuration last
         configurationRegistry.lastSavedOn = Date.now().toString();
         await setLocalItem('configuration', configurationRegistry);
         setOpen(false);
+        hideLoader();
 
       } catch (err) {
         setError('Invalid JSON format.');
+        hideLoader();
       }
     };
     reader.readAsText(file);
@@ -71,12 +58,12 @@ export default function UploadDataDialog() {
   return (
     <Fragment>
         <IconButton
-        key={'select-import-type-menu'}
+        key={'import-data'}
         aria-controls={`menu`}
         aria-haspopup="true"
         onClick={() => setOpen(true) }
         size="large">
-            <CloudUpload style={{zIndex:1000}} variant="outlined"/>
+            <CloudUpload style={{zIndex:1000}} variant="outlined" />
         </IconButton>
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>Upload a Your Rapport Dataset</DialogTitle>
@@ -93,7 +80,7 @@ export default function UploadDataDialog() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Close</Button>
+          <Button variant={'contained'} color={'cancel'} onClick={() => setOpen(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </Fragment>

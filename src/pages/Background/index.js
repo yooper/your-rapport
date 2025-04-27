@@ -1,12 +1,7 @@
 import {capture} from "../../datasources/browser_capture";
 import {createTab, getActiveTab} from "../../utilities/loaders";
+import {updateRecord} from "../../models/db/local";
 
-/**
- * When Icon in top right is clicked it opens the search option
- */
-chrome.action.onClicked.addListener(async(tab) => {
-    await chrome.tabs.create({'url': chrome.runtime.getURL('search.html')})
-});
 
 /**
  * Initialize configuration values when the app is installed
@@ -56,14 +51,28 @@ chrome.commands.onCommand.addListener(async(command) => {
 
 
 /**
- * Receive messages from the content script
+ * Receive messages from the content script or the extension page
  */
 chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
     switch(message.cmd){
         case 'captureVisibleTab':
-          await capture(sender.tab, message)
-          sendResponse({flag: true});
-          return true;
+            await capture(sender.tab, message)
+            sendResponse({flag: true});
+            return true;
+        case 'updateScreenShotRecord':
+            await updateRecord('screenshots', 'uuid', message.record);
+            sendResponse({completed: true});
+            return true;
+        case 'popupSingleCollect':
+            const activeTab = await getActiveTab();
+            const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
+            await capture(activeTab, response);
+            sendResponse({completed: true});
+            return true;
+        case 'autoscrollCollect':
+            const tab = await getActiveTab();
+            await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
+            return true;
         default:
             console.log(`Unknown cmd ${message.cmd}`);
             return true;

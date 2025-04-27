@@ -57,7 +57,7 @@ const _mustacheService = (templateName, configuration) => {
 const _basicTemplate = `
 {{#records}}
 <div>
-<img src="{{screenshot}}" width="90%" height="80%"/>
+<img src="{{screenshot}}" width="100%" height="80%"/>
 </div>
 <table>
     <tr>
@@ -78,7 +78,11 @@ const _basicTemplate = `
                 <tr>
                     <th>Hash</th>
                     <td>{{hash}}</td>
-                </tr>                
+                </tr>
+                <tr>
+                    <th>Notes</th>
+                    <td>{{note}}</td>
+                </tr>                                                
             </table>
         </td>
     </tr>
