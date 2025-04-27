@@ -9,15 +9,19 @@ and makes the content fully searchable for professionals, amateurs, and archivis
 dialogue across platforms, Your Rapport bridges visual capture with text-based search, turning ephemeral interactions 
 into permanent, searchable records. Your Rapport is an Open Source tool that implements the best practices for 
 protecting your privacy and documenting online content. You can easily import, export, or print screenshots from 
-your collection. 
+your collection. Your Rapport is free to use, but does require purchasing a subscription if you want to collect more than
+400 screenshots. This enables us to continue development and support for this product. 
 
 ### Getting Started 
-After installing the Chrome extension from URL HERE, "Your Rapport" will automatically be ready to collect.
-There are three options for collecting a screenshot of a web page:
+After installing the Chrome extension from https://chromewebstore.google.com/detail/your-rapport/clkaalonjdkliiaadkgodlfbiipidjmn, 
+"Your Rapport" will automatically be ready to collect.
+
+There are several options for collecting a screenshot of a web page:
  * `Mouse - Right Click` and select the **Collect** menu option with the "Your Rapport" logo
  * `Ctrl+Shift+S` collects a single screenshot.
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
+ * Click the "Your Rapport" pin in your extension tab and select the action you want performed.  
 
 Your Rapport is an open source commercial tool for the following reasons:
  * Transparency in how software works and where the data goes is an important security and privacy concern to all of us

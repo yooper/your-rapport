@@ -1,47 +1,29 @@
-/*
- * @license
- * @Copyright Baker Street Enterprises LLC
- * All rights reserved. Copying, distributing or modifying of software is prohibited.
- * Please contact support@bakerstreet.llc for assistance
- */
+import React,{ Fragment} from 'react';
+import { createRoot } from 'react-dom/client';
 
-import React, {Fragment, useEffect, useState} from 'react';
-import Popup from './Popup';
-import './index.css';
-import { ReactNotifications } from 'react-notifications-component'
 import 'react-notifications-component/dist/theme.css'
-import {createRoot} from "react-dom/client";
-import {hideLoader, showLoader} from "../../utilities/loaders";
+import { ReactNotifications } from 'react-notifications-component'
+import './index.css';
+import {createTheme, ThemeProvider} from "@mui/material";
+import {getDarkTheme} from "../../utilities/loaders";
+import Popup from "./Popup";
+import TopAppBar from "../../components/TopAppBar";
 
-const PopupAppLoadingScreen = ({ hideLoader, showLoader }) => {
 
-    const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() =>
-  {
-      async function fetchData() {
-          showLoader()
-          setIsLoading(true)
-          setIsLoading(false)
-          hideLoader()
-      }
-      fetchData();
-  }, []);
-
-    if(isLoading){
-        return <div></div>
-    }
+function App(){
     return (
     <Fragment>
         <ReactNotifications />
-        <Popup />
+        <Popup/>
     </Fragment>
-
-  );
-};
+    )
+}
 
 const container = document.getElementById('app-container');
-const root = createRoot(container);
+const root = createRoot(container); // createRoot(container!) if you use TypeScript
 root.render(
-    <PopupAppLoadingScreen hideLoader={hideLoader} showLoader={showLoader}/>
+    <ThemeProvider theme={createTheme(getDarkTheme())}>
+        <TopAppBar />
+        <App/>
+    </ThemeProvider>
 );
