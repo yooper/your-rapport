@@ -36,7 +36,6 @@ export async function capture(tab, message = {}){
     };
     // get the existing records, append it and move on
     let screenshots = await getLocalItem('screenshots') ?? []
-
     // keeps records sorted by creation order
     screenshots = [record].concat(screenshots);
     await setLocalItem('screenshots', screenshots);

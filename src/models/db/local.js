@@ -39,7 +39,13 @@ export async function getLocalItem(key)
     return null;
 }
 
-
+/**
+ * Update a single record in the collection
+ * @param key
+ * @param idFieldName
+ * @param record
+ * @returns {Promise<void>}
+ */
 export async function updateRecord(key, idFieldName, record){
     let records = await getLocalItem(key);
     const index = records.findIndex(r => r[idFieldName] === record[idFieldName]);

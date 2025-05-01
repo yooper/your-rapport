@@ -28,7 +28,7 @@ Your Rapport is an open source commercial tool for the following reasons:
  * A commercial tool is the only viable way to support developing a standard set of open source tools, useful for doing online research
  * Keeps the infrastructure costs lower by not having additional overhead with privatized Software as a Service approach
  * Implement best practices based on community feedback
- * The target price for the Pro license can be set to $3 a month
+ * The target price for the Pro license can be set to $3 a month. 
 
 
 🌟 Key Features
