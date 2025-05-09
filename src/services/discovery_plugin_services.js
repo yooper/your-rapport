@@ -3,13 +3,13 @@ import {createTab, processNotification} from "../utilities/loaders";
 
 
 /**
- * Receives the discovery plugin and record. The selectedValue is the value of the selector that was clicked on
+ * Receives the discovery plugin and record. The selectedValue is the value of the selector that was selected by the end user.
  * @param discoveryPlugin {DiscoveryPlugin}
  * @param record
- * @param pluginValue
+ * @param selectedValue{string|number|null}
  * @returns {Promise<void>}
  */
-export default async function discovery_plugin_runner(discoveryPlugin, record = {}, pluginValue = null)
+export default async function discoveryPluginRunner(discoveryPlugin, record = {}, selectedValue = null)
 {
     Mustache.escape = function (text) { return text; }
     let formFields = null;
@@ -24,6 +24,7 @@ export default async function discovery_plugin_runner(discoveryPlugin, record = 
             const data = await _fetchRequest(discoveryPlugin, formFields, url, record)
             processNotification(data)
             break;
+        case 'createTab':
         default:
             const encodedUri = encodeURI(url)
             createTab(encodedUri);
@@ -75,7 +76,8 @@ function _createForm(discoveryPlugin, formFields, url)
 }
 
 /**
- * Submit a single fetch request in the background
+ * Submit a single fetch request in the foreground
+ * TODO: make a background/service runner
  * @param discoveryPlugin{DiscoveryPlugin}
  * @param formFields
  * @param url
@@ -95,7 +97,7 @@ async function _fetchRequest(discoveryPlugin, formFields, url, record)
     }
 
     let params = {
-        method: discoveryPlugin.method,
+        method: discoveryPlugin.method
     }
 
     let headers = {}
@@ -118,11 +120,11 @@ async function _fetchRequest(discoveryPlugin, formFields, url, record)
     try {
         // TODO: determine if this is running in the service worker or the browser window, to prevent calling
         const promise = fetch(url, params)
-        processNotification({ Title: 'Discovery Plugin Request Sent', Message: 'Waiting for response from the server.', Type: 'info'})
+        processNotification({ title: 'Discovery Plugin Request Sent', message: 'Waiting for response from the server.', type: 'info'})
         const response = await promise
         if (response.ok)
         {
-           processNotification({Title: 'Discovery Plugin Request Received', Message:'Your request was successfully accepted and data processing has begun.', Type:'success'})
+           processNotification({title: 'Discovery Plugin Request Received', message:'Your request was successfully accepted and data processing has begun.', type:'success'})
            const contentType = response.headers.get("content-type");
            if (contentType && contentType.indexOf("application/json") !== -1)
            {

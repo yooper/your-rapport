@@ -2,20 +2,31 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import MUIDataTable from "mui-datatables";
-import CopyToClipboardIcon from "./CopyToClipboardIcon";
-import {hideLoader, showLoader} from "../utilities/loaders";
-import {getLocalItem, setLocalItem} from "../models/db/local";
-import {useState} from "react";
-import SearchTableOptionMenu from "./menus/SearchTableOptionMenu";
-import PreviewImageDialog from "./PreviewImageDialog";
-import UploadDataDialog from "./dialogs/UploadDataDialog";
-import {downloadJsonData} from "../utilities/transformers";
-import NotesDialog from "./dialogs/NoteDialog";
+import CopyToClipboardIcon from "../CopyToClipboardIcon";
+import {hideLoader, showLoader} from "../../utilities/loaders";
+import {getLocalItem, setLocalItem} from "../../models/db/local";
+import {useEffect, useState} from "react";
+import SearchTableOptionMenu from "../menus/SearchTableOptionMenu";
+import PreviewImageDialog from "../dialogs/PreviewImageDialog";
+import UploadDataDialog from "../dialogs/UploadDataDialog";
+import {downloadJsonData} from "../../utilities/transformers";
+import NotesDialog from "../dialogs/NoteDialog";
+import DiscoveryPluginDialog from "../dialogs/DiscoveryPluginDialog";
 
 export default function SearchDataTable(props) {
 
   const [isLoading, setIsLoading] = useState(false);
+  const [selectors, setSelectors] = useState([]);
+  const [discoveryPlugins, setDiscoveryPlugins] = useState([]);
 
+  useEffect(() =>
+  {
+      async function fetchData(){
+          setSelectors(await getLocalItem('selectors'));
+          setDiscoveryPlugins(await getLocalItem('discovery-plugins'));
+      }
+      fetchData();
+  }, []);
   const columns = [
   {
     name: 'screenshot',
@@ -81,6 +92,35 @@ export default function SearchDataTable(props) {
     },
   },
   {
+    name: 'selectors',
+    label: 'Selectors',
+    options: {
+      filterType: 'multiselect',
+      filter: true,
+      filterOptions: {
+        names: selectors.map((x) => x.key) ?? []
+      },
+      sort: false,
+      customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData)
+          // add support for regexes.
+          return value.map((selector, index) => (
+              <DiscoveryPluginDialog
+                  key={`selector-${selector.key}-${selector.selectorTypeName}-${record.uuid}`}
+                  plugins={discoveryPlugins.filter( plugin => {
+                      return plugin.pluginType === selector.selectorTypeName ||
+                          (plugin.regex && new RegExp(`${plugin.regex}`, 'ig').test(selector.key))
+                  } )}
+                  title={selector.selectorTypeName}
+                  record={record}
+                  uxType={'chip'}
+                  pluginValue={selector.key}
+              />
+          ))
+      },
+    },
+  },
+  {
     name: 'domain',
     label: 'Domain',
     options: {
@@ -104,7 +144,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'uuid',
-    label: 'Options',
+    label: 'OPTIONS',
     options: {
       print: false,
       filter: false,
@@ -183,7 +223,7 @@ export default function SearchDataTable(props) {
       configurationRegistry.screenShotCount = filteredResults.length;
       await setLocalItem('configuration', configurationRegistry);
       setIsLoading(false)
-      hideLoader()
+      hideLoader();
    }
 
   const options = {

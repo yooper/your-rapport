@@ -47,10 +47,46 @@ export async function getLocalItem(key)
  * @returns {Promise<void>}
  */
 export async function updateRecord(key, idFieldName, record){
-    let records = await getLocalItem(key);
+    let records = await getLocalItem(key) ?? [];
     const index = records.findIndex(r => r[idFieldName] === record[idFieldName]);
     if(index !== -1){
         records[index] = record;
         await setLocalItem(key, records);
     }
 }
+
+/**
+ * add a single record in the collection
+ * @param key
+ * @param idFieldName
+ * @param record
+ * @returns {Promise<void>}
+ */
+export async function addRecord(key, idFieldName, record){
+    let records = await getLocalItem(key) ?? [];
+    const index = records.findIndex(r => r[idFieldName] === record[idFieldName]);
+    // verify the record does not exist
+    if(index === -1){
+        records = [record].concat(records);
+        await setLocalItem(key, records);
+    }
+}
+
+/**
+ * delete a single record in the collection
+ * @param key
+ * @param idFieldName
+ * @param record
+ * @returns {Promise<void>}
+ */
+export async function deleteRecord(key, idFieldName, record) {
+    let records = await getLocalItem(key) ?? [];
+    // Filter out the record to delete
+    const filtered = records.filter(r => r[idFieldName] !== record[idFieldName]);
+
+    // Only write if a deletion actually occurred
+    if (filtered.length !== records.length) {
+        await setLocalItem(key, filtered);
+    }
+}
+

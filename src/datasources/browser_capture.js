@@ -14,8 +14,9 @@ export async function capture(tab, message = {}){
     configurationRegistry.screenShotCount = configurationRegistry?.screenShotCount ?? 0
 
     const screenShot = await chrome.tabs.captureVisibleTab();
+    const uuid = crypto.randomUUID();
     let record = {
-      uuid: crypto.randomUUID(),
+      uuid: uuid,
       title: tab.title,
       url: tab.url,
       domain: (new URL(tab.url)).hostname,
@@ -32,8 +33,17 @@ export async function capture(tab, message = {}){
       selectors: [], // TODO: add support for tracking pivots / keywords found in text
       tags: [],  // TODO: add support for tagging data
       caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387', // TODO: add case management functionality
-      note: null
+      note: null,
+      mhtml_uuid: `mhtml_${uuid}`, // TODO: add support for storing mhtml
+      text_uuid: `text_${uuid}`, // TODO: add support for storing text
+      html_uuid: `html_${uuid}`,  // TODO: add support for storing html
+      attachments: [],  // TODO: add support for attachments
     };
+
+    // search the saved record for keywords
+    const selectors = await getLocalItem('selectors') ?? []
+    record.selectors = findMatchingValues(record.text, selectors);
+
     // get the existing records, append it and move on
     let screenshots = await getLocalItem('screenshots') ?? []
     // keeps records sorted by creation order
@@ -43,4 +53,22 @@ export async function capture(tab, message = {}){
     configurationRegistry.lastSavedOn = Date.now().toString();
     configurationRegistry.screenShotCount = screenshots.length;
     await setLocalItem('configuration', configurationRegistry);
+}
+
+/**
+ * Finds all objects whose `value` field matches anywhere in the input text.
+ * TODO: Normalize text and selector key to improve matching algorithm
+ * @param {string} text - The text to search in.
+ * @param {Array<{ key: string }>} items - The array of objects with `value` fields.
+ * @returns {Array<{ match: string, index: number, ref: object }>} List of matches with references
+ */
+function findMatchingValues(text, selectors) {
+  const matches = [];
+  for (let i = 0; i < selectors.length; i++) {
+    const selector = selectors[i];
+    if(text.includes(selector.key)){
+      matches.push(selector);
+    }
+  }
+  return matches;
 }

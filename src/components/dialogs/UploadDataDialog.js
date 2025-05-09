@@ -12,7 +12,7 @@ import {CloudUpload} from "@mui/icons-material";
 import {Fragment} from "@emotion/react/jsx-runtime";
 import IconButton from "@mui/material/IconButton";
 import {getLocalItem, setLocalItem} from "../../models/db/local";
-import {createTab, hideLoader, showLoader} from "../../utilities/loaders";
+import { hideLoader, showLoader} from "../../utilities/loaders";
 
 export default function UploadDataDialog() {
   const [open, setOpen] = useState(false);

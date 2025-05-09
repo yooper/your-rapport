@@ -71,4 +71,42 @@ export function downloadBase64Image(base64Data, fileName) {
   document.body.removeChild(link);
 }
 
+/**
+ * @param str
+ * @returns {string}
+ */
+const toCamelCase = (str) => {
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
 
+
+/**
+ * Change the name of the fields from PascalCase to camelCase.
+ * @param obj
+ * @returns {{}|*}
+ */
+export function convertKeysToCamelCase(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(convertKeysToCamelCase);
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      acc[toCamelCase(key)] = convertKeysToCamelCase(value);
+      return acc;
+    }, {});
+  }
+  return obj;
+}
+
+export function sortByField(array, key) {
+    if(!array || array.length === 0){
+        return []
+    }
+    else if(array.length === 1){
+        return array
+    }
+    return array.sort( (a, b) => {
+        const x = a[key]
+        const y = b[key]
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0))
+    })
+}

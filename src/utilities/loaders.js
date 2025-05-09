@@ -92,3 +92,23 @@ export async function getActiveTab() {
   let [tab] = await chrome.tabs.query(queryOptions);
   return tab;
 }
+
+export function getSelectorTypeMap(){
+    return {
+        'address': 'Address',
+        'associate': 'Associate',
+        'crypto': 'Crypto Address',
+        'dob': 'Date of Birth',
+        'date': 'Date',
+        'email': 'Email',
+        'event': 'Event',
+        'family': 'Family',
+        'keyword': 'Keyword',
+        'name': 'Name',
+        'occupation': 'Occupation',
+        'organization': 'Organization',
+        'phone': 'Phone',
+        'religion': 'Religion',
+        'username': 'Username'
+    }
+}

@@ -11,10 +11,10 @@ export class DiscoveryPlugin {
         this.label = null;
         this.readOnly = false;
         this.sortOrder = 0;
-        this.timeOutInSeconds = 100;
+        this.timeOut = 100;
         this.lastAccessedOn = null;
         this.createdOn = new Date();
-        this.timeTakenInSeconds = 0;
+        this.timeTakenIn = 0;
         this.method = 'GET';
         this.accessed = 0;
         this.version = '0.0.1';

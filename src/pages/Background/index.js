@@ -1,30 +1,19 @@
 import {capture} from "../../datasources/browser_capture";
 import {createTab, getActiveTab} from "../../utilities/loaders";
 import {updateRecord} from "../../models/db/local";
+import {initializeContextMenus} from "../../services/context_menu_services";
+import {Selector} from "../../models/schemas/Selector";
 
 
 /**
  * Initialize configuration values when the app is installed
  */
 chrome.runtime.onInstalled.addListener(async(details) => {
-    // add capture context menu to the UI
-    chrome.contextMenus.create({
-      id: "collectPage",
-      title: "Collect",
-      contexts: ["page"]
-    });
+
 })
 
-/**
- * Add onclick event to the context menu item
- */
-chrome.contextMenus.onClicked.addListener(async(info, tab) => {
-  if (info.menuItemId === "collectPage") {
-      // get the visible text from the content script.
-      const response = await chrome.tabs.sendMessage(tab.id, {cmd: 'getVisibleText'});
-      await capture(tab, response);
-  }
-});
+await initializeContextMenus();
+
 
 /**
  * Add in support for short-cut keys
@@ -73,6 +62,10 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
             const tab = await getActiveTab();
             await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
             return true;
+        case 'indexSelector':
+            await Selector.add(message.selector);
+
+
         default:
             console.log(`Unknown cmd ${message.cmd}`);
             return true;
