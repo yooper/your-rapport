@@ -16,7 +16,7 @@ export class Selector{
         selector.key = selector.key.toLowerCase();
         await addRecord('selectors', 'key', selector);
         // scan the existing records
-        let records = await getLocalItem('screenshots') ?? [];
+        let records = await getLocalItem('rapports') ?? [];
         await Selector._findMatches(records, [selector]);
     }
 
@@ -28,11 +28,11 @@ export class Selector{
      */
     static async delete(selector){
         await deleteRecord('selectors', 'key', selector);
-        let records = await getLocalItem('screenshots') ?? [];
+        let records = await getLocalItem('rapports') ?? [];
         for(let record of records){
             record.selectors = record.selectors.filter(item => item.key === selector.key)
         }
-        await setLocalItem('screenshots', records);
+        await setLocalItem('rapports', records);
     }
 
 
@@ -45,7 +45,7 @@ export class Selector{
                 }
             }
             record.selectors = matches;
-            await updateRecord('screenshots', 'uuid', record)
+            await updateRecord('rapports', 'uuid', record)
         }
     }
 }

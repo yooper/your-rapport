@@ -110,3 +110,22 @@ export function sortByField(array, key) {
         return ((x < y) ? -1 : ((x > y) ? 1 : 0))
     })
 }
+
+/**
+ *
+ * @param base64Data
+ * @param fileName
+ * @returns {module:buffer.File}
+ */
+export function base64ToFile(base64Data, fileName) {
+  const [prefix, base64] = base64Data.includes(',') ? base64Data.split(',') : [null, base64Data];
+  const mimeMatch = prefix?.match(/data:(.*);base64/);
+  const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+  const binary = atob(base64);
+  const len = binary.length;
+  const buffer = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    buffer[i] = binary.charCodeAt(i);
+  }
+  return new File([buffer], fileName, { type: mimeType });
+}

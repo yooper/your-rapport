@@ -1,5 +1,5 @@
 import {capture} from "../../datasources/browser_capture";
-import {createTab, getActiveTab} from "../../utilities/loaders";
+import {createTab, getActiveTab, installPackage} from "../../utilities/loaders";
 import {updateRecord} from "../../models/db/local";
 import {initializeContextMenus} from "../../services/context_menu_services";
 import {Selector} from "../../models/schemas/Selector";
@@ -9,11 +9,45 @@ import {Selector} from "../../models/schemas/Selector";
  * Initialize configuration values when the app is installed
  */
 chrome.runtime.onInstalled.addListener(async(details) => {
+    // install the default discovery plugins
+    const defaultDiscoveryPlugins = [
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/sec-edgar.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/california/sos-business-search.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-name.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-org.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-name.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-org-name.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-name.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-org.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/forensics/cyber-chef.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/github/gh-save-screenshot.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-text-username.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-title-username.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-url-username.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-name.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-org.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/caller-id.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/experian-phone-verification.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/ipqs-phone-validator.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/phone-validator.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/reverse-phone-checker.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/whats-my-name.json",
+      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/who-am-i.json"
+    ];
+    await Promise.all(defaultDiscoveryPlugins.map(pluginUrl => {
+        installPackage({url: pluginUrl}).catch(err => {
+
+        })
+    }))
+
 
 })
 
 await initializeContextMenus();
-
 
 /**
  * Add in support for short-cut keys
@@ -40,7 +74,7 @@ chrome.commands.onCommand.addListener(async(command) => {
 
 
 /**
- * Receive messages from the content script or the extension page
+ * Receives messages from the content script or the extension page
  */
 chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
     switch(message.cmd){
@@ -49,7 +83,7 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
             sendResponse({flag: true});
             return true;
         case 'updateScreenShotRecord':
-            await updateRecord('screenshots', 'uuid', message.record);
+            await updateRecord('rapports', 'uuid', message.record);
             sendResponse({completed: true});
             return true;
         case 'popupSingleCollect':
@@ -64,8 +98,6 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
             return true;
         case 'indexSelector':
             await Selector.add(message.selector);
-
-
         default:
             console.log(`Unknown cmd ${message.cmd}`);
             return true;

@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import {useEffect, useState} from "react";
 import MUIDataTable from "mui-datatables";
 import Chip from "@mui/material/Chip";
-import {hideLoader, processNotification, showLoader} from "../../utilities/loaders";
+import {hideLoader, installPackage, processNotification, showLoader} from "../../utilities/loaders";
 import {convertKeysToCamelCase} from "../../utilities/transformers";
 import {addRecord, deleteRecord, getLocalItem} from "../../models/db/local";
 import IconButton from "@mui/material/IconButton";
@@ -80,16 +80,13 @@ export default function PackageManagerDataTable(props) {
   };
 
   /**
-  * Upsert the record
+  * Install the package
   * @param record
   * */
   const upsert = async(record) => {
       setIsLoading(true);
       showLoader();
-      const response = await fetch(record.url);
-      const data = await response.json();
-      const dp = convertKeysToCamelCase(data);
-      await addRecord('discovery-plugins', 'uuid', dp);
+      await installPackage(record);
       // TODO: fix layout issue with notifications
       //processNotification({title: `Discovery Plugin Installed`, message: `The discovery plugin ${dp.label}`, type: 'success'});
       // TODO: refresh the package table without re-pulling the data

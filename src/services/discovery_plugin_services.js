@@ -1,16 +1,23 @@
 import Mustache from "mustache/mustache.mjs";
 import {createTab, processNotification} from "../utilities/loaders";
+import {getUser} from "../models/schemas/User";
 
 
 /**
  * Receives the discovery plugin and record. The selectedValue is the value of the selector that was selected by the end user.
  * @param discoveryPlugin {DiscoveryPlugin}
- * @param record
+ * @param rapport
  * @param selectedValue{string|number|null}
  * @returns {Promise<void>}
  */
-export default async function discoveryPluginRunner(discoveryPlugin, record = {}, selectedValue = null)
+export default async function discoveryPluginRunner(discoveryPlugin, rapport = {}, selectedValue = null)
 {
+    const user = await getUser();
+    if(!user.isAccessible('discoveryPlugin', rapport, discoveryPlugin)){
+        // TODO notify user feature is only available in the pro model
+        throw new Error("Pro License Required");
+    }
+
     Mustache.escape = function (text) { return text; }
     let formFields = null;
     const url = Mustache.render(discoveryPlugin.url, record);

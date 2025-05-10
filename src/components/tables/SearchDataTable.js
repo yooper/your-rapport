@@ -98,7 +98,7 @@ export default function SearchDataTable(props) {
       filterType: 'multiselect',
       filter: true,
       filterOptions: {
-        names: selectors.map((x) => x.key) ?? []
+        names: selectors?.map((x) => x.key) ?? []
       },
       sort: false,
       customBodyRender: (value, tableMeta, updateValue) => {
@@ -216,7 +216,7 @@ export default function SearchDataTable(props) {
       const deleteSet = new Set(uuids);
       const filteredResults =  props.rows.filter(record => !deleteSet.has(record.uuid));
       props.setRows(filteredResults);
-      await setLocalItem('screenshots', filteredResults);
+      await setLocalItem('rapports', filteredResults);
       // update the configuration last
       let configurationRegistry = await getLocalItem('configuration') ?? {};
       configurationRegistry.lastSavedOn = Date.now().toString();
@@ -233,8 +233,8 @@ export default function SearchDataTable(props) {
         },
     },
     onDownload: (buildHead, buildBody, columns, data) => {
-        getLocalItem('screenshots').then(screenshots => {
-            downloadJsonData(screenshots, 'your-rapport.json');
+        getLocalItem('rapports').then(rapports => {
+            downloadJsonData(rapports, 'your-rapport.json');
         })
         return false;
     },

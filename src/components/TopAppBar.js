@@ -19,7 +19,6 @@ export default function TopAppBar() {
       {'name': 'videos', 'label': 'Training Videos', 'url': 'https://www.youtube.com/@your-rapport'},
   ]
 
-
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };

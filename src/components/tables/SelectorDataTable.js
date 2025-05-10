@@ -31,7 +31,16 @@ export default function SelectorDataTable(props) {
   const columns = [
     { label: 'Selector', name: 'key'},
     { label: 'Selector Type', name: 'selectorTypeName'},
-    { label: 'Description', name: 'description'}
+    {
+        label: 'Description',
+        name: 'description',
+        options: {
+          display: false,
+          filter: false,
+          sort: true,
+          searchable: true
+        },
+    }
   ]
 
   const options = {
@@ -48,8 +57,8 @@ export default function SelectorDataTable(props) {
           const deleteSet = new Set(keys);
           const filteredResults = rows.filter(record => !deleteSet.has(record.key));
           setRows(filteredResults);
-          setIsLoading(false)
-          hideLoader()
+          setIsLoading(false);
+          hideLoader();
       },
       customToolbar: () => {
         return (

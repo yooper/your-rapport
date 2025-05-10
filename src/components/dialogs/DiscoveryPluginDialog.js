@@ -28,7 +28,7 @@ import {CalendarMonth} from "@mui/icons-material";
 import Mustache from "mustache/mustache.mjs";
 import Typography from "@mui/material/Typography";
 import {sortByField} from "../../utilities/transformers";
-import {getSelectorTypeMap, hideLoader, showLoader} from "../../utilities/loaders";
+import {getSelectorTypeMap, hideLoader, processNotification, showLoader} from "../../utilities/loaders";
 import {deleteRecord} from "../../models/db/local";
 import CopyToClipboardIcon from "../CopyToClipboardIcon";
 import discoveryPluginRunner from "../../services/discovery_plugin_services";
@@ -171,7 +171,17 @@ export default function DiscoveryPluginDialog(props)
                             key={`plugin-${plugin.pluginType}-${plugin.uuid}`}
                             className={'clickable'}
                             onClick={() => {
-                              discoveryPluginRunner(plugin, record, pluginValue)
+                              try{
+                                discoveryPluginRunner(plugin, record, pluginValue)
+                              }
+                              catch(e){
+                                // an exception means a pro license is required.
+                                processNotification({
+                                  title: 'Pro License Required',
+                                  message: 'You will need to buy a pro license to use this feature',
+                                  type: 'danger'
+                                })
+                              }
                             }}
                         >
                           <ListItemIcon>

@@ -30,8 +30,8 @@ export async function capture(tab, message = {}){
       updatedBy: 'TODO-UPDATE', // TODO: add support for tracking who updated the record, requires authentication
       length: screenShot.length,
       attributes: { tab: tab },
-      selectors: [], // TODO: add support for tracking pivots / keywords found in text
-      tags: [],  // TODO: add support for tagging data
+      selectors: [],
+      tags: [],  // TODO: add support for tagging/annotating data
       caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387', // TODO: add case management functionality
       note: null,
       mhtml_uuid: `mhtml_${uuid}`, // TODO: add support for storing mhtml
@@ -45,13 +45,13 @@ export async function capture(tab, message = {}){
     record.selectors = findMatchingValues(record.text, selectors);
 
     // get the existing records, append it and move on
-    let screenshots = await getLocalItem('screenshots') ?? []
+    let rapports = await getLocalItem('rapports') ?? []
     // keeps records sorted by creation order
-    screenshots = [record].concat(screenshots);
-    await setLocalItem('screenshots', screenshots);
+    rapports = [record].concat(rapports);
+    await setLocalItem('screenshots', rapports);
     // update the configuration last saved on metadata
     configurationRegistry.lastSavedOn = Date.now().toString();
-    configurationRegistry.screenShotCount = screenshots.length;
+    configurationRegistry.screenShotCount = rapports.length;
     await setLocalItem('configuration', configurationRegistry);
 }
 
