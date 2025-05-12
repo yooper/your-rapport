@@ -42,7 +42,7 @@ export default function DiscoveryPluginDataTable() {
   {
       async function fetchData() {
           setIsLoading(true)
-          setRows(await getLocalItem('discovery-plugins') ?? []);
+          setRows(await getLocalItem('discoveryPlugins') ?? []);
           let allPluginTypes = [...new Set( [...basePluginTypes])];
           allPluginTypes.sort();
           setPluginTypes(allPluginTypes);
@@ -54,7 +54,7 @@ export default function DiscoveryPluginDataTable() {
 
   const handleSwitchChange = async(record, isChecked) => {
     record.active = isChecked
-    await updateRecord('discovery-plugins', 'uuid', record);
+    await updateRecord('discoveryPlugins', 'uuid', record);
     // TODO: fix layout issue
     //processNotification({title: 'Discovery Plugin Updated', message: `Discovery Plugin ${record.label} has been updated.`, type: 'success'});
   }
@@ -247,7 +247,7 @@ export default function DiscoveryPluginDataTable() {
         showLoader()
         const keys = []
         for (const [idx, value] of Object.entries(records.lookup)) {
-           await deleteRecord('discovery-plugins', 'uuid', rows[idx])
+           await deleteRecord('discoveryPlugins', 'uuid', rows[idx])
         }
         // deletes the rows in the ui and re-saves
         const deleteSet = new Set(keys);

@@ -17,6 +17,7 @@ export default function TopAppBar() {
       {'name': 'search', 'label': 'Search Dashboard', 'url': '/search.html'},
       {'name': 'options', 'label': 'Settings', 'url': '/options.html'},
       {'name': 'videos', 'label': 'Training Videos', 'url': 'https://www.youtube.com/@your-rapport'},
+      {'name': 'login', 'label': 'Authenticate', 'url': '/login.html'},
   ]
 
   const handleMenu = (event) => {

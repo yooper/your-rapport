@@ -31,7 +31,7 @@ export default function PackageManagerDataTable(props) {
       // convert the data to camelCase
       const externalPackages = convertKeysToCamelCase(data).filter(r => r.action !== 'Middleware');
 
-      const localPackages = await getLocalItem('discovery-plugins') ?? [];
+      const localPackages = await getLocalItem('discoveryPlugins') ?? [];
       externalPackages.forEach(ep => ep.action = 'install');
 
       // Iterate through the first list
@@ -200,7 +200,7 @@ export default function PackageManagerDataTable(props) {
         setIsLoading(true)
         showLoader()
         for (const [idx, value] of Object.entries(records.lookup)) {
-           await deleteRecord('discovery-plugins', 'uuid', rows[idx])
+           await deleteRecord('discoveryPlugins', 'uuid', rows[idx])
         }
         await fetchData();
         setIsLoading(false);

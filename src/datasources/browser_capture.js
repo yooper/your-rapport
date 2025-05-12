@@ -1,6 +1,10 @@
 import {getLocalItem, setLocalItem} from "../models/db/local";
 import {sha256} from "../utilities/transformers";
 
+let lastCaptureTime = 0;
+const CAPTURE_INTERVAL_MS = 600; // Allow slightly less than 1000ms / 2 calls
+
+
 /**
  * Capture the tab and persist it into local storage
  * @param tab
@@ -37,18 +41,19 @@ export async function capture(tab, message = {}){
       mhtml_uuid: `mhtml_${uuid}`, // TODO: add support for storing mhtml
       text_uuid: `text_${uuid}`, // TODO: add support for storing text
       html_uuid: `html_${uuid}`,  // TODO: add support for storing html
-      attachments: [],  // TODO: add support for attachments
+      nodes: [],  // TODO: add support for nodes
     };
 
     // search the saved record for keywords
     const selectors = await getLocalItem('selectors') ?? []
-    record.selectors = findMatchingValues(record.text, selectors);
+    // include the title in the search
+    record.selectors = findMatchingValues(record.text + record.title.toLowerCase(), selectors);
 
     // get the existing records, append it and move on
     let rapports = await getLocalItem('rapports') ?? []
     // keeps records sorted by creation order
     rapports = [record].concat(rapports);
-    await setLocalItem('screenshots', rapports);
+    await setLocalItem('rapports', rapports);
     // update the configuration last saved on metadata
     configurationRegistry.lastSavedOn = Date.now().toString();
     configurationRegistry.screenShotCount = rapports.length;
@@ -58,7 +63,7 @@ export async function capture(tab, message = {}){
 /**
  * Finds all objects whose `value` field matches anywhere in the input text.
  * TODO: Normalize text and selector key to improve matching algorithm
- * @param {string} text - The text to search in.
+ * @param {string} text - The text + title to search in.
  * @param {Array<{ key: string }>} items - The array of objects with `value` fields.
  * @returns {Array<{ match: string, index: number, ref: object }>} List of matches with references
  */

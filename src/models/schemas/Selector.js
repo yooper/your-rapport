@@ -13,7 +13,7 @@ export class Selector{
      */
     static async add(selector){
         // normalize selector to lower case
-        selector.key = selector.key.toLowerCase();
+        selector.key = selector.key.toLowerCase().trim();
         await addRecord('selectors', 'key', selector);
         // scan the existing records
         let records = await getLocalItem('rapports') ?? [];
@@ -40,11 +40,13 @@ export class Selector{
         for (const record of records) {
             let matches = [];
             for(const selector of selectors){
-                if(record.text?.includes(selector.key)){
+                const fullText = (record.text ?? '') + ' ' + record.title.toLowerCase()
+                if(fullText.includes(selector.key)){
                     matches.push(selector);
                 }
             }
-            record.selectors = matches;
+            record.selectors = record.selectors.concat(matches);
+            // TODO: Compare the new and old results. If the lists are the same skip calling update
             await updateRecord('rapports', 'uuid', record)
         }
     }

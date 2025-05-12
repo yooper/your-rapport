@@ -18,7 +18,7 @@ export function initAutoScrollerHandler() {
                 if((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight){
                     state = 'bottom';
                 }
-            }, 1000)
+            }, 2000)
 
         }
         if(state !== 'startCapture'){

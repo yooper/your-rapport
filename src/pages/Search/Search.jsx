@@ -18,7 +18,7 @@ export default function Search()
        async function fetchData(){
            showLoader();
            setIsLoading(true);
-           const screenshots = await getLocalItem('screenshots') ?? []
+           const screenshots = await getLocalItem('rapports') ?? []
            setRows(screenshots ?? []);
            setIsLoading(false);
            hideLoader();

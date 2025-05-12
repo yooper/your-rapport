@@ -22,8 +22,8 @@ export default function SearchDataTable(props) {
   useEffect(() =>
   {
       async function fetchData(){
-          setSelectors(await getLocalItem('selectors'));
-          setDiscoveryPlugins(await getLocalItem('discovery-plugins'));
+          setSelectors(await getLocalItem('selectors') ?? []);
+          setDiscoveryPlugins(await getLocalItem('discoveryPlugins') ?? []);
       }
       fetchData();
   }, []);
@@ -103,14 +103,16 @@ export default function SearchDataTable(props) {
       sort: false,
       customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData)
+          if(record?.selectors?.length == 0){
+              return <div></div>
+          }
           // add support for regexes.
-          return value.map((selector, index) => (
+          return record?.selectors?.map((selector, index) => (
               <DiscoveryPluginDialog
                   key={`selector-${selector.key}-${selector.selectorTypeName}-${record.uuid}`}
                   plugins={discoveryPlugins.filter( plugin => {
-                      return plugin.pluginType === selector.selectorTypeName ||
-                          (plugin.regex && new RegExp(`${plugin.regex}`, 'ig').test(selector.key))
-                  } )}
+                      return plugin.pluginType === selector.selectorTypeName
+                  })}
                   title={selector.selectorTypeName}
                   record={record}
                   uxType={'chip'}
@@ -183,7 +185,7 @@ export default function SearchDataTable(props) {
           sort: false,
       },
   },
-  ].concat(['updatedOn','hash','length','attributes','selectors','tags','caseManagementUuid', 'createdOnLocalTime'].map(fieldName => {
+  ].concat(['updatedOn','hash','length','attributes','tags','caseManagementUuid', 'createdOnLocalTime'].map(fieldName => {
       return {
             name: fieldName,
             label: fieldName,

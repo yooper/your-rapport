@@ -24,14 +24,6 @@ export async function sha256(message) {
   return hashHex;
 }
 
-
-export async function getActiveTab() {
-  let queryOptions = { active: true, lastFocusedWindow: true };
-  // `tab` will either be a `tabs.Tab` instance or `undefined`.
-  let [tab] = await chrome.tabs.query(queryOptions);
-  return tab;
-}
-
 /**
  * Invokes downloading of json file
  * @param data

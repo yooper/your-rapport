@@ -23,20 +23,17 @@ export async function setLocalItem(key, obj)
  * @param key
  * @returns {Promise<{}|null|[]|any>}
  */
-export async function getLocalItem(key)
-{
-    const value = await chrome.storage.local.get(key)
-    if(value){
-        try{
-            const data = JSON.parse(value[key])
+export async function getLocalItem(key) {
+    const value = await chrome.storage.local.get(key);
+    if (value) {
+        try {
+            const data = JSON.parse(value[key]);
             return data;
-        }
-        catch(e){
-            console.error(`Error parsing: key is ${key}, value is ${JSON.stringify(value)}`)
-            return null;
+        } catch (e) {
+            return [];
         }
     }
-    return null;
+    return [];
 }
 
 /**

@@ -77,7 +77,6 @@ export async function createTab(url, onlyOneTabOpen = false)
   await chrome.tabs.create({url: url})
 }
 
-
 /**
  * Returns the list of urls that are open
  * @returns {Promise<string[]>}
@@ -103,7 +102,7 @@ export async function installPackage(record){
   const response = await fetch(record.url);
   const data = await response.json();
   const dp = convertKeysToCamelCase(data);
-  await addRecord('discovery-plugins', 'uuid', dp);
+  await addRecord('discoveryPlugins', 'uuid', dp);
 }
 
 
@@ -125,4 +124,8 @@ export function getSelectorTypeMap(){
         'religion': 'Religion',
         'username': 'Username'
     }
+}
+
+export function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

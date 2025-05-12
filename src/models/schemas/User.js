@@ -41,11 +41,15 @@ export class User
     }
 
 
-    async verify()
+    /**
+     * Verify will validate the auth token
+     * @returns {Promise<void>}
+     */
+    async verify(override = false)
     {
         // verify has not been run, yet
         // TODO: add re-check condition
-        if(this.verifiedOn){
+        if(this.verifiedOn && !override){
             console.log('Account verified');
             return;
         }
@@ -75,7 +79,7 @@ export class User
 
     async save()
     {
-        // license update, downgrading to freemium
+        // license updated, or downgraded to freemium upon failure
         await setLocalItem('user', JSON.stringify(this))
     }
 
@@ -86,6 +90,9 @@ export class User
  * @returns {Promise<User>}
  */
 export async function getUser(){
-    const user = await getLocalItem('user') ?? { authToken: false, license: 'freemium'};
-    return new User(user.authToken, user.license);
+    const userObj = await getLocalItem('user') ?? { authToken: false, license: 'freemium'};
+    const user = new User(userObj.authToken, userObj.license);
+    // verify a user, verify is cached
+    await user.verify();
+    return user;
 }
