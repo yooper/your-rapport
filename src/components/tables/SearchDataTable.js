@@ -93,14 +93,18 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'selectors',
-    label: 'Selectors',
+    label: 'SELECTORS',
     options: {
       filterType: 'multiselect',
       filter: true,
-      filterOptions: {
-        names: selectors?.map((x) => x.key) ?? []
-      },
       sort: false,
+      filterOptions: {
+        names: selectors?.map((x) => x.key) ?? [],
+        logic: (selectors, filters) => {
+          const selectorLabels = selectors.map(s => s.key);
+          return !filters.some(filter => selectorLabels.includes(filter));
+        }
+      },
       customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData)
           if(record?.selectors?.length == 0){
@@ -124,7 +128,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'domain',
-    label: 'Domain',
+    label: 'DOMAIN',
     options: {
       filter: true,
       sort: true,
@@ -133,7 +137,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'createdOn',
-    label: 'Collected On',
+    label: 'COLLECTED OO',
     options: {
       filter: false,
       sort: true,

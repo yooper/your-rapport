@@ -5,6 +5,8 @@ import {getUser} from "../models/schemas/User";
 
 /**
  * Receives the discovery plugin and record. The selectedValue is the value of the selector that was selected by the end user.
+ * Throws an error
+ * TODO: Add support for API / Configuration variables
  * @param discoveryPlugin {DiscoveryPlugin}
  * @param rapport
  * @param selectedValue{string|number|null}
@@ -20,15 +22,15 @@ export default async function discoveryPluginRunner(discoveryPlugin, rapport = {
 
     Mustache.escape = function (text) { return text; }
     let formFields = null;
-    const url = Mustache.render(discoveryPlugin.url, record);
+    const url = Mustache.render(discoveryPlugin.url, discoveryPlugin);
     switch(discoveryPlugin.action){
         case 'submitForm':
-            formFields = await _buildObject(discoveryPlugin, record)
+            formFields = await _buildObject(discoveryPlugin, rapport)
             _submitForm(discoveryPlugin, formFields, url)
             break;
         case 'singleTask':
-            formFields = await _buildObject(discoveryPlugin, record)
-            const data = await _fetchRequest(discoveryPlugin, formFields, url, record)
+            formFields = await _buildObject(discoveryPlugin, rapport)
+            const data = await _fetchRequest(discoveryPlugin, formFields, url, rapport)
             processNotification(data)
             break;
         case 'createTab':
@@ -41,7 +43,7 @@ export default async function discoveryPluginRunner(discoveryPlugin, rapport = {
 
 
 /**
- * Submits an HTMLFormElement to a url
+ * Submits an HTMLFormElement to an url
  * @param discoveryPlugin{DiscoveryPlugin}
  * @param formFields
  * @param url
@@ -126,6 +128,7 @@ async function _fetchRequest(discoveryPlugin, formFields, url, record)
 
     try {
         // TODO: determine if this is running in the service worker or the browser window, to prevent calling
+        // TODO: implement in background service worker context
         const promise = fetch(url, params)
         processNotification({ title: 'Discovery Plugin Request Sent', message: 'Waiting for response from the server.', type: 'info'})
         const response = await promise
@@ -198,7 +201,7 @@ async function _fetchRequest(discoveryPlugin, formFields, url, record)
 }
 
 /**
- * Use templates
+ * Use Mustache templates to do variable substitution
  * @param discoveryPlugin
  * @param configurations
  * @param record

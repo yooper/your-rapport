@@ -37,11 +37,7 @@ export async function capture(tab, message = {}){
       selectors: [],
       tags: [],  // TODO: add support for tagging/annotating data
       caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387', // TODO: add case management functionality
-      note: null,
-      mhtml_uuid: `mhtml_${uuid}`, // TODO: add support for storing mhtml
-      text_uuid: `text_${uuid}`, // TODO: add support for storing text
-      html_uuid: `html_${uuid}`,  // TODO: add support for storing html
-      nodes: [],  // TODO: add support for nodes
+      note: null
     };
 
     // search the saved record for keywords
@@ -62,7 +58,7 @@ export async function capture(tab, message = {}){
 
 /**
  * Finds all objects whose `value` field matches anywhere in the input text.
- * TODO: Normalize text and selector key to improve matching algorithm
+ * TODO: Tokenize & normalize text and selector key to improve matching algorithm and support fuzzy matching
  * @param {string} text - The text + title to search in.
  * @param {Array<{ key: string }>} items - The array of objects with `value` fields.
  * @returns {Array<{ match: string, index: number, ref: object }>} List of matches with references

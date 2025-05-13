@@ -1,5 +1,5 @@
 import {capture} from "../../datasources/browser_capture";
-import {createTab, getActiveTab, installPackage, sleep} from "../../utilities/loaders";
+import {createTab, getActiveTab, initializeDiscoveryPlugins, installPackage, sleep} from "../../utilities/loaders";
 import {setLocalItem, updateRecord} from "../../models/db/local";
 import {initializeContextMenus} from "../../services/context_menu_services";
 import {Selector} from "../../models/schemas/Selector";
@@ -9,6 +9,7 @@ import {Selector} from "../../models/schemas/Selector";
  * Initialize configuration values when the app is installed
  */
 await initializeContextMenus();
+await initializeDiscoveryPlugins();
 
 /**
  * Add in support for short-cut keys
@@ -35,7 +36,7 @@ chrome.commands.onCommand.addListener(async(command) => {
 
 
 /**
- * Receives messages from the content script or the extension page
+ * Receives messages from the content script
  */
 chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
     switch(message.cmd){
@@ -66,13 +67,13 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
 });
 
 /**
- * Let the Who Am I extension trigger the collector
+ * Let the 'Who Am I' extension be able to RPC the extension's functionality
 */
 // For a single request:
 chrome.runtime.onMessageExternal.addListener(
   async function(message, sender, sendResponse) {
     if (sender.id !== 'gdnhlhadhgnhaenfcphpeakdghkccfoo') {
-        return;  // deny access
+        return;  // deny access to all extensions, except the Who Am I
     }
 
     switch(message.cmd){
@@ -81,9 +82,9 @@ chrome.runtime.onMessageExternal.addListener(
             await sleep(1000)
             const singleTabCapture = await getActiveTab();
             await capture(singleTabCapture, message)
-            //sendResponse({flag: true});
             return true;
         case 'autoscrollCollect':
+            // TODO: not working
             await createTab(message.url);
             await sleep(1000)
             const tab = await getActiveTab();
@@ -97,62 +98,27 @@ chrome.runtime.onMessageExternal.addListener(
 
 
 /**
- * On install open the github page
+ * On install open the github page & install default discovery plugins
  */
 chrome.runtime.onInstalled.addListener(async (details) => {
 
-//chrome.runtime.setUninstallURL('https://link.reachpenguin.com/widget/survey/OtuDAzickWrbYvAlLE1M');
-if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-    await createTab('https://github.com/yooper/your-rapport')
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+        await createTab('https://github.com/yooper/your-rapport')
 
-    // install the default discovery plugins
-    const defaultDiscoveryPlugins = [
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/sec-edgar.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/california/sos-business-search.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-org.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-org-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-org.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/github/gh-save-screenshot.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-text-username.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-title-username.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-url-username.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-org.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/caller-id.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/experian-phone-verification.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/ipqs-phone-validator.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/phone-validator.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/reverse-phone-checker.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/whats-my-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/who-am-i.json"
-    ];
-    await Promise.all(defaultDiscoveryPlugins.map(pluginUrl => {
-        installPackage({url: pluginUrl}).catch(err => {
-
-        })
-    }))
-
-}
-else if (details.reason === 'update') {
-  chrome.tabs.create(
-    {
-      url: 'https://github.com/yooper/your-rapport',
-    },
-    (tab) => {}
-  );
-  // When extension is updated
-} else if (details.reason === 'chrome_update') {
-  // When browser is updated
-} else if (details.reason === 'shared_module_update') {
-  // When a shared module is updated
-}
+    }
+    else if (details.reason === 'update') {
+      chrome.tabs.create(
+        {
+          url: 'https://github.com/yooper/your-rapport',
+        },
+        (tab) => {}
+      );
+      // When extension is updated
+    } else if (details.reason === 'chrome_update') {
+      // When browser is updated
+    } else if (details.reason === 'shared_module_update') {
+      // When a shared module is updated
+    }
 });
 
 
