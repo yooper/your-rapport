@@ -2,24 +2,36 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import MUIDataTable from "mui-datatables";
-import CopyToClipboardIcon from "./CopyToClipboardIcon";
-import {hideLoader, showLoader} from "../utilities/loaders";
-import {getLocalItem, setLocalItem} from "../models/db/local";
-import {useState} from "react";
-import SearchTableOptionMenu from "./menus/SearchTableOptionMenu";
-import PreviewImageDialog from "./PreviewImageDialog";
-import UploadDataDialog from "./dialogs/UploadDataDialog";
-import {downloadJsonData} from "../utilities/transformers";
-import NotesDialog from "./dialogs/NoteDialog";
+import CopyToClipboardIcon from "../CopyToClipboardIcon";
+import {hideLoader, showLoader} from "../../utilities/loaders";
+import {getLocalItem, setLocalItem} from "../../models/db/local";
+import {useEffect, useState} from "react";
+import SearchTableOptionMenu from "../menus/SearchTableOptionMenu";
+import PreviewImageDialog from "../dialogs/PreviewImageDialog";
+import UploadDataDialog from "../dialogs/UploadDataDialog";
+import {downloadJsonData} from "../../utilities/transformers";
+import NotesDialog from "../dialogs/NoteDialog";
+import DiscoveryPluginDialog from "../dialogs/DiscoveryPluginDialog";
+import {Tooltip} from "@mui/material";
 
 export default function SearchDataTable(props) {
 
   const [isLoading, setIsLoading] = useState(false);
+  const [selectors, setSelectors] = useState([]);
+  const [discoveryPlugins, setDiscoveryPlugins] = useState([]);
 
+  useEffect(() =>
+  {
+      async function fetchData(){
+          setSelectors(await getLocalItem('selectors') ?? []);
+          setDiscoveryPlugins(await getLocalItem('discoveryPlugins') ?? []);
+      }
+      fetchData();
+  }, []);
   const columns = [
   {
     name: 'screenshot',
-    label: 'Screenshot',
+    label: 'SCREENSHOT',
     options: {
       filter: false,
       searchable: false,
@@ -44,7 +56,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'url',
-    label: 'Url',
+    label: 'URL',
     options: {
       filter: true,
       sort: false,
@@ -64,11 +76,15 @@ export default function SearchDataTable(props) {
         return <div>
             <span>
                 <span><CopyToClipboardIcon record={record} copyFieldName={'url'}/></span>
-                <span className={'page_title'}>Url: </span><a href={record.url} target={'_blank'} rel={'noreferrer'} alt={record.url} >{url}</a>
+                <Tooltip title={record.url}>
+                <span className={'page_title'}>Url: </span><a href={record.url} target={'_blank'} rel={'noreferrer'}>{url}</a>
+                </Tooltip>
             </span>
             <div>
-                <span><CopyToClipboardIcon record={record} copyFieldName={'title'}/></span>
-              <span className={'page_title'}>Title: </span><span>{title}</span>
+                <Tooltip title={record.title}>
+                    <span><CopyToClipboardIcon record={record} copyFieldName={'title'}/></span>
+                    <span className={'page_title'}>Title: </span><span>{title}</span>
+                </Tooltip>
             </div>
             <div>
                 <span>
@@ -81,8 +97,43 @@ export default function SearchDataTable(props) {
     },
   },
   {
+    name: 'selectors',
+    label: 'SELECTORS',
+    options: {
+      filterType: 'multiselect',
+      filter: true,
+      sort: false,
+      filterOptions: {
+        names: selectors?.map((x) => x.key) ?? [],
+        logic: (selectors, filters) => {
+          const selectorLabels = selectors.map(s => s.key);
+          return !filters.some(filter => selectorLabels.includes(filter));
+        }
+      },
+      customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData)
+          if(record?.selectors?.length == 0){
+              return <div></div>
+          }
+          // add support for regexes.
+          return record?.selectors?.map((selector, index) => (
+              <DiscoveryPluginDialog
+                  key={`selector-${selector.key}-${selector.selectorTypeName}-${record.uuid}`}
+                  plugins={discoveryPlugins.filter( plugin => {
+                      return plugin.pluginType === selector.selectorTypeName
+                  })}
+                  title={selector.selectorTypeName}
+                  record={record}
+                  uxType={'chip'}
+                  pluginValue={selector.key}
+              />
+          ))
+      },
+    },
+  },
+  {
     name: 'domain',
-    label: 'Domain',
+    label: 'DOMAIN',
     options: {
       filter: true,
       sort: true,
@@ -91,7 +142,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'createdOn',
-    label: 'Collected On',
+    label: 'COLLECTED OO',
     options: {
       filter: false,
       sort: true,
@@ -104,7 +155,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'uuid',
-    label: 'Options',
+    label: 'OPTIONS',
     options: {
       print: false,
       filter: false,
@@ -143,7 +194,7 @@ export default function SearchDataTable(props) {
           sort: false,
       },
   },
-  ].concat(['updatedOn','hash','length','attributes','selectors','tags','caseManagementUuid', 'createdOnLocalTime'].map(fieldName => {
+  ].concat(['updatedOn','hash','length','attributes','tags','caseManagementUuid', 'createdOnLocalTime'].map(fieldName => {
       return {
             name: fieldName,
             label: fieldName,
@@ -176,14 +227,14 @@ export default function SearchDataTable(props) {
       const deleteSet = new Set(uuids);
       const filteredResults =  props.rows.filter(record => !deleteSet.has(record.uuid));
       props.setRows(filteredResults);
-      await setLocalItem('screenshots', filteredResults);
+      await setLocalItem('rapports', filteredResults);
       // update the configuration last
       let configurationRegistry = await getLocalItem('configuration') ?? {};
       configurationRegistry.lastSavedOn = Date.now().toString();
       configurationRegistry.screenShotCount = filteredResults.length;
       await setLocalItem('configuration', configurationRegistry);
       setIsLoading(false)
-      hideLoader()
+      hideLoader();
    }
 
   const options = {
@@ -193,8 +244,8 @@ export default function SearchDataTable(props) {
         },
     },
     onDownload: (buildHead, buildBody, columns, data) => {
-        getLocalItem('screenshots').then(screenshots => {
-            downloadJsonData(screenshots, 'your-rapport.json');
+        getLocalItem('rapports').then(rapports => {
+            downloadJsonData(rapports, 'your-rapport.json');
         })
         return false;
     },

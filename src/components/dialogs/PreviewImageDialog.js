@@ -8,6 +8,9 @@ import DialogTitle from '@mui/material/DialogTitle';
 import {DialogContentText} from "@mui/material";
 import {useEffect} from "react";
 import {Fragment} from "@emotion/react/jsx-runtime";
+import IconButton from "@mui/material/IconButton";
+import {CloudDownload} from "@mui/icons-material";
+import {downloadBase64Image} from "../../utilities/transformers";
 
 /**
  *
@@ -28,7 +31,6 @@ export default function PreviewImageDialog(props) {
     props.setIsOpen(false);
   };
 
-
   return (
     <Fragment>
       <Dialog
@@ -38,7 +40,14 @@ export default function PreviewImageDialog(props) {
         open={open}
         onClose={handleClose}
       >
-        <DialogTitle>{`Collected On: ${props.record.createdOnLocalTime} - ${props.record.url}` }</DialogTitle>
+        <DialogTitle>
+          <IconButton>
+            <CloudDownload
+                onClick={() => downloadBase64Image(props.record.screenshot, `${props.record.uuid}.png`)}
+            />
+          </IconButton>
+          {`Collected On: ${props.record.createdOnLocalTime} - ${props.record.url}` }
+        </DialogTitle>
         <DialogContent>
           <DialogContentText></DialogContentText>
           <Box>
@@ -46,7 +55,7 @@ export default function PreviewImageDialog(props) {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Close</Button>
+          <Button onClick={handleClose} variant={'contained'} color={'cancel'}>Close</Button>
         </DialogActions>
       </Dialog>
     </Fragment>

@@ -1,30 +1,15 @@
 import {capture} from "../../datasources/browser_capture";
-import {createTab, getActiveTab} from "../../utilities/loaders";
-import {updateRecord} from "../../models/db/local";
+import {createTab, getActiveTab, initializeDiscoveryPlugins, installPackage, sleep} from "../../utilities/loaders";
+import {setLocalItem, updateRecord} from "../../models/db/local";
+import {initializeContextMenus} from "../../services/context_menu_services";
+import {Selector} from "../../models/schemas/Selector";
 
 
 /**
  * Initialize configuration values when the app is installed
  */
-chrome.runtime.onInstalled.addListener(async(details) => {
-    // add capture context menu to the UI
-    chrome.contextMenus.create({
-      id: "collectPage",
-      title: "Collect",
-      contexts: ["page"]
-    });
-})
-
-/**
- * Add onclick event to the context menu item
- */
-chrome.contextMenus.onClicked.addListener(async(info, tab) => {
-  if (info.menuItemId === "collectPage") {
-      // get the visible text from the content script.
-      const response = await chrome.tabs.sendMessage(tab.id, {cmd: 'getVisibleText'});
-      await capture(tab, response);
-  }
-});
+await initializeContextMenus();
+await initializeDiscoveryPlugins();
 
 /**
  * Add in support for short-cut keys
@@ -51,7 +36,7 @@ chrome.commands.onCommand.addListener(async(command) => {
 
 
 /**
- * Receive messages from the content script or the extension page
+ * Receives messages from the content script
  */
 chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
     switch(message.cmd){
@@ -60,7 +45,7 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
             sendResponse({flag: true});
             return true;
         case 'updateScreenShotRecord':
-            await updateRecord('screenshots', 'uuid', message.record);
+            await updateRecord('rapports', 'uuid', message.record);
             sendResponse({completed: true});
             return true;
         case 'popupSingleCollect':
@@ -73,6 +58,8 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
             const tab = await getActiveTab();
             await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
             return true;
+        case 'indexSelector':
+            await Selector.add(message.selector);
         default:
             console.log(`Unknown cmd ${message.cmd}`);
             return true;
@@ -80,27 +67,58 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
 });
 
 /**
- * On install open the github page
+ * Let the 'Who Am I' extension be able to RPC the extension's functionality
+*/
+// For a single request:
+chrome.runtime.onMessageExternal.addListener(
+  async function(message, sender, sendResponse) {
+    if (sender.id !== 'gdnhlhadhgnhaenfcphpeakdghkccfoo') {
+        return;  // deny access to all extensions, except the Who Am I
+    }
+
+    switch(message.cmd){
+        case 'singleCollect':
+            await createTab(message.url);
+            await sleep(1000)
+            const singleTabCapture = await getActiveTab();
+            await capture(singleTabCapture, message)
+            return true;
+        case 'autoscrollCollect':
+            // TODO: not working
+            await createTab(message.url);
+            await sleep(1000)
+            const tab = await getActiveTab();
+            await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
+            return true;
+        default:
+            console.log(`Unknown cmd ${message.cmd}`);
+            return true;
+    }
+  });
+
+
+/**
+ * On install open the github page & install default discovery plugins
  */
 chrome.runtime.onInstalled.addListener(async (details) => {
 
-//chrome.runtime.setUninstallURL('https://link.reachpenguin.com/widget/survey/OtuDAzickWrbYvAlLE1M');
-if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-    await createTab('https://github.com/yooper/your-rapport')
-}
-else if (details.reason === 'update') {
-  chrome.tabs.create(
-    {
-      url: 'https://github.com/yooper/your-rapport',
-    },
-    (tab) => {}
-  );
-  // When extension is updated
-} else if (details.reason === 'chrome_update') {
-  // When browser is updated
-} else if (details.reason === 'shared_module_update') {
-  // When a shared module is updated
-}
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+        await createTab('https://github.com/yooper/your-rapport')
+
+    }
+    else if (details.reason === 'update') {
+      chrome.tabs.create(
+        {
+          url: 'https://github.com/yooper/your-rapport',
+        },
+        (tab) => {}
+      );
+      // When extension is updated
+    } else if (details.reason === 'chrome_update') {
+      // When browser is updated
+    } else if (details.reason === 'shared_module_update') {
+      // When a shared module is updated
+    }
 });
 
 

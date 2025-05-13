@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import './Search.css';
 import TopAppBar from "../../components/TopAppBar";
 import {Paper} from "@mui/material";
-import SearchDataTable from "../../components/SearchDataTable";
+import SearchDataTable from "../../components/tables/SearchDataTable";
 import {showLoader, hideLoader, } from "../../utilities/loaders"
 import {getLocalItem} from "../../models/db/local";
 
@@ -18,7 +18,7 @@ export default function Search()
        async function fetchData(){
            showLoader();
            setIsLoading(true);
-           const screenshots = await getLocalItem('screenshots') ?? []
+           const screenshots = await getLocalItem('rapports') ?? []
            setRows(screenshots ?? []);
            setIsLoading(false);
            hideLoader();
@@ -54,5 +54,4 @@ export default function Search()
         </Paper>
         </div>
     )
-
 }

@@ -28,8 +28,7 @@ Your Rapport is an open source commercial tool for the following reasons:
  * A commercial tool is the only viable way to support developing a standard set of open source tools, useful for doing online research
  * Keeps the infrastructure costs lower by not having additional overhead with privatized Software as a Service approach
  * Implement best practices based on community feedback
- * The target price for the Pro license can be set to $3 a month
-
+ * The target price for the Pro license can be set to $3 a month. 
 
 🌟 Key Features
 
@@ -49,7 +48,9 @@ Your captured content stays on your machine utilizing your browser's security an
 🔗 Share Your Rapport Collection 
 The data exported from Your Rapport is in a Non-Proprietary format known as JSON.
 Your collection can be downloaded as "json" file(s) which lets you easily share them with
-others using email or other file sharing apps.
+others using email or other file sharing apps. 
+
+The screenshots can be individually downloaded, too. 
 
 🧠 Best Data Integrity Practices, so far:
 * Signed Hash for verifying each screenshot's integrity

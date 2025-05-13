@@ -1,6 +1,10 @@
 import {getLocalItem, setLocalItem} from "../models/db/local";
 import {sha256} from "../utilities/transformers";
 
+let lastCaptureTime = 0;
+const CAPTURE_INTERVAL_MS = 600; // Allow slightly less than 1000ms / 2 calls
+
+
 /**
  * Capture the tab and persist it into local storage
  * @param tab
@@ -14,8 +18,9 @@ export async function capture(tab, message = {}){
     configurationRegistry.screenShotCount = configurationRegistry?.screenShotCount ?? 0
 
     const screenShot = await chrome.tabs.captureVisibleTab();
+    const uuid = crypto.randomUUID();
     let record = {
-      uuid: crypto.randomUUID(),
+      uuid: uuid,
       title: tab.title,
       url: tab.url,
       domain: (new URL(tab.url)).hostname,
@@ -29,19 +34,42 @@ export async function capture(tab, message = {}){
       updatedBy: 'TODO-UPDATE', // TODO: add support for tracking who updated the record, requires authentication
       length: screenShot.length,
       attributes: { tab: tab },
-      selectors: [], // TODO: add support for tracking pivots / keywords found in text
-      tags: [],  // TODO: add support for tagging data
+      selectors: [],
+      tags: [],  // TODO: add support for tagging/annotating data
       caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387', // TODO: add case management functionality
       note: null
     };
-    // get the existing records, append it and move on
-    let screenshots = await getLocalItem('screenshots') ?? []
 
+    // search the saved record for keywords
+    const selectors = await getLocalItem('selectors') ?? []
+    // include the title in the search
+    record.selectors = findMatchingValues(record.text + record.title.toLowerCase(), selectors);
+
+    // get the existing records, append it and move on
+    let rapports = await getLocalItem('rapports') ?? []
     // keeps records sorted by creation order
-    screenshots = [record].concat(screenshots);
-    await setLocalItem('screenshots', screenshots);
+    rapports = [record].concat(rapports);
+    await setLocalItem('rapports', rapports);
     // update the configuration last saved on metadata
     configurationRegistry.lastSavedOn = Date.now().toString();
-    configurationRegistry.screenShotCount = screenshots.length;
+    configurationRegistry.screenShotCount = rapports.length;
     await setLocalItem('configuration', configurationRegistry);
+}
+
+/**
+ * Finds all objects whose `value` field matches anywhere in the input text.
+ * TODO: Tokenize & normalize text and selector key to improve matching algorithm and support fuzzy matching
+ * @param {string} text - The text + title to search in.
+ * @param {Array<{ key: string }>} items - The array of objects with `value` fields.
+ * @returns {Array<{ match: string, index: number, ref: object }>} List of matches with references
+ */
+function findMatchingValues(text, selectors) {
+  const matches = [];
+  for (let i = 0; i < selectors.length; i++) {
+    const selector = selectors[i];
+    if(text.includes(selector.key)){
+      matches.push(selector);
+    }
+  }
+  return matches;
 }

@@ -24,14 +24,6 @@ export async function sha256(message) {
   return hashHex;
 }
 
-
-export async function getActiveTab() {
-  let queryOptions = { active: true, lastFocusedWindow: true };
-  // `tab` will either be a `tabs.Tab` instance or `undefined`.
-  let [tab] = await chrome.tabs.query(queryOptions);
-  return tab;
-}
-
 /**
  * Invokes downloading of json file
  * @param data
@@ -71,4 +63,61 @@ export function downloadBase64Image(base64Data, fileName) {
   document.body.removeChild(link);
 }
 
+/**
+ * @param str
+ * @returns {string}
+ */
+const toCamelCase = (str) => {
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
 
+
+/**
+ * Change the name of the fields from PascalCase to camelCase.
+ * @param obj
+ * @returns {{}|*}
+ */
+export function convertKeysToCamelCase(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(convertKeysToCamelCase);
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      acc[toCamelCase(key)] = convertKeysToCamelCase(value);
+      return acc;
+    }, {});
+  }
+  return obj;
+}
+
+export function sortByField(array, key) {
+    if(!array || array.length === 0){
+        return []
+    }
+    else if(array.length === 1){
+        return array
+    }
+    return array.sort( (a, b) => {
+        const x = a[key]
+        const y = b[key]
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0))
+    })
+}
+
+/**
+ *
+ * @param base64Data
+ * @param fileName
+ * @returns {module:buffer.File}
+ */
+export function base64ToFile(base64Data, fileName) {
+  const [prefix, base64] = base64Data.includes(',') ? base64Data.split(',') : [null, base64Data];
+  const mimeMatch = prefix?.match(/data:(.*);base64/);
+  const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+  const binary = atob(base64);
+  const len = binary.length;
+  const buffer = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    buffer[i] = binary.charCodeAt(i);
+  }
+  return new File([buffer], fileName, { type: mimeType });
+}

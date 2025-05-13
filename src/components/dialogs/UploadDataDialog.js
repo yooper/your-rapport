@@ -12,7 +12,7 @@ import {CloudUpload} from "@mui/icons-material";
 import {Fragment} from "@emotion/react/jsx-runtime";
 import IconButton from "@mui/material/IconButton";
 import {getLocalItem, setLocalItem} from "../../models/db/local";
-import {createTab, hideLoader, showLoader} from "../../utilities/loaders";
+import { hideLoader, showLoader} from "../../utilities/loaders";
 
 export default function UploadDataDialog() {
   const [open, setOpen] = useState(false);
@@ -37,10 +37,10 @@ export default function UploadDataDialog() {
         configurationRegistry.recordCount = configurationRegistry?.recordCount ?? 0
         const newRecords = JSON.parse(e.target.result);
         // TODO: fix issue with adding duplicates, the uuid is the unique key
-        let screenshots = await getLocalItem('screenshots') ?? [];
+        let rapports = await getLocalItem('rapports') ?? [];
         // TODO: sort by dates.
-        configurationRegistry.screenShotCount = screenshots.length;
-        await setLocalItem('screenshots', screenshots.concat(newRecords));
+        configurationRegistry.screenShotCount = rapports.length;
+        await setLocalItem('rapports', rapports.concat(newRecords));
         // update the configuration last
         configurationRegistry.lastSavedOn = Date.now().toString();
         await setLocalItem('configuration', configurationRegistry);

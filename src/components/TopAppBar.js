@@ -8,14 +8,17 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import {Tooltip} from "@mui/material";
+import {createTab} from "../utilities/loaders";
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null)
   const open = Boolean(anchorEl);
   const menuItems = [
-      {'name': 'search', 'label': 'Search', 'url': '/search.html'},
+      {'name': 'search', 'label': 'Search Dashboard', 'url': '/search.html'},
+      {'name': 'options', 'label': 'Settings', 'url': '/options.html'},
+      {'name': 'videos', 'label': 'Training Videos', 'url': 'https://www.youtube.com/@your-rapport'},
+      {'name': 'login', 'label': 'Authenticate', 'url': '/login.html'},
   ]
-
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -29,7 +32,7 @@ export default function TopAppBar() {
     if(found === undefined) {
       return;
     }
-    document.location.href = found.url;
+    createTab(found.url);
   }
 
   return (
