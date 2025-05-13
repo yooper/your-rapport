@@ -12,6 +12,7 @@ import UploadDataDialog from "../dialogs/UploadDataDialog";
 import {downloadJsonData} from "../../utilities/transformers";
 import NotesDialog from "../dialogs/NoteDialog";
 import DiscoveryPluginDialog from "../dialogs/DiscoveryPluginDialog";
+import {Tooltip} from "@mui/material";
 
 export default function SearchDataTable(props) {
 
@@ -30,7 +31,7 @@ export default function SearchDataTable(props) {
   const columns = [
   {
     name: 'screenshot',
-    label: 'Screenshot',
+    label: 'SCREENSHOT',
     options: {
       filter: false,
       searchable: false,
@@ -55,7 +56,7 @@ export default function SearchDataTable(props) {
   },
   {
     name: 'url',
-    label: 'Url',
+    label: 'URL',
     options: {
       filter: true,
       sort: false,
@@ -75,11 +76,15 @@ export default function SearchDataTable(props) {
         return <div>
             <span>
                 <span><CopyToClipboardIcon record={record} copyFieldName={'url'}/></span>
-                <span className={'page_title'}>Url: </span><a href={record.url} target={'_blank'} rel={'noreferrer'} alt={record.url} >{url}</a>
+                <Tooltip title={record.url}>
+                <span className={'page_title'}>Url: </span><a href={record.url} target={'_blank'} rel={'noreferrer'}>{url}</a>
+                </Tooltip>
             </span>
             <div>
-                <span><CopyToClipboardIcon record={record} copyFieldName={'title'}/></span>
-              <span className={'page_title'}>Title: </span><span>{title}</span>
+                <Tooltip title={record.title}>
+                    <span><CopyToClipboardIcon record={record} copyFieldName={'title'}/></span>
+                    <span className={'page_title'}>Title: </span><span>{title}</span>
+                </Tooltip>
             </div>
             <div>
                 <span>
