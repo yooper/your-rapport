@@ -9,7 +9,7 @@ import {autoScroller} from "./autoScroller";
 export function initMarkJsHandler(){
      chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.cmd === "getFullText") {
-            sendResponse({text: document.documentElement.innerText})
+            sendResponse({text: document.documentElement.innerText.toLowerCase()})
             return true;
         }
         if (message.cmd === "markText") {

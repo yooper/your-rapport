@@ -41,7 +41,9 @@ chrome.commands.onCommand.addListener(async(command) => {
             response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getFullText'});
             const selectors = findAllMatches(response.text, await getLocalItem('selectors'))
             // after the scan is done
-            ExtensionPin.showNumber(selectors.length, activeTab.id);
+            const totalCount = selectors.reduce((sum, item) => sum + item.count, 0);
+
+            ExtensionPin.showNumber(selectors.length + '|' + totalCount, activeTab.id);
             chrome.tabs.sendMessage(activeTab.id, {cmd: 'markText', selectors: selectors }).then(() => {});
             break;
         default:
