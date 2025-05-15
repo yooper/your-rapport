@@ -5,8 +5,7 @@ import {printPdfReport} from "../../utilities/print_service";
 import {useState} from "react";
 import JsonAttributeViewerDialog from "../dialogs/JsonAttributeViewerDialog";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import {downloadBase64Image, downloadJsonData, findAllMatches, findMatchingValues} from "../../utilities/transformers";
-import {getLocalItem} from "../../models/db/local";
+import {downloadBase64Image, downloadJsonData} from "../../utilities/transformers";
 
 export default function SearchTableOptionMenu(props){
   const {record} = props;
