@@ -142,7 +142,7 @@ export function autoScroller(){
             }
         }
         // TODO check that all ajax requests have finished
-        setTimeout(autoScroll, 750); // Adjust the delay as needed
+        setTimeout(autoScroll, 1000); // Adjust the delay as needed
       });
     };
     autoScroll()

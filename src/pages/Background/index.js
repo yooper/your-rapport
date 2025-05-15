@@ -1,10 +1,16 @@
 import {capture} from "../../datasources/browser_capture";
-import {createTab, getActiveTab, initializeDiscoveryPlugins, installPackage, sleep} from "../../utilities/loaders";
+import {
+    createTab,
+    getActiveTab,
+    initializeDiscoveryPlugins,
+    installPackage,
+    sleep
+} from "../../utilities/loaders";
 import {getLocalItem, setLocalItem, updateRecord} from "../../models/db/local";
 import {initializeContextMenus} from "../../services/context_menu_services";
 import {Selector} from "../../models/schemas/Selector";
-import {findMatchingValues} from "../../utilities/transformers";
 import ExtensionPin from "../../utilities/ExtensionPin";
+import {findAllMatches} from "../../utilities/transformers";
 
 
 /**
@@ -31,9 +37,11 @@ chrome.commands.onCommand.addListener(async(command) => {
             await capture(activeTab, response);
             break;
         case 'scanPage':
+            //ExtensionPin.scanPage(activeTab.id);
             response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getFullText'});
-            const selectors = findMatchingValues(response.text, await getLocalItem('selectors'))
-            ExtensionPin.showNumber(selectors.length);
+            const selectors = findAllMatches(response.text, await getLocalItem('selectors'))
+            // after the scan is done
+            ExtensionPin.showNumber(selectors.length, activeTab.id);
             chrome.tabs.sendMessage(activeTab.id, {cmd: 'markText', selectors: selectors }).then(() => {});
             break;
         default:
@@ -133,4 +141,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     }
 });
 
+/**
+ * When the web page changes, we need to reset the extension pin to its default state
+ */
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete") {
+    ExtensionPin.setDefault(tab);
+  }
+});
 

@@ -5,7 +5,8 @@ import {printPdfReport} from "../../utilities/print_service";
 import {useState} from "react";
 import JsonAttributeViewerDialog from "../dialogs/JsonAttributeViewerDialog";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import {downloadBase64Image, downloadJsonData} from "../../utilities/transformers";
+import {downloadBase64Image, downloadJsonData, findAllMatches, findMatchingValues} from "../../utilities/transformers";
+import {getLocalItem} from "../../models/db/local";
 
 export default function SearchTableOptionMenu(props){
   const {record} = props;
@@ -34,6 +35,18 @@ export default function SearchTableOptionMenu(props){
     downloadJsonData(record, `your.rapport.${record.uuid}.json`)
     setAnchorEl(null);
   }
+
+  const handleReIndex = async() => {
+    const foundSelectors = findAllMatches(record.text, await getLocalItem('selectors'), 1);
+    const message = foundSelectors
+        .map((selector, index) => `${index + 1}. ${selector.key} - ${selector.selectorTypeName} - ${selector.count}`)
+        .join('\n');
+
+    alert(message);
+    setAnchorEl(null);
+  }
+
+
 
   /**
    * Debug the data
@@ -66,6 +79,7 @@ export default function SearchTableOptionMenu(props){
         <MenuItem onClick={handleMetadata}>View Metadata</MenuItem>
         <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>
         <MenuItem onClick={handleDownloadRecord}>Download Record</MenuItem>
+        <MenuItem onClick={handleReIndex}>Re-Index</MenuItem>
       </Menu>
       <JsonAttributeViewerDialog isOpen={isOpen} setIsOpen={setIsOpen} record={record} />
     </div>

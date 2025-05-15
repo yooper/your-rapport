@@ -1,21 +1,65 @@
 
 export default class ExtensionPin {
 
-  static setBgColorAndText = (color, text) => {
+  /**
+   *
+   * @param color
+   * @param text
+   * @param tabId
+   * @param windowId
+   */
+  static setBgColorAndText = (color, text, activeTab  = null, windowId = null) => {
     chrome.action.setBadgeBackgroundColor({ color: color }, () => {
-      chrome.action.setBadgeText({ text: text }, () => {
+
+      let data = { text: text};
+      if(activeTab){
+        data['tabId'] = activeTab.tabId
+      }
+      chrome.action.setBadgeText(data, () => {
       });
     });
   };
 
-  static setDefault = () => {
-    ExtensionPin.setBgColorAndText('#0000', '');
-    chrome.action.setIcon({ path: "/icon-32.png" })
+  static scanPage = (activeTab) => {
+    ExtensionPin.setBgColorAndText('#619657', 'RUN', activeTab);
+  }
+
+  static setDefaultSaved = (activeTab = null) => {
+    if(activeTab){
+      ExtensionPin.setBgColorAndText('#619657', '', activeTab);
+    }
+    else{
+      // globally reset all badges
+      chrome.action.setIcon({ path: "/icon-32.png" })
+      ExtensionPin.setBgColorAndText('#619657', '');
+    }
+  };
+
+  static setDefaultNotSaved = (activeTab = null) => {
+    if(activeTab){
+      ExtensionPin.setBgColorAndText('#E86E69', '', activeTab);
+    }
+    else{
+      // globally reset all badges
+      chrome.action.setIcon({ path: "/icon-32.png" })
+      ExtensionPin.setBgColorAndText('#619657', '');
+    }
   };
 
 
-  static showNumber = (number) => {
-    ExtensionPin.setBgColorAndText('blue', number);
+  static setDefault = (activeTab = null) => {
+    if(activeTab){
+      ExtensionPin.setBgColorAndText('#E86E69', '', activeTab);
+    }
+    else{
+      // globally reset all badges
+      chrome.action.setIcon({ path: "/icon-32.png" })
+      ExtensionPin.setBgColorAndText('#E86E69', '');
+    }
+  };
+
+  static showNumber = (number, activeTab) => {
+    ExtensionPin.setBgColorAndText('#E86E69', ''+number, activeTab);
   };
 
 }
