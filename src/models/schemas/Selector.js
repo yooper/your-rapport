@@ -1,10 +1,12 @@
 import {addRecord, deleteRecord, getLocalItem, setLocalItem, updateRecord} from "../db/local";
+import {findAllMatches} from "../../utilities/transformers";
 
 export class Selector{
     constructor(key, selectorTypeName, description = null) {
         this.key = key;
         this.selectorTypeName = selectorTypeName;
         this.description = description;
+        this.count = 0;
     }
 
     /**
@@ -17,7 +19,7 @@ export class Selector{
         await addRecord('selectors', 'key', selector);
         // scan the existing records
         let records = await getLocalItem('rapports') ?? [];
-        await Selector._findMatches(records, [selector]);
+        await Selector.findAndAssignMatches(records, [selector]);
     }
 
 
@@ -36,18 +38,21 @@ export class Selector{
     }
 
 
-    static async _findMatches(records, selectors) {
+    /***
+     * Iterate through the records looking for the given selectors
+     * @param records
+     * @param selectors
+     * @returns {Promise<void>}
+     * @private
+     */
+    static async findAndAssignMatches(records, selectors) {
         for (const record of records) {
-            let matches = [];
-            for(const selector of selectors){
-                const fullText = (record.text ?? '') + ' ' + record.title.toLowerCase()
-                if(fullText.includes(selector.key)){
-                    matches.push(selector);
-                }
-            }
-            record.selectors = record.selectors.concat(matches);
-            // TODO: Compare the new and old results. If the lists are the same skip calling update
-            await updateRecord('rapports', 'uuid', record)
+            record.selectors = findAllMatches(record.text, selectors, 1).concat(record.selectors ?? [])
+            await updateRecord('rapports', 'uuid', record);
         }
+
+        const configurationRegistry = await getLocalItem('configuration');
+        configurationRegistry.lastSavedOn = Date.now().toString();
+        await setLocalItem('configuration', configurationRegistry);
     }
 }
