@@ -1,5 +1,5 @@
 import {getLocalItem, setLocalItem} from "../models/db/local";
-import {sha256} from "../utilities/transformers";
+import {findMatchingValues, sha256} from "../utilities/transformers";
 
 let lastCaptureTime = 0;
 const CAPTURE_INTERVAL_MS = 600; // Allow slightly less than 1000ms / 2 calls
@@ -54,22 +54,4 @@ export async function capture(tab, message = {}){
     configurationRegistry.lastSavedOn = Date.now().toString();
     configurationRegistry.screenShotCount = rapports.length;
     await setLocalItem('configuration', configurationRegistry);
-}
-
-/**
- * Finds all objects whose `value` field matches anywhere in the input text.
- * TODO: Tokenize & normalize text and selector key to improve matching algorithm and support fuzzy matching
- * @param {string} text - The text + title to search in.
- * @param {Array<{ key: string }>} items - The array of objects with `value` fields.
- * @returns {Array<{ match: string, index: number, ref: object }>} List of matches with references
- */
-function findMatchingValues(text, selectors) {
-  const matches = [];
-  for (let i = 0; i < selectors.length; i++) {
-    const selector = selectors[i];
-    if(text.includes(selector.key)){
-      matches.push(selector);
-    }
-  }
-  return matches;
 }

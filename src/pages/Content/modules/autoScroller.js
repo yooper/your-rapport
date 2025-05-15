@@ -51,7 +51,7 @@ export function initAutoScrollerHandler() {
             }, (dataUrl) => {
             });
         }
-        // else do nothing
+        // else do nothing, the message could be handled else where
     });
 
 }

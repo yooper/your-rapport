@@ -1,8 +1,10 @@
 import {capture} from "../../datasources/browser_capture";
 import {createTab, getActiveTab, initializeDiscoveryPlugins, installPackage, sleep} from "../../utilities/loaders";
-import {setLocalItem, updateRecord} from "../../models/db/local";
+import {getLocalItem, setLocalItem, updateRecord} from "../../models/db/local";
 import {initializeContextMenus} from "../../services/context_menu_services";
 import {Selector} from "../../models/schemas/Selector";
+import {findMatchingValues} from "../../utilities/transformers";
+import ExtensionPin from "../../utilities/ExtensionPin";
 
 
 /**
@@ -22,14 +24,21 @@ chrome.commands.onCommand.addListener(async(command) => {
     }
 
     const activeTab = await getActiveTab();
+    let response = null;
     switch(command){
         case 'singleCapture':
-            const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
+            response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
             await capture(activeTab, response);
             break;
+        case 'scanPage':
+            response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getFullText'});
+            const selectors = findMatchingValues(response.text, await getLocalItem('selectors'))
+            ExtensionPin.showNumber(selectors.length);
+            chrome.tabs.sendMessage(activeTab.id, {cmd: 'markText', selectors: selectors }).then(() => {});
+            break;
         default:
-            const defaultResponse = await chrome.tabs.sendMessage(activeTab.id, {cmd: command});
-            await capture(activeTab, defaultResponse);
+            response = await chrome.tabs.sendMessage(activeTab.id, {cmd: command});
+            await capture(activeTab, response);
             break;
     }
 });
@@ -60,6 +69,9 @@ chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
             return true;
         case 'indexSelector':
             await Selector.add(message.selector);
+            return true;
+        case 'scanText': // originates from the content script
+            return true;
         default:
             console.log(`Unknown cmd ${message.cmd}`);
             return true;

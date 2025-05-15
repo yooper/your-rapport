@@ -121,3 +121,21 @@ export function base64ToFile(base64Data, fileName) {
   }
   return new File([buffer], fileName, { type: mimeType });
 }
+
+/**
+ * Finds all objects whose `value` field matches anywhere in the input text.
+ * TODO: Tokenize & normalize text and selector key to improve matching algorithm and support fuzzy matching
+ * @param {string} text - The text + title to search in.
+ * @param {Array<{ key: string }>} items - The array of objects with `value` fields.
+ * @returns {Array<{ match: string, index: number, ref: object }>} List of matches with references
+ */
+export function findMatchingValues(text, selectors) {
+  const matches = [];
+  for (let i = 0; i < selectors.length; i++) {
+    const selector = selectors[i];
+    if(text.includes(selector.key)){
+      matches.push(selector);
+    }
+  }
+  return matches;
+}

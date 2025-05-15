@@ -36,18 +36,32 @@ export class Selector{
     }
 
 
+    /***
+     * Iterate through the records looking for the given selectors
+     * @param records
+     * @param selectors
+     * @returns {Promise<void>}
+     * @private
+     */
     static async _findMatches(records, selectors) {
         for (const record of records) {
+            const text = (record.text ?? '') + ' ' + record.title.toLowerCase();
             let matches = [];
             for(const selector of selectors){
-                const fullText = (record.text ?? '') + ' ' + record.title.toLowerCase()
-                if(fullText.includes(selector.key)){
+                if(text.includes(selector.key)){
                     matches.push(selector);
                 }
             }
+            //Compare the new and old results. If the lists are the same skip calling update
+            if(record.selectors.length === matches.length){
+                continue;
+            }
             record.selectors = record.selectors.concat(matches);
-            // TODO: Compare the new and old results. If the lists are the same skip calling update
-            await updateRecord('rapports', 'uuid', record)
+            updateRecord('rapports', 'uuid', record).then(async() => {
+                const configurationRegistry = await getLocalItem('configuration');
+                configurationRegistry.lastSavedOn = Date.now().toString();
+                await setLocalItem('configuration', configurationRegistry);
+            });
         }
     }
 }
