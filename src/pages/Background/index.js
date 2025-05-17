@@ -37,13 +37,11 @@ chrome.commands.onCommand.addListener(async(command) => {
             await capture(activeTab, response);
             break;
         case 'scanPage':
-            //ExtensionPin.scanPage(activeTab.id);
             response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getFullText'});
             const selectors = findAllMatches(response.text, await getLocalItem('selectors'))
-            // after the scan is done
-            const totalCount = selectors.reduce((sum, item) => sum + item.count, 0);
-
-            ExtensionPin.showNumber(selectors.length + '|' + totalCount, activeTab.id);
+            // after the scan is done, limit the max numbers for the UI
+            const totalCount = Math.max(selectors.reduce((sum, item) => sum + item.count, 0), 99);
+            ExtensionPin.showNumber(Math.max(selectors.length, 9) + '|' + totalCount, activeTab.id);
             chrome.tabs.sendMessage(activeTab.id, {cmd: 'markText', selectors: selectors }).then(() => {});
             break;
         default:
@@ -101,14 +99,14 @@ chrome.runtime.onMessageExternal.addListener(
     switch(message.cmd){
         case 'singleCollect':
             await createTab(message.url);
-            await sleep(1000)
+            await sleep(2000)
             const singleTabCapture = await getActiveTab();
             await capture(singleTabCapture, message)
             return true;
         case 'autoscrollCollect':
             // TODO: not working
             await createTab(message.url);
-            await sleep(1000)
+            await sleep(2000)
             const tab = await getActiveTab();
             await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
             return true;
