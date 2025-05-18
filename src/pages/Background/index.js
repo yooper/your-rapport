@@ -104,7 +104,6 @@ chrome.runtime.onMessageExternal.addListener(
             await capture(singleTabCapture, message)
             return true;
         case 'autoscrollCollect':
-            // TODO: not working
             await createTab(message.url);
             await sleep(2000)
             const tab = await getActiveTab();

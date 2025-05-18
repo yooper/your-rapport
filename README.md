@@ -9,8 +9,8 @@ and makes the content fully searchable for professionals, amateurs, and archivis
 dialogue across platforms, Your Rapport bridges visual capture with text-based search, turning ephemeral interactions 
 into permanent, searchable records. Your Rapport is an Open Source tool that implements the best practices for 
 protecting your privacy and documenting online content. You can easily import, export, or print screenshots from 
-your collection. Your Rapport is free to use, but does require purchasing a subscription if you want to collect more than
-400 screenshots. This enables us to continue development and support for this product. 
+your collection. Your Rapport is free to use, but has a couple pro features you will need to pay for. 
+This enables us to continue development and support for this product. 
 
 Please consider supporting this project with a [pro license](https://store.osintliar.com/product-details/product/6806a82925f8aaa6c9eb26c4/?buyNowProductId=6806a82925f8aa6bebeb26c6).
 
@@ -23,6 +23,7 @@ There are several options for collecting a screenshot of a web page:
  * `Ctrl+Shift+S` collects a single screenshot.
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
+ * `Ctrl+Shift+F` quick scan the web page for selectors and show the counts on the extension pin. 
  * Click the "Your Rapport" pin in your extension tab and select the action you want performed.  
 
 Your Rapport is an open source commercial tool for the following reasons:
@@ -40,6 +41,15 @@ Automatically takes screenshots of chats, posts, comments, and threads across th
 🔍 Searchable Text Extraction
 Uses advanced algorithms to extract text from screenshots, making every captured conversation searchable by keyword, 
 username, or phrase.
+
+📗 Quick Scan 
+Will show how many of your keywords in and selectors are contained on the web page within the Extension Pin. Making it
+easy to determine if the current page has any pertinent information
+
+📚 Discovery Plugins
+Are small json scripts that allow you to link your selectors to specific websites for enrichment. Example, if you find a 
+phone number and have installed the Discovery Plugin from the Package Management screen, you will now be able to streamline
+searching against several of the data brokers. 
 
 💬 Platform-Agnostic
 Works across social media platforms, messaging apps (via web interfaces), forums, and more.
