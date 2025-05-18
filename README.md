@@ -9,7 +9,7 @@ and makes the content fully searchable for professionals, amateurs, and archivis
 dialogue across platforms, Your Rapport bridges visual capture with text-based search, turning ephemeral interactions 
 into permanent, searchable records. Your Rapport is an Open Source tool that implements the best practices for 
 protecting your privacy and documenting online content. You can easily import, export, or print screenshots from 
-your collection. Your Rapport is free to use, but has a couple pro features you will need to pay for. 
+your collection. Your Rapport is free to use, but has a couple pro features you will need to pay for, eventually. 
 This enables us to continue development and support for this product. 
 
 Please consider supporting this project with a [pro license](https://store.osintliar.com/product-details/product/6806a82925f8aaa6c9eb26c4/?buyNowProductId=6806a82925f8aa6bebeb26c6).
@@ -50,6 +50,11 @@ easy to determine if the current page has any pertinent information
 Are small json scripts that allow you to link your selectors to specific websites for enrichment. Example, if you find a 
 phone number and have installed the Discovery Plugin from the Package Management screen, you will now be able to streamline
 searching against several of the data brokers. 
+
+🌱 Companion Extensions
+Are chrome extensions that will provide improvements to your workflow. For example, "[Who Am I](https://chromewebstore.google.com/detail/who-am-i/gdnhlhadhgnhaenfcphpeakdghkccfoo)"
+ a chrome extension, provides username enumeration across a couple thousand websites. Who Am I has a button in its
+UI that will trigger the "Your Rapport" extension to scrape the selected social website with the click of a button. 
 
 💬 Platform-Agnostic
 Works across social media platforms, messaging apps (via web interfaces), forums, and more.
