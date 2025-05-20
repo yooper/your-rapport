@@ -10,7 +10,7 @@ import {getLocalItem, setLocalItem, updateRecord} from "../../models/db/local";
 import {initializeContextMenus} from "../../services/context_menu_services";
 import {Selector} from "../../models/schemas/Selector";
 import ExtensionPin from "../../utilities/ExtensionPin";
-import {findAllMatches} from "../../utilities/transformers";
+import {findAllMatches, scanPage} from "../../utilities/transformers";
 
 
 /**
@@ -37,12 +37,7 @@ chrome.commands.onCommand.addListener(async(command) => {
             await capture(activeTab, response);
             break;
         case 'scanPage':
-            response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getFullText'});
-            const selectors = findAllMatches(response.text, await getLocalItem('selectors'))
-            // after the scan is done, limit the max numbers for the UI
-            const totalCount = Math.max(selectors.reduce((sum, item) => sum + item.count, 0), 99);
-            ExtensionPin.showNumber(Math.max(selectors.length, 9) + '|' + totalCount, activeTab.id);
-            chrome.tabs.sendMessage(activeTab.id, {cmd: 'markText', selectors: selectors }).then(() => {});
+            scanPage(activeTab)
             break;
         default:
             response = await chrome.tabs.sendMessage(activeTab.id, {cmd: command});

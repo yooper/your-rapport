@@ -43,7 +43,7 @@ Uses advanced algorithms to extract text from screenshots, making every captured
 username, or phrase.
 
 📗 Quick Scan 
-Will show how many of your keywords in and selectors are contained on the web page within the Extension Pin. Making it
+Shows how many of your keyword selectors are contained on the web page within the Extension Pin. Making it
 easy to determine if the current page has any pertinent information
 
 📚 Discovery Plugins

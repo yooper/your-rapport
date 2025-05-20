@@ -1,6 +1,6 @@
 {
   "name": "your-rapport",
-  "version": "0.6.1",
+  "version": "0.6.",
   "description": "A chrome extension for saving screenshots and making them searchable. ",
   "license": "Commercial",
   "scripts": {

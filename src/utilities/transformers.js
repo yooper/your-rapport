@@ -1,3 +1,5 @@
+import {getLocalItem} from "../models/db/local";
+import ExtensionPin from "./ExtensionPin";
 
 export function stringToBoolean(string)
 {
@@ -186,4 +188,18 @@ export function findAllMatches(text, selectors, limit = 100) {
         }
     }
     return matches;
+}
+
+/**
+ * @param activeTab
+ * @returns {Promise<void>}
+ */
+export async function scanPage(activeTab)
+{
+    const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getFullText'});
+    const selectors = findAllMatches(response.text, await getLocalItem('selectors'))
+    // after the scan is done, limit the max numbers for the UI
+    const totalCount = Math.min(selectors.reduce((sum, item) => sum + item.count, 0), 99);
+    ExtensionPin.showNumber(Math.min(selectors.length, 9) + '|' + totalCount, activeTab.id);
+    chrome.tabs.sendMessage(activeTab.id, {cmd: 'markText', selectors: selectors }).then(() => {});
 }

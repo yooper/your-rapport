@@ -2,9 +2,10 @@ import './Popup.css';
 import Grid from "@mui/material/Unstable_Grid2";
 import * as React from 'react';
 import {useEffect, useState} from "react";
-import {hideLoader, processNotification, showLoader} from "../../utilities/loaders";
+import {getActiveTab, hideLoader, processNotification, showLoader} from "../../utilities/loaders";
 import Typography from "@mui/material/Typography";
 import {ButtonBase} from "@mui/material";
+import {scanPage} from "../../utilities/transformers";
 
 
 export default function Popup() {
@@ -54,6 +55,8 @@ function LargeButtonGrid() {
     },
     { title: 'Search Dashboard', onClick: async() => await chrome.tabs.create({'url': chrome.runtime.getURL('search.html')})},
     { title: 'Docs', onClick: () => window.open('https://github.com/yooper/your-rapport') },
+    { title: 'Quick Scan', onClick: async() => { scanPage(await getActiveTab())}, },
+
 
   ];
 
