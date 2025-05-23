@@ -9,16 +9,21 @@ import {getUser} from "../models/schemas/User";
  * TODO: Add support for API / Configuration variables
  * @param discoveryPlugin {DiscoveryPlugin}
  * @param rapport
- * @param selectedValue{string|number|null}
+ * @param pluginValue{string|number|null}
  * @returns {Promise<void>}
  */
-export default async function discoveryPluginRunner(discoveryPlugin, rapport = {}, selectedValue = null)
+export default async function discoveryPluginRunner(discoveryPlugin, rapport = {}, pluginValue = null)
 {
     const user = await getUser();
     if(!user.isAccessible('discoveryPlugin', rapport, discoveryPlugin)){
         // TODO notify user feature is only available in the pro model
         throw new Error("Pro License Required");
     }
+
+    // assign the plugin value
+    discoveryPlugin.pluginValue = pluginValue;
+    // To support the legacy Mustache markup add this property to the discovery plugin
+    discoveryPlugin.PluginValue = pluginValue;
 
     Mustache.escape = function (text) { return text; }
     let formFields = null;

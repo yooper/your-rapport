@@ -115,7 +115,7 @@ export default function SearchDataTable(props) {
           if(record?.selectors?.length == 0){
               return <div></div>
           }
-          // add support for regexes.
+          // TODO add support for regexes.
           return record?.selectors?.map((selector, index) => (
               <DiscoveryPluginDialog
                   key={`selector-${selector.key}-${selector.selectorTypeName}-${record.uuid}`}

@@ -24,6 +24,8 @@ export class DiscoveryPlugin {
         this.contentTypeHeader = null;
         this.fieldMapping = {};
         this.headers = {};
+        this.pluginValue = null; // this is assigned by the user
+        this.PluginValue = null; // deprecated, but necessary until the package management system gets overhauled/reformatted.
     }
 
     /**
