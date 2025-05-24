@@ -3,7 +3,7 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import {useEffect, useState, Fragment} from "react";
 import MUIDataTable from "mui-datatables";
-import {FormControlLabel, Switch} from "@mui/material";
+import {FormControlLabel, Switch, Tooltip} from "@mui/material";
 import {deleteRecord, getLocalItem, updateRecord} from "../../models/db/local";
 import {hideLoader, processNotification, showLoader} from "../../utilities/loaders";
 import {Selector} from "../../models/schemas/Selector";
@@ -124,7 +124,9 @@ export default function DiscoveryPluginDataTable() {
             }
 
             return (
-              <span>{text}</span>
+                <Tooltip title={value}>
+                    <span>{text}</span>
+                </Tooltip>
             )
           },
         },
