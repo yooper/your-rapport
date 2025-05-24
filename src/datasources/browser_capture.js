@@ -1,5 +1,6 @@
 import {addRecord, getLocalItem, setLocalItem} from "../models/db/local";
-import {findAllMatches, findMatchingValues, sha256} from "../utilities/transformers";
+import {findAllMatches, sha256} from "../utilities/transformers";
+import {Rapport} from "../models/schemas/Rapport";
 
 
 /**
@@ -18,29 +19,8 @@ export async function capture(tab, message = {}){
 
     // search the saved record for keywords
     const selectors = await getLocalItem('selectors') ?? []
-
     const screenShot = await chrome.tabs.captureVisibleTab();
-    const uuid = crypto.randomUUID();
-    let record = {
-      uuid: uuid,
-      title: tab.title,
-      url: tab.url,
-      domain: (new URL(tab.url)).hostname,
-      text: text,
-      screenshot: screenShot,
-      createdOn: Date.now(),
-      updatedOn: Date.now(),
-      createdOnLocalTime: new Date().toLocaleString(),
-      hash: await sha256(screenShot),
-      createdBy: 'TODO-CREATE', // TODO: add support for tracking who created the record, requires authentication
-      updatedBy: 'TODO-UPDATE', // TODO: add support for tracking who updated the record, requires authentication
-      length: screenShot.length,
-      attributes: { tab: tab },
-      selectors: findAllMatches(text, selectors, 1), // limit the search scope,
-      tags: [],  // TODO: add support for tagging/annotating data
-      caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387', // TODO: add case management functionality
-      note: null
-    };
+    const record = await Rapport.createFromTab(tab, text, screenShot, selectors)
 
     await addRecord('rapports', 'uuid', record);
     // update the configuration last saved on metadata

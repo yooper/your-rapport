@@ -50,35 +50,55 @@ chrome.commands.onCommand.addListener(async(command) => {
 /**
  * Receives messages from the content script
  */
-chrome.runtime.onMessage.addListener( async(message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener( (message, sender, sendResponse) => {
     switch(message.cmd){
+        case 'bulkAutomation':
+            (async () => {
+              try {
+                const tab = await createTab(message.automation.url);
+                await sleep(5000);
+
+                const singleTabCapture = await getActiveTab();
+                await capture(singleTabCapture, message);
+
+                await chrome.tabs.remove(singleTabCapture.id);
+                await sleep(1000); // small buffer
+
+                sendResponse({ uuid: message.automation.uuid });
+              } catch (err) {
+                sendResponse({ uuid: message.automation.uuid, error: err.message });
+              }
+            })();
+            return true;
+            /*
         case 'captureVisibleTab':
             await capture(sender.tab, message)
             sendResponse({flag: true});
-            return true;
+            break;
         case 'updateScreenShotRecord':
             await updateRecord('rapports', 'uuid', message.record);
             sendResponse({completed: true});
-            return true;
+            break;
         case 'popupSingleCollect':
             const activeTab = await getActiveTab();
             const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
             await capture(activeTab, response);
             sendResponse({completed: true});
-            return true;
+            break;
         case 'autoscrollCollect':
             const tab = await getActiveTab();
             await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
-            return true;
+            break;
         case 'indexSelector':
             await Selector.add(message.selector);
-            return true;
+            break;
         case 'scanText': // originates from the content script
-            return true;
         default:
             console.log(`Unknown cmd ${message.cmd}`);
-            return true;
+
+             */
     }
+    return true;
 });
 
 /**
