@@ -43,30 +43,15 @@ export function initAutoScrollerHandler() {
     }
     else if (message.cmd === 'getVisibleText') {
       sendResponse({ text: getVisibleText() });
+      return; // stop processing the request
     }
     else {
       state = message.cmd;
     }
 
     // TODO check for an invalid state before proceeding
-    if (message.cmd === 'startCapture') {
-      autoScroller(message, sendResponse);
-    }
-    /*
-    else if (message.cmd === 'singleCapture') {
-      const text = getVisibleText();
-      chrome.runtime.sendMessage(
-        {
-          cmd: 'captureVisibleTab',
-          text: text,
-          sequence: screenCollectionCount++,
-        },
-        (dataUrl) => {}
-      );
-    }
-    */
+    autoScroller(message);
 
-    // else do nothing, the message could be handled else where
   });
 }
 
@@ -120,7 +105,9 @@ function getScrollDetailsByHostName() {
  * @returns {boolean}
  */
 export function autoScroller(message, sendResponse) {
+
   const autoScroll = () => {
+
     if (state !== 'startCapture') {
       console.log('capture stopped');
       return;
@@ -130,58 +117,53 @@ export function autoScroller(message, sendResponse) {
     const { scrollHeight, clientHeight } = scrollElement;
     const scrollAmount = clientHeight;
 
-    const text = getVisibleText();
-
-    if (!text) {
-      state = 'stopped'; // stops the scrolling capture if the text is not being read in
-      return;
-    }
-
-    // after moving the scrollbar send a message to capture the tab
-    chrome.runtime.sendMessage(
-      {
+    (async() => {
+      const text = getVisibleText();
+      if (!text) {
+        state = 'stopped'; // stops the scrolling capture if the text is not being read in
+        console.log('could not capture text');
+        return;
+      }
+      const response = chrome.runtime.sendMessage({
         cmd: 'captureVisibleTab',
         text: text,
         sequence: screenCollectionCount++,
-      },
-      (dataUrl) => {
-        // TODO fix this so auto scroll doesn't fire
-        // don't scroll, it's only a single page, no scroll bar
-        if (scrollAmount == 0) {
-          state = 'singleCapture'; // stops the scrolling capture
+      });
+      // TODO fix this so auto scroll doesn't fire
+      // don't scroll, it's only a single page, no scroll bar
+      if (scrollAmount == 0) {
+        state = 'stopCapture'; // stops the scrolling capture
+      }
+
+      if (direction === 'down') {
+        capturedHeight += scrollAmount;
+        if (state !== 'startCapture') {
+          console.log('capture stopped');
         }
-
-        if (direction === 'down') {
-          capturedHeight += scrollAmount;
-          if (state !== 'startCapture') {
-            console.log('capture stopped');
-          } else if (capturedHeight < scrollHeight) {
-            // Scroll to the next part of the page, after the screenshot has been taken
-            scrollElement.scrollTo(0, capturedHeight);
-          }
-        } else {
-          capturedHeight -= scrollAmount;
-          if (state !== 'startCapture') {
-          }
-
-          // Check if the new position is less than 0, set to 0 if it is
-          if (capturedHeight < 0) {
-            scrollElement.scrollTop = 0;
-          } else {
-            scrollElement.scrollTop = capturedHeight;
-          }
-        }
-        // TODO check that all ajax requests have finished
-        setTimeout(autoScroll, 1000); // TODO: Adjust the delay as needed, make it a configuration setting
-
-        if('automation' in message){
-          if(message.automation.unit === 'count' && message.automation.value < screenCollectionCount){
-            state = 'stopCapture'; // max screenshots collected
-            sendResponse({automation: message.automation});
-          }
+        else if (capturedHeight < scrollHeight) {
+          // Scroll to the next part of the page, after the screenshot has been taken
+          scrollElement.scrollTo(0, capturedHeight);
         }
       }
-    );
+      else {
+        capturedHeight -= scrollAmount;
+        // Check if the new position is less than 0, set to 0 if it is
+        if (capturedHeight < 0) {
+          scrollElement.scrollTop = 0;
+        } else {
+          scrollElement.scrollTop = capturedHeight;
+        }
+      }
+      // TODO check that all ajax requests have finished
+      setTimeout(autoScroll, 1000); // TODO: Adjust the delay as needed, make it a configuration setting
+
+      if('automation' in message){
+        if(message.automation.unit === 'count' && message.automation.value < screenCollectionCount){
+          state = 'stopCapture'; // max screenshots collected
+          sendResponse({automation: message.automation});
+        }
+      }
+    })();
   };
   autoScroll();
   return true;

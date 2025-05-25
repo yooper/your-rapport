@@ -34,8 +34,7 @@
     "storage",
     "contextMenus",
     "activeTab",
-    "tabs",
-    "devtools"
+    "tabs"
   ],
   "commands": {
     "initStartCapture": {
@@ -50,13 +49,13 @@
       },
       "description": "Open Dashboard"
     },
-    "startCapture": {
+    "initAutoScroll": {
       "suggested_key": {
         "default": "Ctrl+Shift+Z"
       },
       "description": "Starts and stops auto scroll"
     },
-    "scanPage": {
+    "initScanPage": {
       "suggested_key": {
         "default": "Ctrl+Shift+F"
       },

@@ -39,9 +39,19 @@ chrome.commands.onCommand.addListener( (command) => {
           await capture(activeTab, response);
         })();
         return true;
-    case 'scanPage':
-      //scanPage(activeTab);
+
+    case 'initScanPage':
+        (async () => {
+          const activeTab = await getActiveTab();
+          await scanPage(activeTab);
+        })();
       break;
+    case 'initAutoScroll':
+        (async () => {
+          const activeTab = await getActiveTab();
+          chrome.tabs.sendMessage(activeTab.id, { cmd: 'startCapture' });
+        })();
+        return false;
     default:
       //response = await chrome.tabs.sendMessage(activeTab.id, { cmd: command });
       //await capture(activeTab, response);

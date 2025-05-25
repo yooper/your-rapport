@@ -1,6 +1,7 @@
 import { addRecord, getLocalItem, setLocalItem } from '../models/db/local';
 import { findAllMatches, sha256 } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
+import ExtensionPin from '../utilities/ExtensionPin';
 
 /**
  * Capture the tab and persist it into local storage
@@ -9,6 +10,9 @@ import { Rapport } from '../models/schemas/Rapport';
  * @returns {Promise<void>}
  */
 export async function capture(tab, message = {}) {
+
+  ExtensionPin.setDefaultNotSaved(tab);
+
   let configurationRegistry = (await getLocalItem('configuration')) ?? {
     authToken: false,
     productVersion: 'trial',
@@ -23,17 +27,27 @@ export async function capture(tab, message = {}) {
     ' ' +
     splitCamelCase(message?.text ?? '').toLowerCase();
 
-  // search the saved record for keywords
-  const selectors = (await getLocalItem('selectors')) ?? [];
-  const screenShot = await chrome.tabs.captureVisibleTab();
-  //const screenShot = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAnsB9VRjR5sAAAAASUVORK5CYII='
-  const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
+  try{
+    // search the saved record for keywords
+    const selectors = (await getLocalItem('selectors')) ?? [];
+    const screenShot = await chrome.tabs.captureVisibleTab();
+    const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
 
-  await addRecord('rapports', 'uuid', record);
-  // update the configuration last saved on metadata
-  configurationRegistry.lastSavedOn = Date.now().toString();
-  configurationRegistry.screenShotCount++;
-  await setLocalItem('configuration', configurationRegistry);
+    await addRecord('rapports', 'uuid', record);
+    // update the configuration last saved on metadata
+    configurationRegistry.lastSavedOn = Date.now().toString();
+    configurationRegistry.screenShotCount++;
+    await setLocalItem('configuration', configurationRegistry);
+    ExtensionPin.setDefaultSaved(tab);
+  }
+  catch(e){
+    ExtensionPin.setBgColorAndText('red', 'ERR', tab);
+  }
+  finally {
+    setTimeout(() => {
+      ExtensionPin.setDefault(tab);
+    }, 3000)
+  }
 }
 
 function splitCamelCase(input) {

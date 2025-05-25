@@ -27,7 +27,7 @@ export default class ExtensionPin {
 
   static setDefaultSaved = (activeTab = null) => {
     if (activeTab) {
-      ExtensionPin.setBgColorAndText('#619657', '', activeTab);
+      ExtensionPin.setBgColorAndText('#619657', 'SAVD', activeTab);
     } else {
       // globally reset all badges
       chrome.action.setIcon({ path: '/icon-32.png' });
@@ -37,7 +37,7 @@ export default class ExtensionPin {
 
   static setDefaultNotSaved = (activeTab = null) => {
     if (activeTab) {
-      ExtensionPin.setBgColorAndText('#E86E69', '', activeTab);
+      ExtensionPin.setBgColorAndText('#E86E69', 'SAVG', activeTab);
     } else {
       // globally reset all badges
       chrome.action.setIcon({ path: '/icon-32.png' });

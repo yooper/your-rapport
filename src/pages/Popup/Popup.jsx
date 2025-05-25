@@ -42,8 +42,8 @@ function LargeButtonGrid() {
           const response = await chrome.tabs.sendMessage(tab.id, { cmd: 'getVisibleText' });
           await capture(tab, response);
           processNotification({
-            title: 'Autoscroll Collect Started',
-            message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
+            title: 'Single Collect Started',
+            message: `A single screenshot has been collected.`,
             type: 'success',
           });
         })();
@@ -53,12 +53,17 @@ function LargeButtonGrid() {
     {
       title: 'Autoscroll Collect',
       onClick: () => {
-          chrome.runtime.sendMessage({ cmd: 'startCapture'});
+        (async () => {
+          const tab = await getActiveTab();
+          const response = await chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });
+          await capture(tab, response);
           processNotification({
             title: 'Autoscroll Collect Started',
             message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
             type: 'success',
           });
+        })();
+        return true;
       },
     },
     {
