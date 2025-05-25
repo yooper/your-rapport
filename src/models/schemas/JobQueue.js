@@ -2,7 +2,7 @@ export class JobQueue{
   constructor() {
     this.type = null;
     this.status = null;
-    this.objects = {}; // JavaScript object used in place of Dictionary<string, string>
+    this.objects = {};
     this.jobId = crypto.randomUUID();
     this.startedOn = null;
     this.completedOn = null;

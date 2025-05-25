@@ -4,17 +4,21 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import {FormControl, TextareaAutosize} from "@mui/material";
+import {FormControl, FormControlLabel, Paper, Switch, TextareaAutosize} from "@mui/material";
 import {getLocalItem, setLocalItem} from "../../../models/db/local";
 import {processNotification} from "../../../utilities/loaders";
 import IconButton from "@mui/material/IconButton";
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
+import FormGroup from "@mui/material/FormGroup";
+import HelperPopover from "../../HelperPopover";
+import Grid from "@mui/material/Unstable_Grid2";
 
 
 export default function BulkAutomationAddDialog(props) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [text, setText] = useState('');
+  const [unit, setUnit] = useState('count');
 
   useEffect(() =>
   {
@@ -39,8 +43,10 @@ export default function BulkAutomationAddDialog(props) {
             return {
                 uuid: crypto.randomUUID(),
                 url: url,
-                createdOn: new Date(),
-                completedOn: null
+                createdOn: Date.now(),
+                completedOn: null,
+                unit: unit,
+                value: 50 // TODO; set to a configuration
             }
         });
 
@@ -66,13 +72,29 @@ export default function BulkAutomationAddDialog(props) {
         onClose={handleClose}
         aria-labelledby="form-dialog-title"
         fullWidth={true}
-        maxWidth={'md'}
+        maxWidth={'lg'}
       >
         <DialogTitle>Bulk Collect Urls</DialogTitle>
         <DialogContent>
+            <FormGroup>
+            <Grid container spacing>
+              <Grid item xs={1}>
+                  <HelperPopover message={'The default is to collect by the number of screenshots, when disabled it collects based on time spent collecting.'}/>
+              </Grid>
+              <Grid item xs={6}>
+                  <FormControlLabel control={<Switch
+                      disabled={true}
+                      checked={true}
+                      onChange={(event) => { setUnit( event.target.checked ? 'count' : 'time' )}}
+                      inputProps={{ 'aria-label': 'controlled' }} />} label="Collection Method"
+                  />
+              </Grid>
+            </Grid>
+            </FormGroup>
+            <FormGroup>
               <TextareaAutosize
                 style={{ width: "90%" }}
-                minRows={10}
+                minRows={25}
                 maxRows={100}
                 placeholder="Enter your urls to bulk scan, one url per line..."
                 name="urls"
@@ -80,6 +102,7 @@ export default function BulkAutomationAddDialog(props) {
                 defaultValue={text}
                 onChange={(e) => setText(e.target.value)}
               />
+            </FormGroup>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="cancel" variant={'contained'}>

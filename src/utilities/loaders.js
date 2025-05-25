@@ -127,6 +127,24 @@ export function getSelectorTypeMap(){
     }
 }
 
+/**
+ * Hydrate the passed in instance with data object
+ * @param instance
+ * @param data
+ * @returns {*}
+ */
+export function hydrate(instance, data)
+{
+    for (const key in instance) {
+      if (instance.hasOwnProperty(key)) {
+        instance[key] = instance[key];
+      }
+    }
+    return instance;
+}
+
+
+
 
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

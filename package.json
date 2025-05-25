@@ -51,7 +51,7 @@
     "html-loader": "^4.2.0",
     "html-webpack-plugin": "^5.5.0",
     "mark.js": "^8.11.1",
-    "prettier": "^2.8.3",
+    "prettier": "2.8.8",
     "react-refresh": "^0.14.0",
     "react-refresh-typescript": "^2.0.7",
     "sass": "^1.83.4",

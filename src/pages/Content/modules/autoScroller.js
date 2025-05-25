@@ -1,8 +1,9 @@
-// contentScript.js
 import {getVisibleText} from "./visibleElements";
 
 let state = 'stopped'
 let capturedHeight = 0;
+// global var to track the number of screenshots captured thus far, used to mark the sequential order
+let screenCollectionCount = 0;
 
 /**
  * Listen for the message to start scrolling and issuing page saves
@@ -28,11 +29,11 @@ export function initAutoScrollerHandler() {
     });
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-
         if (state === 'startCapture' && message.cmd === 'startCapture') {
             // we are already scrolling, lets cancel the auto scrolling.
             state = "stopCapture";
-        } else {
+        }
+        else {
             state = message.cmd;
         }
 
@@ -47,7 +48,8 @@ export function initAutoScrollerHandler() {
             const text = getVisibleText();
             chrome.runtime.sendMessage({
                 cmd: "captureVisibleTab",
-                text: text
+                text: text,
+                sequence: screenCollectionCount++
             }, (dataUrl) => {
             });
         }
@@ -109,7 +111,8 @@ export function autoScroller(){
       // after moving the scrollbar send a message to capture the tab
       chrome.runtime.sendMessage({
           cmd: "captureVisibleTab",
-          text: text
+          text: text,
+          sequence: screenCollectionCount++
       }, (dataUrl) => {
 
         // TODO fix this so auto scroll doesn't fire
@@ -125,7 +128,7 @@ export function autoScroller(){
               console.log('capture stopped')
             }
             else if (capturedHeight < scrollHeight) {
-              // Scroll to the next part of the page
+              // Scroll to the next part of the page, after the screenshot has been taken
               scrollElement.scrollTo(0, capturedHeight)
             }
         }

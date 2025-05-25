@@ -51,24 +51,45 @@ chrome.commands.onCommand.addListener(async(command) => {
  * Receives messages from the content script
  */
 chrome.runtime.onMessage.addListener( (message, sender, sendResponse) => {
-    switch(message.cmd){
-        case 'bulkAutomation':
-            (async () => {
+    (async () => {
+        switch(message.cmd){
+            case 'bulkAutomation':
               try {
                 const tab = await createTab(message.automation.url);
-                await sleep(5000);
-
-                const singleTabCapture = await getActiveTab();
-                await capture(singleTabCapture, message);
-
-                await chrome.tabs.remove(singleTabCapture.id);
-                await sleep(1000); // small buffer
-
+                await sleep(3000); // TODO: Make this a configuration value
+                await capture(tab, message);
+                await chrome.tabs.remove(tab.id);
                 sendResponse({ uuid: message.automation.uuid });
-              } catch (err) {
+              }
+              catch (err) {
                 sendResponse({ uuid: message.automation.uuid, error: err.message });
               }
-            })();
+              break;
+                    case 'updateScreenShotRecord':
+            await updateRecord('rapports', 'uuid', message.record);
+            sendResponse({completed: true});
+            break;
+        case 'popupSingleCollect':
+            const activeTab = await getActiveTab();
+            const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
+            await capture(activeTab, response);
+            sendResponse({completed: true});
+            break;
+        case 'autoscrollCollect':
+            const tab = await getActiveTab();
+            await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
+            break;
+        case 'indexSelector':
+            await Selector.add(message.selector);
+            break;
+        }
+
+    })();
+    return true;
+    /*
+    switch(message.cmd){
+        case 'bulkAutomation':
+
             return true;
             /*
         case 'captureVisibleTab':
