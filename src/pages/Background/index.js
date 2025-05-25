@@ -1,17 +1,20 @@
-import {capture} from "../../datasources/browser_capture";
+import { capture } from '../../datasources/browser_capture';
 import {
-    createTab,
-    getActiveTab,
-    initializeDiscoveryPlugins,
-    installPackage,
-    sleep
-} from "../../utilities/loaders";
-import {getLocalItem, setLocalItem, updateRecord} from "../../models/db/local";
-import {initializeContextMenus} from "../../services/context_menu_services";
-import {Selector} from "../../models/schemas/Selector";
-import ExtensionPin from "../../utilities/ExtensionPin";
-import {findAllMatches, scanPage} from "../../utilities/transformers";
-
+  createTab,
+  getActiveTab,
+  initializeDiscoveryPlugins,
+  installPackage,
+  sleep,
+} from '../../utilities/loaders';
+import {
+  getLocalItem,
+  setLocalItem,
+  updateRecord,
+} from '../../models/db/local';
+import { initializeContextMenus } from '../../services/context_menu_services';
+import { Selector } from '../../models/schemas/Selector';
+import ExtensionPin from '../../utilities/ExtensionPin';
+import { findAllMatches, scanPage } from '../../utilities/transformers';
 
 /**
  * Initialize configuration values when the app is installed
@@ -22,166 +25,130 @@ await initializeDiscoveryPlugins();
 /**
  * Add in support for short-cut keys
  */
-chrome.commands.onCommand.addListener(async(command) => {
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === 'openDashboard') {
+    await createTab(chrome.runtime.getURL('search.html'), false);
+    return;
+  }
 
-    if(command === 'openDashboard'){
-        await createTab(chrome.runtime.getURL('search.html'), false);
-        return;
-    }
-
-    const activeTab = await getActiveTab();
-    let response = null;
-    switch(command){
-        case 'singleCapture':
-            response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
-            await capture(activeTab, response);
-            break;
-        case 'scanPage':
-            scanPage(activeTab)
-            break;
-        default:
-            response = await chrome.tabs.sendMessage(activeTab.id, {cmd: command});
-            await capture(activeTab, response);
-            break;
-    }
+  const activeTab = await getActiveTab();
+  let response = null;
+  switch (command) {
+    case 'singleCapture':
+      response = await chrome.tabs.sendMessage(activeTab.id, {
+        cmd: 'getVisibleText',
+      });
+      await capture(activeTab, response);
+      break;
+    case 'scanPage':
+      scanPage(activeTab);
+      break;
+    default:
+      response = await chrome.tabs.sendMessage(activeTab.id, { cmd: command });
+      await capture(activeTab, response);
+      break;
+  }
 });
-
 
 /**
  * Receives messages from the content script
  */
-chrome.runtime.onMessage.addListener( (message, sender, sendResponse) => {
-    (async () => {
-        switch(message.cmd){
-            case 'bulkAutomation':
-              try {
-                const tab = await createTab(message.automation.url);
-                await sleep(3000); // TODO: Make this a configuration value
-                await capture(tab, message);
-                await chrome.tabs.remove(tab.id);
-                sendResponse({ uuid: message.automation.uuid });
-              }
-              catch (err) {
-                sendResponse({ uuid: message.automation.uuid, error: err.message });
-              }
-              break;
-                    case 'updateScreenShotRecord':
-            await updateRecord('rapports', 'uuid', message.record);
-            sendResponse({completed: true});
-            break;
-        case 'popupSingleCollect':
-            const activeTab = await getActiveTab();
-            const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
-            await capture(activeTab, response);
-            sendResponse({completed: true});
-            break;
-        case 'autoscrollCollect':
-            const tab = await getActiveTab();
-            await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
-            break;
-        case 'indexSelector':
-            await Selector.add(message.selector);
-            break;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  (async () => {
+    switch (message.cmd) {
+      case 'bulkAutomation':
+        try {
+          const tab = await createTab(message.automation.url);
+          await sleep(3000); // TODO: Make this a configuration value
+          await capture(tab, message);
+          await chrome.tabs.remove(tab.id);
+          sendResponse({ uuid: message.automation.uuid });
+        } catch (err) {
+          sendResponse({ uuid: message.automation.uuid, error: err.message });
         }
-
-    })();
-    return true;
-    /*
-    switch(message.cmd){
-        case 'bulkAutomation':
-
-            return true;
-            /*
-        case 'captureVisibleTab':
-            await capture(sender.tab, message)
-            sendResponse({flag: true});
-            break;
-        case 'updateScreenShotRecord':
-            await updateRecord('rapports', 'uuid', message.record);
-            sendResponse({completed: true});
-            break;
-        case 'popupSingleCollect':
-            const activeTab = await getActiveTab();
-            const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getVisibleText'});
-            await capture(activeTab, response);
-            sendResponse({completed: true});
-            break;
-        case 'autoscrollCollect':
-            const tab = await getActiveTab();
-            await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
-            break;
-        case 'indexSelector':
-            await Selector.add(message.selector);
-            break;
-        case 'scanText': // originates from the content script
-        default:
-            console.log(`Unknown cmd ${message.cmd}`);
-
-             */
+        break;
+      case 'updateScreenShotRecord':
+        await updateRecord('rapports', 'uuid', message.record);
+        sendResponse({ completed: true });
+        break;
+      case 'popupSingleCollect':
+        const activeTab = await getActiveTab();
+        const response = await chrome.tabs.sendMessage(activeTab.id, {
+          cmd: 'getVisibleText',
+        });
+        await capture(activeTab, response);
+        sendResponse({ completed: true });
+        break;
+      case 'autoscrollCollect':
+        const tab = await getActiveTab();
+        await chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });
+        break;
+      case 'indexSelector':
+        await Selector.add(message.selector);
+        break;
     }
-    return true;
+  })();
+  return true;
 });
 
 /**
  * Let the 'Who Am I' extension be able to RPC the extension's functionality
-*/
+ */
 // For a single request:
-chrome.runtime.onMessageExternal.addListener(
-  async function(message, sender, sendResponse) {
-    if (sender.id !== 'gdnhlhadhgnhaenfcphpeakdghkccfoo') {
-        return;  // deny access to all extensions, except the Who Am I
-    }
+chrome.runtime.onMessageExternal.addListener(async function (
+  message,
+  sender,
+  sendResponse
+) {
+  if (sender.id !== 'gdnhlhadhgnhaenfcphpeakdghkccfoo') {
+    return; // deny access to all extensions, except the Who Am I
+  }
 
-    switch(message.cmd){
-        case 'singleCollect':
-            await createTab(message.url);
-            await sleep(2000)
-            const singleTabCapture = await getActiveTab();
-            await capture(singleTabCapture, message)
-            return true;
-        case 'autoscrollCollect':
-            await createTab(message.url);
-            await sleep(2000)
-            const tab = await getActiveTab();
-            await chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture'});
-            return true;
-        default:
-            console.log(`Unknown cmd ${message.cmd}`);
-            return true;
-    }
-  });
-
+  switch (message.cmd) {
+    case 'singleCollect':
+      await createTab(message.url);
+      await sleep(2000);
+      const singleTabCapture = await getActiveTab();
+      await capture(singleTabCapture, message);
+      return true;
+    case 'autoscrollCollect':
+      await createTab(message.url);
+      await sleep(2000);
+      const tab = await getActiveTab();
+      await chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });
+      return true;
+    default:
+      console.log(`Unknown cmd ${message.cmd}`);
+      return true;
+  }
+});
 
 /**
  * On install open the github page & install default discovery plugins
  */
 chrome.runtime.onInstalled.addListener(async (details) => {
-
-    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-        await createTab('https://github.com/yooper/your-rapport')
-
-    }
-    else if (details.reason === 'update') {
-      chrome.tabs.create(
-        {
-          url: 'https://github.com/yooper/your-rapport',
-        },
-        (tab) => {}
-      );
-      // When extension is updated
-    } else if (details.reason === 'chrome_update') {
-      // When browser is updated
-    } else if (details.reason === 'shared_module_update') {
-      // When a shared module is updated
-    }
+  if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+    await createTab('https://github.com/yooper/your-rapport');
+  } else if (details.reason === 'update') {
+    chrome.tabs.create(
+      {
+        url: 'https://github.com/yooper/your-rapport',
+      },
+      (tab) => {}
+    );
+    // When extension is updated
+  } else if (details.reason === 'chrome_update') {
+    // When browser is updated
+  } else if (details.reason === 'shared_module_update') {
+    // When a shared module is updated
+  }
 });
 
 /**
  * When the web page changes, we need to reset the extension pin to its default state
  */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete") {
+  if (changeInfo.status === 'complete') {
     ExtensionPin.setDefault(tab);
   }
 });
-

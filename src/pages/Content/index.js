@@ -5,13 +5,8 @@
  * Please contact support@bakerstreet.llc for assistance
  */
 
-import {initAutoScrollerHandler} from "./modules/autoScroller";
-import {initMarkJsHandler} from "./modules/markText";
+import { initAutoScrollerHandler } from './modules/autoScroller';
+import { initMarkJsHandler } from './modules/markText';
 
 initAutoScrollerHandler();
 initMarkJsHandler();
-
-
-
-
-

@@ -1,4 +1,4 @@
-import {findAllMatches, sha256} from "../../utilities/transformers";
+import { findAllMatches, sha256 } from '../../utilities/transformers';
 
 export class Rapport {
   constructor({
@@ -19,7 +19,7 @@ export class Rapport {
     selectors,
     tags,
     caseManagementUuid,
-    note
+    note,
   }) {
     this.uuid = uuid;
     this.title = title;
@@ -64,9 +64,9 @@ export class Rapport {
       length: screenShot.length,
       attributes: { tab },
       selectors: matchedSelectors,
-      tags: [],  // Placeholder for future tagging
+      tags: [], // Placeholder for future tagging
       caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387',
-      note: null
+      note: null,
     });
   }
 }

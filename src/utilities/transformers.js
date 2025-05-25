@@ -1,13 +1,20 @@
-import {getLocalItem} from "../models/db/local";
-import ExtensionPin from "./ExtensionPin";
+import { getLocalItem } from '../models/db/local';
+import ExtensionPin from './ExtensionPin';
 
-export function stringToBoolean(string)
-{
-    switch(string.toLowerCase().trim()) {
-        case "true": case "yes": case "1": return true;
-        case "false": case "no": case "0": case null: return false;
-        default: return Boolean(string);
-    }
+export function stringToBoolean(string) {
+  switch (string.toLowerCase().trim()) {
+    case 'true':
+    case 'yes':
+    case '1':
+      return true;
+    case 'false':
+    case 'no':
+    case '0':
+    case null:
+      return false;
+    default:
+      return Boolean(string);
+  }
 }
 
 /**
@@ -33,9 +40,9 @@ export async function sha256(message) {
  */
 export function downloadJsonData(data, fileName = 'data.json', type = '') {
   const jsonString = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonString], { type: "application/json" });
+  const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
   link.download = fileName;
   document.body.appendChild(link); // Required for Firefox
@@ -51,7 +58,7 @@ export function downloadJsonData(data, fileName = 'data.json', type = '') {
  */
 export function downloadBase64Image(base64Data, fileName) {
   // Create a new anchor element
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   // Set the download attribute with the desired file name
   link.download = fileName;
   // Set href to the base64 data
@@ -71,8 +78,7 @@ export function downloadBase64Image(base64Data, fileName) {
  */
 const toCamelCase = (str) => {
   return str.charAt(0).toLowerCase() + str.slice(1);
-}
-
+};
 
 /**
  * Change the name of the fields from PascalCase to camelCase.
@@ -92,17 +98,16 @@ export function convertKeysToCamelCase(obj) {
 }
 
 export function sortByField(array, key) {
-    if(!array || array.length === 0){
-        return []
-    }
-    else if(array.length === 1){
-        return array
-    }
-    return array.sort( (a, b) => {
-        const x = a[key]
-        const y = b[key]
-        return ((x < y) ? -1 : ((x > y) ? 1 : 0))
-    })
+  if (!array || array.length === 0) {
+    return [];
+  } else if (array.length === 1) {
+    return array;
+  }
+  return array.sort((a, b) => {
+    const x = a[key];
+    const y = b[key];
+    return x < y ? -1 : x > y ? 1 : 0;
+  });
 }
 
 /**
@@ -112,7 +117,9 @@ export function sortByField(array, key) {
  * @returns {module:buffer.File}
  */
 export function base64ToFile(base64Data, fileName) {
-  const [prefix, base64] = base64Data.includes(',') ? base64Data.split(',') : [null, base64Data];
+  const [prefix, base64] = base64Data.includes(',')
+    ? base64Data.split(',')
+    : [null, base64Data];
   const mimeMatch = prefix?.match(/data:(.*);base64/);
   const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
   const binary = atob(base64);
@@ -135,13 +142,12 @@ export function findMatchingValues(text, selectors) {
   const matches = [];
   for (let i = 0; i < selectors.length; i++) {
     const selector = selectors[i];
-    if(text.includes(selector.key)){
+    if (text.includes(selector.key)) {
       matches.push(selector);
     }
   }
   return matches;
 }
-
 
 /**
  * Does a full scan of all the text trying to find any selectors contained with,
@@ -152,54 +158,65 @@ export function findMatchingValues(text, selectors) {
  * @returns {*[]}
  */
 export function findAllMatches(text, selectors, limit = 100) {
-    const matches = [];
-    for (const selector of selectors) {
-       const key = selector.key;
-       selector.count = 0;
-       const occurrences = [];
+  const matches = [];
+  for (const selector of selectors) {
+    const key = selector.key;
+    selector.count = 0;
+    const occurrences = [];
 
-       let index = 0;
+    let index = 0;
 
-       while (index <= text.length - key.length) {
-           let match = true;
+    while (index <= text.length - key.length) {
+      let match = true;
 
-           for (let k = 0; k < key.length; k++) {
-                if (text[index + k] !== key[k]) {
-                    match = false;
-                    break;
-                }
-           }
-
-            if (match) {
-                occurrences.push({ index, match: key });
-                index += key.length; // Move past this match to avoid overlapping
-                selector.count++;
-            } else {
-                index++;
-            }
-
-            if(selector.count >= limit){
-                break; // stop counting if the limit has been hit
-            }
-
-       }
-        if (occurrences.length > 0) {
-            matches.push(selector);
+      for (let k = 0; k < key.length; k++) {
+        if (text[index + k] !== key[k]) {
+          match = false;
+          break;
         }
+      }
+
+      if (match) {
+        occurrences.push({ index, match: key });
+        index += key.length; // Move past this match to avoid overlapping
+        selector.count++;
+      } else {
+        index++;
+      }
+
+      if (selector.count >= limit) {
+        break; // stop counting if the limit has been hit
+      }
     }
-    return matches;
+    if (occurrences.length > 0) {
+      matches.push(selector);
+    }
+  }
+  return matches;
 }
 
 /**
  * @param activeTab
  * @returns {Promise<void>}
  */
-export async function scanPage(activeTab)
-{
-    const response = await chrome.tabs.sendMessage(activeTab.id, {cmd: 'getFullText'});
-    const selectors = findAllMatches(response.text, await getLocalItem('selectors'))
-    // after the scan is done, limit the max numbers for the UI
-    const totalCount = Math.min(selectors.reduce((sum, item) => sum + item.count, 0), 99);
-    ExtensionPin.showNumber(Math.min(selectors.length, 9) + '|' + totalCount, activeTab.id);
-    chrome.tabs.sendMessage(activeTab.id, {cmd: 'markText', selectors: selectors }).then(() => {});
+export async function scanPage(activeTab) {
+  const response = await chrome.tabs.sendMessage(activeTab.id, {
+    cmd: 'getFullText',
+  });
+  const selectors = findAllMatches(
+    response.text,
+    await getLocalItem('selectors')
+  );
+  // after the scan is done, limit the max numbers for the UI
+  const totalCount = Math.min(
+    selectors.reduce((sum, item) => sum + item.count, 0),
+    99
+  );
+  ExtensionPin.showNumber(
+    Math.min(selectors.length, 9) + '|' + totalCount,
+    activeTab.id
+  );
+  chrome.tabs
+    .sendMessage(activeTab.id, { cmd: 'markText', selectors: selectors })
+    .then(() => {});
 }

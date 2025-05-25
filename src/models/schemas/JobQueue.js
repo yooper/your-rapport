@@ -1,4 +1,4 @@
-export class JobQueue{
+export class JobQueue {
   constructor() {
     this.type = null;
     this.status = null;

@@ -1,6 +1,1 @@
-
-export function startAutomationProcess()
-{
-
-}
-
+export function startAutomationProcess() {}
