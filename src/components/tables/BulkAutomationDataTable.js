@@ -14,18 +14,9 @@ export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  function sendAutomationMessage(record) {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { cmd: 'bulkAutomation', automation: record },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            return reject(chrome.runtime.lastError);
-          }
-          resolve(response);
-        }
-      );
-    });
+  async function sendAutomationMessage(record) {
+    const response = await chrome.runtime.sendMessage({ cmd: 'bulkAutomation', automation: record })
+
   }
   /**
    * Initiate the process of bulk downloading the list of urls

@@ -50,7 +50,7 @@ export default function BulkAutomationAddDialog(props) {
           createdOn: Date.now(),
           completedOn: null,
           unit: unit,
-          value: 50, // TODO; set to a configuration
+          value: 10, // TODO; set to a configuration
         };
       });
 
@@ -105,7 +105,7 @@ export default function BulkAutomationAddDialog(props) {
                       inputProps={{ 'aria-label': 'controlled' }}
                     />
                   }
-                  label="Collection Method"
+                  label="Collection Methodology"
                 />
               </Grid>
             </Grid>

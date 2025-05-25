@@ -1,6 +1,6 @@
 import { capture } from '../datasources/browser_capture';
 import { Selector } from '../models/schemas/Selector';
-import { getSelectorTypeMap } from '../utilities/loaders';
+import { getActiveTab, getSelectorTypeMap } from '../utilities/loaders';
 
 /**
  * Add the selectors as menu items
@@ -31,19 +31,21 @@ export async function initializeContextMenus() {
     });
   }
   // add event listeners
-  chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  chrome.contextMenus.onClicked.addListener((info, tab) => {
     switch (info.menuItemId) {
       case 'collectPage':
-        // get the visible text from the content script.
-        const response = await chrome.tabs.sendMessage(tab.id, {
-          cmd: 'getVisibleText',
-        });
-        await capture(tab, response);
+        (async () => {
+          const response = await chrome.tabs.sendMessage(tab.id, { cmd: 'getVisibleText' });
+          await capture(tab, response);
+        })();
+        return true;
         break;
       default:
         const selectorTypeName = info.menuItemId;
         const key = info.selectionText;
-        await Selector.add(new Selector(key, selectorTypeName));
+        Selector.add(new Selector(key, selectorTypeName)).then((response) => {
+          console.log(`selector added ${key}`);
+        })
         break;
     }
   });

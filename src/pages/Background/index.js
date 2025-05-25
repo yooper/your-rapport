@@ -25,45 +25,67 @@ await initializeDiscoveryPlugins();
 /**
  * Add in support for short-cut keys
  */
-chrome.commands.onCommand.addListener(async (command) => {
+chrome.commands.onCommand.addListener( (command) => {
   if (command === 'openDashboard') {
-    await createTab(chrome.runtime.getURL('search.html'), false);
-    return;
+    createTab(chrome.runtime.getURL('search.html'), false);
+    return false;
   }
 
-  const activeTab = await getActiveTab();
-  let response = null;
   switch (command) {
-    case 'singleCapture':
-      response = await chrome.tabs.sendMessage(activeTab.id, {
-        cmd: 'getVisibleText',
-      });
-      await capture(activeTab, response);
-      break;
+    case 'initStartCapture':
+        (async () => {
+          const activeTab = await getActiveTab();
+          const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'getVisibleText' });
+          await capture(activeTab, response);
+        })();
+        return true;
     case 'scanPage':
-      scanPage(activeTab);
+      //scanPage(activeTab);
       break;
     default:
-      response = await chrome.tabs.sendMessage(activeTab.id, { cmd: command });
-      await capture(activeTab, response);
+      //response = await chrome.tabs.sendMessage(activeTab.id, { cmd: command });
+      //await capture(activeTab, response);
       break;
   }
+  return false;
 });
+
 
 /**
  * Receives messages from the content script
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+
+  if(message.cmd === 'initStartCapture'){
+    (async () => {
+      const activeTab = await getActiveTab();
+      const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'getVisibleText' });
+      await capture(activeTab, response);
+    })();
+    return false;
+  }
+
+
   (async () => {
     switch (message.cmd) {
+      case 'captureVisibleTab':
+        await capture(sender.tab, message)
+        sendResponse({flag: true});
+        break;
       case 'bulkAutomation':
         try {
           const tab = await createTab(message.automation.url);
-          await sleep(3000); // TODO: Make this a configuration value
-          await capture(tab, message);
-          await chrome.tabs.remove(tab.id);
-          sendResponse({ uuid: message.automation.uuid });
+          await sleep(3000); // TODO: Make this a configuration value, allows for page to full load
+          // forward the message to the content script
+          chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture', automation: message.automation}).then( response => {
+            if (response.uuid === message.automation.uuid) {
+              chrome.tabs.remove(tab.id);
+              // sends the response back to the extension page that made the request
+              sendResponse({ uuid: message.automation.uuid });
+            }
+          })
         } catch (err) {
+          console.log(err)
           sendResponse({ uuid: message.automation.uuid, error: err.message });
         }
         break;
@@ -88,7 +110,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         break;
     }
   })();
-  return true;
+  return message.cmd !== 'bulkAutomation';
 });
 
 /**

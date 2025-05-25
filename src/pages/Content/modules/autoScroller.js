@@ -32,19 +32,28 @@ export function initAutoScrollerHandler() {
   });
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log(`message received ${message.cmd}`);
+    if(['autoscrollCollect'].includes(message.cmd)){
+      return; // ignore this command
+    }
+
     if (state === 'startCapture' && message.cmd === 'startCapture') {
       // we are already scrolling, lets cancel the auto scrolling.
       state = 'stopCapture';
-    } else {
+    }
+    else if (message.cmd === 'getVisibleText') {
+      sendResponse({ text: getVisibleText() });
+    }
+    else {
       state = message.cmd;
     }
 
     // TODO check for an invalid state before proceeding
     if (message.cmd === 'startCapture') {
-      autoScroller();
-    } else if (message.cmd === 'getVisibleText') {
-      sendResponse({ text: getVisibleText() });
-    } else if (message.cmd === 'singleCapture') {
+      autoScroller(message, sendResponse);
+    }
+    /*
+    else if (message.cmd === 'singleCapture') {
       const text = getVisibleText();
       chrome.runtime.sendMessage(
         {
@@ -55,6 +64,8 @@ export function initAutoScrollerHandler() {
         (dataUrl) => {}
       );
     }
+    */
+
     // else do nothing, the message could be handled else where
   });
 }
@@ -105,9 +116,10 @@ function getScrollDetailsByHostName() {
 
 /**
  * Scrolls up or down depending upon which host it is trying to scan.
+ * @param message the message received
  * @returns {boolean}
  */
-export function autoScroller() {
+export function autoScroller(message, sendResponse) {
   const autoScroll = () => {
     if (state !== 'startCapture') {
       console.log('capture stopped');
@@ -160,7 +172,14 @@ export function autoScroller() {
           }
         }
         // TODO check that all ajax requests have finished
-        setTimeout(autoScroll, 1000); // Adjust the delay as needed
+        setTimeout(autoScroll, 1000); // TODO: Adjust the delay as needed, make it a configuration setting
+
+        if('automation' in message){
+          if(message.automation.unit === 'count' && message.automation.value < screenCollectionCount){
+            state = 'stopCapture'; // max screenshots collected
+            sendResponse({automation: message.automation});
+          }
+        }
       }
     );
   };

@@ -11,6 +11,7 @@ import {
 import Typography from '@mui/material/Typography';
 import { ButtonBase } from '@mui/material';
 import { scanPage } from '../../utilities/transformers';
+import { capture } from '../../datasources/browser_capture';
 
 export default function Popup() {
   const [isLoading, setIsLoading] = useState(true);
@@ -34,34 +35,29 @@ export default function Popup() {
 function LargeButtonGrid() {
   const buttons = [
     {
-      title: 'Autoscroll Collect',
+      title: 'Single Collect',
       onClick: () => {
-        chrome.runtime
-          .sendMessage({
-            cmd: 'autoscrollCollect',
-          })
-          .then((response) => {
-            processNotification({
-              title: 'Autoscroll Collect Started',
-              message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
-              type: 'success',
-            });
+        (async () => {
+          const tab = await getActiveTab();
+          const response = await chrome.tabs.sendMessage(tab.id, { cmd: 'getVisibleText' });
+          await capture(tab, response);
+          processNotification({
+            title: 'Autoscroll Collect Started',
+            message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
+            type: 'success',
           });
+        })();
+        return true;
       },
     },
     {
-      title: 'Single Collect',
+      title: 'Autoscroll Collect',
       onClick: () => {
-        chrome.runtime
-          .sendMessage({
-            cmd: 'popupSingleCollect',
-          })
-          .then((response) => {
-            processNotification({
-              title: 'Single Collect',
-              message: `Single screenshot collected.`,
-              type: 'success',
-            });
+          chrome.runtime.sendMessage({ cmd: 'startCapture'});
+          processNotification({
+            title: 'Autoscroll Collect Started',
+            message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
+            type: 'success',
           });
       },
     },

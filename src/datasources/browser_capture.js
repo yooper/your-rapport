@@ -26,6 +26,7 @@ export async function capture(tab, message = {}) {
   // search the saved record for keywords
   const selectors = (await getLocalItem('selectors')) ?? [];
   const screenShot = await chrome.tabs.captureVisibleTab();
+  //const screenShot = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAnsB9VRjR5sAAAAASUVORK5CYII='
   const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
 
   await addRecord('rapports', 'uuid', record);
