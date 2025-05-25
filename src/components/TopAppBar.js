@@ -7,18 +7,22 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
-import {Tooltip} from "@mui/material";
-import {createTab} from "../utilities/loaders";
+import { Tooltip } from '@mui/material';
+import { createTab } from '../utilities/loaders';
 
 export default function TopAppBar() {
-  const [anchorEl, setAnchorEl] = React.useState(null)
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
   const menuItems = [
-      {'name': 'search', 'label': 'Search Dashboard', 'url': '/search.html'},
-      {'name': 'options', 'label': 'Settings', 'url': '/options.html'},
-      {'name': 'videos', 'label': 'Training Videos', 'url': 'https://www.youtube.com/@your-rapport'},
-      {'name': 'login', 'label': 'Authenticate', 'url': '/login.html'},
-  ]
+    { name: 'search', label: 'Search Dashboard', url: '/search.html' },
+    { name: 'options', label: 'Settings', url: '/options.html' },
+    {
+      name: 'videos',
+      label: 'Training Videos',
+      url: 'https://www.youtube.com/@your-rapport',
+    },
+    { name: 'login', label: 'Authenticate', url: '/login.html' },
+  ];
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -29,11 +33,11 @@ export default function TopAppBar() {
     const { optionValue } = event.currentTarget.dataset;
     const found = menuItems.find((menuItem) => menuItem.name === optionValue);
 
-    if(found === undefined) {
+    if (found === undefined) {
       return;
     }
     createTab(found.url);
-  }
+  };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -56,8 +60,7 @@ export default function TopAppBar() {
             open={open}
             onClose={handleClose}
           >
-          {
-            menuItems.map((menuItem) => (
+            {menuItems.map((menuItem) => (
               <MenuItem
                 key={menuItem.label}
                 onClick={handleClose}
@@ -69,7 +72,9 @@ export default function TopAppBar() {
           </Menu>
           <span>&nbsp;&nbsp;&nbsp;</span>
           <Tooltip title="Your Rapport">
-            <a href={'https://osintliar.com/store/Who-Am-I-p598981597'}><img alt="Your Rapport" src="/icon-48.png"/></a>
+            <a href={'https://osintliar.com/store/Who-Am-I-p598981597'}>
+              <img alt="Your Rapport" src="/icon-48.png" />
+            </a>
           </Tooltip>
           <span>&nbsp;&nbsp;&nbsp;</span>
           <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>

@@ -5,12 +5,12 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import {DialogContentText} from "@mui/material";
-import {useEffect} from "react";
-import {Fragment} from "@emotion/react/jsx-runtime";
-import IconButton from "@mui/material/IconButton";
-import {CloudDownload} from "@mui/icons-material";
-import {downloadBase64Image} from "../../utilities/transformers";
+import { DialogContentText } from '@mui/material';
+import { useEffect } from 'react';
+import { Fragment } from '@emotion/react/jsx-runtime';
+import IconButton from '@mui/material/IconButton';
+import { CloudDownload } from '@mui/icons-material';
+import { downloadBase64Image } from '../../utilities/transformers';
 
 /**
  *
@@ -22,9 +22,8 @@ export default function PreviewImageDialog(props) {
   const [open, setOpen] = React.useState(false);
 
   useEffect(() => {
-    setOpen(props.isOpen)
+    setOpen(props.isOpen);
   }, [props.isOpen]);
-
 
   const handleClose = () => {
     setOpen(false);
@@ -34,7 +33,7 @@ export default function PreviewImageDialog(props) {
   return (
     <Fragment>
       <Dialog
-        color='grey'
+        color="grey"
         fullWidth={true}
         maxWidth={'xl'}
         open={open}
@@ -43,19 +42,31 @@ export default function PreviewImageDialog(props) {
         <DialogTitle>
           <IconButton>
             <CloudDownload
-                onClick={() => downloadBase64Image(props.record.screenshot, `${props.record.uuid}.png`)}
+              onClick={() =>
+                downloadBase64Image(
+                  props.record.screenshot,
+                  `${props.record.uuid}.png`
+                )
+              }
             />
           </IconButton>
-          {`Collected On: ${props.record.createdOnLocalTime} - ${props.record.url}` }
+          {`Collected On: ${props.record.createdOnLocalTime} - ${props.record.url}`}
         </DialogTitle>
         <DialogContent>
           <DialogContentText></DialogContentText>
           <Box>
-            <img src={props.record.screenshot} title={props.record.title} width={'100%'} height={'100%'}></img>
+            <img
+              src={props.record.screenshot}
+              title={props.record.title}
+              width={'100%'}
+              height={'100%'}
+            ></img>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} variant={'contained'} color={'cancel'}>Close</Button>
+          <Button onClick={handleClose} variant={'contained'} color={'cancel'}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Fragment>

@@ -6,13 +6,13 @@ import {
   DialogActions,
   Button,
   Typography,
-  Input
+  Input,
 } from '@mui/material';
-import {CloudUpload} from "@mui/icons-material";
-import {Fragment} from "@emotion/react/jsx-runtime";
-import IconButton from "@mui/material/IconButton";
-import {getLocalItem, setLocalItem} from "../../models/db/local";
-import { hideLoader, showLoader} from "../../utilities/loaders";
+import { CloudUpload } from '@mui/icons-material';
+import { Fragment } from '@emotion/react/jsx-runtime';
+import IconButton from '@mui/material/IconButton';
+import { getLocalItem, setLocalItem } from '../../models/db/local';
+import { hideLoader, showLoader } from '../../utilities/loaders';
 
 export default function UploadDataDialog() {
   const [open, setOpen] = useState(false);
@@ -30,14 +30,18 @@ export default function UploadDataDialog() {
     }
 
     const reader = new FileReader();
-    reader.onload = async(e) => {
+    reader.onload = async (e) => {
       try {
-        let configurationRegistry = await getLocalItem('configuration') ?? { authToken: false, productVersion: 'trial'};
+        let configurationRegistry = (await getLocalItem('configuration')) ?? {
+          authToken: false,
+          productVersion: 'trial',
+        };
         // get/set the record count
-        configurationRegistry.recordCount = configurationRegistry?.recordCount ?? 0
+        configurationRegistry.recordCount =
+          configurationRegistry?.recordCount ?? 0;
         const newRecords = JSON.parse(e.target.result);
         // TODO: fix issue with adding duplicates, the uuid is the unique key
-        let rapports = await getLocalItem('rapports') ?? [];
+        let rapports = (await getLocalItem('rapports')) ?? [];
         // TODO: sort by dates.
         configurationRegistry.screenShotCount = rapports.length;
         await setLocalItem('rapports', rapports.concat(newRecords));
@@ -46,7 +50,6 @@ export default function UploadDataDialog() {
         await setLocalItem('configuration', configurationRegistry);
         setOpen(false);
         hideLoader();
-
       } catch (err) {
         setError('Invalid JSON format.');
         hideLoader();
@@ -57,14 +60,15 @@ export default function UploadDataDialog() {
 
   return (
     <Fragment>
-        <IconButton
+      <IconButton
         key={'import-data'}
         aria-controls={`menu`}
         aria-haspopup="true"
-        onClick={() => setOpen(true) }
-        size="large">
-            <CloudUpload style={{zIndex:1000}} variant="outlined" />
-        </IconButton>
+        onClick={() => setOpen(true)}
+        size="large"
+      >
+        <CloudUpload style={{ zIndex: 1000 }} variant="outlined" />
+      </IconButton>
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>Upload a Your Rapport Dataset</DialogTitle>
         <DialogContent>
@@ -80,7 +84,13 @@ export default function UploadDataDialog() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant={'contained'} color={'cancel'} onClick={() => setOpen(false)}>Cancel</Button>
+          <Button
+            variant={'contained'}
+            color={'cancel'}
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
         </DialogActions>
       </Dialog>
     </Fragment>

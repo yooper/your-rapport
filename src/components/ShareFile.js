@@ -1,6 +1,6 @@
-import React from 'react'
+import React from 'react';
 import ShareIcon from '@mui/icons-material/Share';
-import {base64ToFile} from "../utilities/transformers";
+import { base64ToFile } from '../utilities/transformers';
 
 /**
  * Doesn't work due to Chrome Extension security policy
@@ -9,17 +9,17 @@ import {base64ToFile} from "../utilities/transformers";
  * @returns {JSX.Element}
  * @constructor
  */
-export function ShareFile(props){
-    const { record } = props;
-    const handleClick = async() => {
-        if (navigator.share) {
-            const file = base64ToFile(record.screenshot);
-            navigator.share({ files: [file], title: 'Share File' });
-        }
+export function ShareFile(props) {
+  const { record } = props;
+  const handleClick = async () => {
+    if (navigator.share) {
+      const file = base64ToFile(record.screenshot);
+      navigator.share({ files: [file], title: 'Share File' });
     }
-    return (
-        <>
-          <ShareIcon onClick={ handleClick } />
-        </>
-    )
+  };
+  return (
+    <>
+      <ShareIcon onClick={handleClick} />
+    </>
+  );
 }
