@@ -104,7 +104,7 @@ function getScrollDetailsByHostName() {
  * @param message the message received
  * @returns {boolean}
  */
-export function autoScroller(message, sendResponse) {
+export function autoScroller(message) {
 
   const autoScroll = () => {
 
@@ -159,8 +159,15 @@ export function autoScroller(message, sendResponse) {
 
       if('automation' in message){
         if(message.automation.unit === 'count' && message.automation.value < screenCollectionCount){
-          state = 'stopCapture'; // max screenshots collected
-          sendResponse({automation: message.automation});
+          state = 'stopCapture'; // max screenshots
+          message.automation.completedOn = Date.now();
+          message.screenShotCount = screenCollectionCount;
+          console.log('automation task completed')
+          // send the message to stop
+          chrome.runtime.sendMessage({
+            cmd: 'bulkCollectionComplete',
+            automation: message.automation
+          });
         }
       }
     })();

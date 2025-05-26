@@ -12,12 +12,14 @@ import {
   TextareaAutosize,
 } from '@mui/material';
 import { getLocalItem, setLocalItem } from '../../../models/db/local';
-import { processNotification } from '../../../utilities/loaders';
+import { hydrate, processNotification } from '../../../utilities/loaders';
 import IconButton from '@mui/material/IconButton';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import FormGroup from '@mui/material/FormGroup';
 import HelperPopover from '../../HelperPopover';
 import Grid from '@mui/material/Unstable_Grid2';
+import { BulkAutomationUrl } from '../../../models/schemas/BulkAutomationUrl';
+import { Configuration } from '../../../models/schemas/Configuration';
 
 export default function BulkAutomationAddDialog(props) {
   const [open, setOpen] = useState(false);
@@ -38,20 +40,39 @@ export default function BulkAutomationAddDialog(props) {
     setOpen(false);
   };
 
+  /**
+   * Helps with filter bad urls
+   * @param string
+   * @returns {boolean}
+   * @private
+   */
+  function _isValidUrl(string) {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   const handleSave = async () => {
     if (text.length > 0 && text.trim().length > 0) {
-      const urls = text.split('\n');
+      const urls = text.split('\n').filter(t => t && _isValidUrl(t));
       const existingUrls = (await getLocalItem('bulk_automation')) ?? [];
-
+      const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
+      const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', '100')
       let automateUrls = urls.map((url) => {
         return {
           uuid: crypto.randomUUID(),
           url: url,
           createdOn: Date.now(),
           completedOn: null,
-          unit: unit,
-          value: 10, // TODO; set to a configuration
-        };
+          ranOn: null,
+          unit: unitDefault,
+          value: valueDefault,
+          closeTabAfterwards: false,
+          screenShotsCollected: 0
+        }
       });
 
       const rows = existingUrls.concat(automateUrls);

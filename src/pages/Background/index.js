@@ -7,6 +7,7 @@ import {
   sleep,
 } from '../../utilities/loaders';
 import {
+  deleteRecord,
   getLocalItem,
   setLocalItem,
   updateRecord,
@@ -15,6 +16,7 @@ import { initializeContextMenus } from '../../services/context_menu_services';
 import { Selector } from '../../models/schemas/Selector';
 import ExtensionPin from '../../utilities/ExtensionPin';
 import { findAllMatches, scanPage } from '../../utilities/transformers';
+import { Configuration } from '../../models/schemas/Configuration';
 
 /**
  * Initialize configuration values when the app is installed
@@ -65,7 +67,6 @@ chrome.commands.onCommand.addListener( (command) => {
  * Receives messages from the content script
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-
   if(message.cmd === 'initStartCapture'){
     (async () => {
       const activeTab = await getActiveTab();
@@ -74,7 +75,52 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return false;
   }
+  else if(message.cmd === 'bulkAutomationUrl'){
+    (async () => {
+      try {
+        await createTab(message.automation.url);
+        await sleep( parseInt( await Configuration.getConfigurationValue('automationDelayOpenTabDefault', '3000'))); // TODO: Make this a configuration value, allows for page to full load
+        message.automation.ranOn = Date.now();
+        await updateRecord('bulk_automation', 'uuid', message.automation);
+        // forward the message to the content script
+        const activeTab = await getActiveTab();
+        await chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: message.automation})
+      }
+      catch (err) {
+        console.log(err)
+      }
+    })();
+    return false;
+  }
+  else if(message.cmd === 'bulkCollectionComplete'){
+    (async () => {
+      try {
+        if(message.automation.closeTabAfterwards){
+          await chrome.tabs.remove(sender.tab.id);
+        }
+        /* @BulkAutomationUrl */
+        let automation = message.automation;
+        automation.completedOn = Date.now();
 
+        // update the record
+        await updateRecord('bulk_automation', 'uuid', automation);
+        const automations = await getLocalItem('bulk_automation');
+        if(automations.length === 0){
+          // stop processing requests
+          return;
+        }
+        await createTab(automations[0].url);
+        await sleep(3000); // TODO: Make this a configuration value, allows for page to full load
+        // forward the message to the content script
+        const activeTab = await getActiveTab();
+        await chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: automations[0]})
+      }
+      catch (err) {
+        console.log(err)
+      }
+    })();
+    return false;
+  }
 
   (async () => {
     switch (message.cmd) {
@@ -82,23 +128,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await capture(sender.tab, message)
         sendResponse({flag: true});
         break;
-      case 'bulkAutomation':
-        try {
-          const tab = await createTab(message.automation.url);
-          await sleep(3000); // TODO: Make this a configuration value, allows for page to full load
-          // forward the message to the content script
-          chrome.tabs.sendMessage(tab.id, {cmd: 'startCapture', automation: message.automation}).then( response => {
-            if (response.uuid === message.automation.uuid) {
-              chrome.tabs.remove(tab.id);
-              // sends the response back to the extension page that made the request
-              sendResponse({ uuid: message.automation.uuid });
-            }
-          })
-        } catch (err) {
-          console.log(err)
-          sendResponse({ uuid: message.automation.uuid, error: err.message });
-        }
-        break;
+
       case 'updateScreenShotRecord':
         await updateRecord('rapports', 'uuid', message.record);
         sendResponse({ completed: true });
