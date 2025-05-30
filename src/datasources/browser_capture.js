@@ -2,6 +2,8 @@ import { addRecord, getLocalItem, setLocalItem } from '../models/db/local';
 import { findAllMatches, sha256 } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
+import { Configuration } from '../models/schemas/Configuration';
+import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
 
 /**
  * Capture the tab and persist it into local storage
@@ -12,14 +14,10 @@ import ExtensionPin from '../utilities/ExtensionPin';
 export async function capture(tab, message = {}) {
 
   ExtensionPin.setDefaultNotSaved(tab);
-
-  let configurationRegistry = (await getLocalItem('configuration')) ?? {
-    authToken: false,
-    productVersion: 'trial',
-  };
+  let configuration = await Configuration.getConfiguration();
   // get/set the record count
-  configurationRegistry.screenShotCount =
-    configurationRegistry?.screenShotCount ?? 0;
+  configuration.screenShotCount =
+    configuration?.screenShotCount ?? 0;
 
   // normalize text
   const text =
@@ -29,19 +27,25 @@ export async function capture(tab, message = {}) {
 
   try{
     // search the saved record for keywords
-    const selectors = (await getLocalItem('selectors')) ?? [];
+    const selectors = (await getLocalItem(SELECTOR)) ?? [];
     const screenShot = await chrome.tabs.captureVisibleTab();
     const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
 
-    await addRecord('rapports', 'uuid', record);
+    await addRecord(RAPPORT, UUID, record);
     // update the configuration last saved on metadata
-    configurationRegistry.lastSavedOn = Date.now().toString();
-    configurationRegistry.screenShotCount++;
-    await setLocalItem('configuration', configurationRegistry);
+    configuration[UPDATED_ON] = Date.now().toString();
+    configuration.screenShotCount++;
+    await Configuration.setConfiguration(configuration)
     ExtensionPin.setDefaultSaved(tab);
   }
-  catch(e){
+  catch(error){
+    // TODO: ERROR handling for too many captures
+    if(error){
+      console.log(error);
+    }
     ExtensionPin.setBgColorAndText('red', 'ERR', tab);
+    // stop scrolling when an error occurs
+    chrome.tabs.sendMessage(tab.id, { cmd: 'stopCapture' });
   }
   finally {
     setTimeout(() => {

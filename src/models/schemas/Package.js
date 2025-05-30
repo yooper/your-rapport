@@ -1,5 +1,6 @@
 import { convertKeysToCamelCase } from '../../utilities/transformers';
 import { addRecord } from '../db/local';
+import { DISCOVERY_PLUGIN } from '../../services/constants';
 
 class Package {
   constructor(data) {
@@ -24,6 +25,6 @@ class Package {
     const response = await fetch(record.url);
     const data = await response.json();
     const discoveryPlugin = convertKeysToCamelCase(data);
-    await addRecord('discovery_plugins', 'uuid', discoveryPlugin);
+    await addRecord(DISCOVERY_PLUGIN, UUID, discoveryPlugin);
   }
 }

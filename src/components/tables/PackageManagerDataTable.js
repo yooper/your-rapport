@@ -13,6 +13,7 @@ import { convertKeysToCamelCase } from '../../utilities/transformers';
 import { addRecord, deleteRecord, getLocalItem } from '../../models/db/local';
 import IconButton from '@mui/material/IconButton';
 import HelperPopover from '../HelperPopover';
+import { DISCOVERY_PLUGIN } from '../../services/constants';
 
 export default function PackageManagerDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -188,7 +189,7 @@ export default function PackageManagerDataTable(props) {
       },
     ];
 
-    const notVisibleColumns = ['uuid', 'url', 'type'];
+    const notVisibleColumns = [UUID, 'url', 'type'];
     notVisibleColumns.forEach((fieldName) => {
       columns.push({
         name: fieldName,
@@ -217,7 +218,7 @@ export default function PackageManagerDataTable(props) {
       setIsLoading(true);
       showLoader();
       for (const [idx, value] of Object.entries(records.lookup)) {
-        await deleteRecord('discoveryPlugins', 'uuid', rows[idx]);
+        await deleteRecord(DISCOVERY_PLUGIN, UUID, rows[idx]);
       }
       await fetchData();
       setIsLoading(false);

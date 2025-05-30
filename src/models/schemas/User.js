@@ -1,4 +1,5 @@
 import { getLocalItem, setLocalItem } from '../db/local';
+import { USER } from '../../services/constants';
 
 export class User {
   constructor(authToken = null, license = 'freemium') {
@@ -74,7 +75,7 @@ export class User {
 
   async save() {
     // license updated, or downgraded to freemium upon failure
-    await setLocalItem('user', JSON.stringify(this));
+    await setLocalItem(USER, JSON.stringify(this));
   }
 }
 
@@ -83,7 +84,7 @@ export class User {
  * @returns {Promise<User>}
  */
 export async function getUser() {
-  const userObj = (await getLocalItem('user')) ?? {
+  const userObj = (await getLocalItem(USER)) ?? {
     authToken: false,
     license: 'freemium',
   };

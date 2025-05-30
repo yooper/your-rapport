@@ -20,6 +20,7 @@ import HelperPopover from '../../HelperPopover';
 import Grid from '@mui/material/Unstable_Grid2';
 import { BulkAutomationUrl } from '../../../models/schemas/BulkAutomationUrl';
 import { Configuration } from '../../../models/schemas/Configuration';
+import { BULK_AUTOMATION } from '../../../services/constants';
 
 export default function BulkAutomationAddDialog(props) {
   const [open, setOpen] = useState(false);
@@ -58,9 +59,9 @@ export default function BulkAutomationAddDialog(props) {
   const handleSave = async () => {
     if (text.length > 0 && text.trim().length > 0) {
       const urls = text.split('\n').filter(t => t && _isValidUrl(t));
-      const existingUrls = (await getLocalItem('bulk_automation')) ?? [];
+      const existingUrls = (await getLocalItem(BULK_AUTOMATION)) ?? [];
       const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
-      const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', '100')
+      const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', '5')
       let automateUrls = urls.map((url) => {
         return {
           uuid: crypto.randomUUID(),
@@ -70,14 +71,14 @@ export default function BulkAutomationAddDialog(props) {
           ranOn: null,
           unit: unitDefault,
           value: valueDefault,
-          closeTabAfterwards: false,
+          keepTabOpen: true,
           screenShotsCollected: 0
         }
       });
 
       const rows = existingUrls.concat(automateUrls);
       props.setRows(rows);
-      await setLocalItem('bulk_automation', rows);
+      await setLocalItem(BULK_AUTOMATION, rows);
       processNotification({
         title: 'Bulk Automation',
         message: `${urls.length} have been added to the bulk automation queue.`,

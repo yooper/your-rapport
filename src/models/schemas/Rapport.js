@@ -20,6 +20,7 @@ export class Rapport {
     tags,
     caseManagementUuid,
     note,
+    bulkAutomationUuid
   }) {
     this.uuid = uuid;
     this.title = title;
@@ -39,6 +40,7 @@ export class Rapport {
     this.tags = tags;
     this.caseManagementUuid = caseManagementUuid;
     this.note = note;
+    this.bulkAutomationUuid = bulkAutomationUuid;
   }
 
   static async createFromTab(tab, text, screenShot, selectors) {

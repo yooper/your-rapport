@@ -16,6 +16,7 @@ import BrowserSettingsForm from '../forms/BrowserSettingsForm';
 import PackageManagerDataTable from '../tables/PackageManagerDataTable';
 import SelectorDataTable from '../tables/SelectorDataTable';
 import DiscoveryPluginDataTable from '../tables/DiscoveryPluginDataTable';
+import { DISCOVERY_PLUGIN } from '../../services/constants';
 
 export default function OptionsLayout() {
   const urlParams = new URL(window.location.href).searchParams;
@@ -32,7 +33,7 @@ export default function OptionsLayout() {
     },
     {
       label: 'Discovery Plugins',
-      key: 'discovery_plugin',
+      key: DISCOVERY_PLUGIN,
       message:
         'Connect or enrich your data to other service providers. Autolinks data repositories to your selectors.',
     },
@@ -84,7 +85,7 @@ function IconMapper(props) {
   switch (props.icon) {
     case 'browser':
       return <WebIcon />;
-    case 'discovery_plugin':
+    case DISCOVERY_PLUGIN:
       return <ExtensionIcon />;
     case 'package_management':
       return <ListAltIcon />;
@@ -99,7 +100,7 @@ function Renderer(props) {
   switch (props.selectedComponent) {
     case 'browser':
       return <BrowserSettingsForm />;
-    case 'discovery_plugin':
+    case DISCOVERY_PLUGIN:
       return <DiscoveryPluginDataTable />;
     case 'package_management':
       return <PackageManagerDataTable />;

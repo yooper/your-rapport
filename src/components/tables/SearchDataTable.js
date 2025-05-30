@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import MUIDataTable from 'mui-datatables';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
 import { hideLoader, showLoader } from '../../utilities/loaders';
-import { getLocalItem, setLocalItem } from '../../models/db/local';
+import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
 import SearchTableOptionMenu from '../menus/SearchTableOptionMenu';
 import PreviewImageDialog from '../dialogs/PreviewImageDialog';
@@ -12,19 +12,52 @@ import { downloadJsonData } from '../../utilities/transformers';
 import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
 import { Tooltip } from '@mui/material';
+import { Configuration } from '../../models/schemas/Configuration';
+import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
+import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 
-export default function SearchDataTable(props) {
+export default function SearchDataTable() {
+  const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectors, setSelectors] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState([]);
 
-  useEffect(() => {
-    async function fetchData() {
-      setSelectors((await getLocalItem('selectors')) ?? []);
-      setDiscoveryPlugins((await getLocalItem('discoveryPlugins')) ?? []);
-    }
+
+    useEffect(() => {
+      async function fetchData() {
+        showLoader();
+        setIsLoading(true);
+        const start = performance.now()
+        setSelectors((await getLocalItem(SELECTOR)) ?? []);
+        setDiscoveryPlugins(await getLocalItem(DISCOVERY_PLUGIN) ?? []);
+        const screenshots = (await getLocalItem(RAPPORT)) ?? [];
+        const elapsed = performance.now() - start;
+        console.log(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
+        setRows(screenshots ?? []);
+        setIsLoading(false);
+        hideLoader();
+      }
+
     fetchData();
+
+    /**
+     * Check if any updates occurred
+     * @type {number}
+     */
+    const intervalId = setInterval(async () => {
+
+      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
+      const pageCachedOn = localStorage.getItem(UPDATED_ON) ?? null;
+
+      if(updatedOn !== pageCachedOn){
+        await fetchData(); // check for new data every 10 seconds.
+        localStorage.setItem(UPDATED_ON, updatedOn);
+      }
+    }, 3000); // wait 5 seconds before re-renders
+    return () => clearInterval(intervalId);
   }, []);
+
+
   const columns = [
     {
       name: 'screenshot',
@@ -34,7 +67,7 @@ export default function SearchDataTable(props) {
         searchable: false,
         sort: true,
         customBodyRenderLite: (dataIndex) => {
-          const record = props.rows[dataIndex];
+          const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
           return (
             <>
@@ -42,7 +75,7 @@ export default function SearchDataTable(props) {
                 className={'clickable'}
                 width="175"
                 height="125"
-                src={props.rows[dataIndex].screenshot}
+                src={rows[dataIndex].screenshot}
                 onClick={() => {
                   setIsOpen(true);
                 }}
@@ -105,8 +138,8 @@ export default function SearchDataTable(props) {
                 <span>
                   <NotesDialog
                     record={record}
-                    rows={props.rows}
-                    setRows={props.setRows}
+                    rows={rows}
+                    setRows={setRows}
                   />
                 </span>
                 <span className={'page_title'}>Notes:</span>
@@ -133,11 +166,11 @@ export default function SearchDataTable(props) {
         },
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
-          if (record?.selectors?.length == 0) {
+          if (record.selectors?.length == 0) {
             return <div></div>;
           }
-          // TODO add support for regexes.
-          return record?.selectors?.map((selector, index) => (
+          // TODO add support for regex activated discovery plugins.
+          return record.selectors.map((selector, index) => (
             <DiscoveryPluginDialog
               key={`selector-${selector.key}-${selector.selectorTypeName}-${record.uuid}`}
               plugins={discoveryPlugins.filter((plugin) => {
@@ -152,15 +185,29 @@ export default function SearchDataTable(props) {
         },
       },
     },
-    {
-      name: 'domain',
-      label: 'DOMAIN',
-      options: {
-        filter: true,
-        sort: true,
-        searchable: true,
+      {
+        name: 'domain',
+        label: 'DOMAINS',
+        options: {
+          filterType: 'multiselect',
+          filter: true,
+          sort: true,
+          customBodyRender: async(value, tableMeta, updateValue) => {
+            const record = getRecord(tableMeta.rowData)
+
+            return <DiscoveryPluginDialog
+                key={`domain-${value}-${record.Uuid}`}
+                plugins={discoveryPlugins.filter((plugin) => {
+                  return plugin.pluginType === 'domain';
+                })}
+                title={'domain'}
+                record={record}
+                uxType={'chip'}
+                pluginValue={value}
+            />
+          }
+        },
       },
-    },
     {
       name: 'createdOn',
       label: 'COLLECTED OO',
@@ -169,13 +216,13 @@ export default function SearchDataTable(props) {
         sort: true,
         searchable: false,
         customBodyRenderLite: (dataIndex) => {
-          const date = new Date(parseInt(props.rows[dataIndex].createdOn));
+          const date = new Date(parseInt(rows[dataIndex].createdOn));
           return <div>{date.toLocaleString()}</div>;
         },
       },
     },
     {
-      name: 'uuid',
+      name: 'options',
       label: 'OPTIONS',
       options: {
         print: false,
@@ -209,6 +256,15 @@ export default function SearchDataTable(props) {
     {
       name: 'note',
       label: 'Note',
+      options: {
+        display: 'excluded',
+        filter: false,
+        sort: false,
+      },
+    },
+    {
+      name: UUID,
+      label: 'UUID',
       options: {
         display: 'excluded',
         filter: false,
@@ -249,22 +305,17 @@ export default function SearchDataTable(props) {
   const rowsDelete = async (records, data) => {
     setIsLoading(true);
     showLoader();
-    const uuids = [];
+    const deleteRecords = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
-      uuids.push(props.rows[idx].uuid);
+      deleteRecords.push(rows[idx])
     }
-    // deletes the rows in the ui and re-saves
-    const deleteSet = new Set(uuids);
-    const filteredResults = props.rows.filter(
-      (record) => !deleteSet.has(record.uuid)
-    );
-    props.setRows(filteredResults);
-    await setLocalItem('rapports', filteredResults);
+
+    await deleteBulkRecords(RAPPORT, UUID, deleteRecords);
+    setRows(await getLocalItem(RAPPORT));
     // update the configuration last
-    let configurationRegistry = (await getLocalItem('configuration')) ?? {};
-    configurationRegistry.lastSavedOn = Date.now().toString();
-    configurationRegistry.screenShotCount = filteredResults.length;
-    await setLocalItem('configuration', configurationRegistry);
+    let configuration = Configuration.getConfiguration();
+    configuration.screenShotCount = rows.length;
+    await Configuration.setConfiguration(configuration);
     setIsLoading(false);
     hideLoader();
   };
@@ -276,9 +327,11 @@ export default function SearchDataTable(props) {
       },
     },
     onDownload: (buildHead, buildBody, columns, data) => {
-      getLocalItem('rapports').then((rapports) => {
-        downloadJsonData(rapports, 'your-rapport.json');
-      });
+        showLoader();
+        getLocalItem(RAPPORT).then((rapports) => {
+          downloadJsonData(rapports, 'your-rapport.json');
+          hideLoader();
+        });
       return false;
     },
     searchOpen: true,
@@ -310,19 +363,28 @@ export default function SearchDataTable(props) {
     customToolbar: () => {
       return (
         <>
-          <UploadDataDialog />
+          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading}/>
         </>
       );
     },
+    customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
+          <SearchDataTableToolbarSelect
+              selectedRows={selectedRows}
+              displayData={displayData}
+              columns={columns}
+              setSelectedRows={setSelectedRows}
+              onRowsDelete={rowsDelete}
+          />
+      ),
   };
 
-  if (props.isLoading) {
+  if (isLoading) {
     return <div></div>;
   }
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
-      {!props.isLoading && (
-        <MUIDataTable data={props.rows} columns={columns} options={options} />
+      {!isLoading && (
+        <MUIDataTable data={rows} columns={columns} options={options} />
       )}
     </Box>
   );

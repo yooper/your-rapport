@@ -1,20 +1,23 @@
 import { getLocalItem, setLocalItem } from '../db/local';
+import { CONFIGURATION } from '../../services/constants';
 
 export class Configuration{
 
   static async getConfiguration(){
-    const configurationRegistry = (await getLocalItem('configuration')) ?? {
+    const configuration = (await getLocalItem(CONFIGURATION)) ?? {
       authToken: false,
       productVersion: 'trial',
       automationUnitDefault: 'count',
       automationValueDefault: 100,
-      automationDelayOpenTabDefault: 3000
+      automationDelayTabOpenDefault: 3000,
+      automationKeepTabOpenDefault: true
+
     };
-    return configurationRegistry;
+    return configuration;
   }
 
   static async setConfiguration(configuration){
-    await setLocalItem('configuration', configuration);
+    await setLocalItem(CONFIGURATION, configuration);
     return configuration;
   }
 

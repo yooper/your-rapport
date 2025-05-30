@@ -13,13 +13,24 @@ import { Fragment } from '@emotion/react/jsx-runtime';
 import IconButton from '@mui/material/IconButton';
 import { getLocalItem, setLocalItem } from '../../models/db/local';
 import { hideLoader, showLoader } from '../../utilities/loaders';
+import { Configuration } from '../../models/schemas/Configuration';
+import { RAPPORT, UPDATED_ON } from '../../services/constants';
 
-export default function UploadDataDialog() {
+/**
+ * TODO: Add support for extracting selectors from incoming records
+ * TODO: Add audit log support for duplicate records
+ * @param props
+ * @returns {JSX.Element}
+ * @constructor
+ */
+export default function UploadDataDialog(props) {
+  const { isLoading, setIsLoading} = props;
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
 
   const handleFileChange = (event) => {
     showLoader();
+    setIsLoading(true);
     const file = event.target.files[0];
     setError('');
     if (!file) return;
@@ -32,27 +43,28 @@ export default function UploadDataDialog() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        let configurationRegistry = (await getLocalItem('configuration')) ?? {
-          authToken: false,
-          productVersion: 'trial',
-        };
+        let configuration = await Configuration.getConfiguration();
         // get/set the record count
-        configurationRegistry.recordCount =
-          configurationRegistry?.recordCount ?? 0;
+        configuration.recordCount =
+          configuration?.recordCount ?? 0;
         const newRecords = JSON.parse(e.target.result);
         // TODO: fix issue with adding duplicates, the uuid is the unique key
-        let rapports = (await getLocalItem('rapports')) ?? [];
+        let rapports = (await getLocalItem(RAPPORT)) ?? [];
         // TODO: sort by dates.
-        configurationRegistry.screenShotCount = rapports.length;
-        await setLocalItem('rapports', rapports.concat(newRecords));
+        configuration.screenShotCount = rapports.length;
+        await setLocalItem(RAPPORT, rapports.concat(newRecords));
         // update the configuration last
-        configurationRegistry.lastSavedOn = Date.now().toString();
-        await setLocalItem('configuration', configurationRegistry);
-        setOpen(false);
-        hideLoader();
+        configuration[UPDATED_ON] = Date.now();
+        await Configuration.setConfiguration(configuration);
+
       } catch (err) {
         setError('Invalid JSON format.');
         hideLoader();
+      }
+      finally {
+        setIsLoading(false);
+        hideLoader();
+        setOpen(false);
       }
     };
     reader.readAsText(file);

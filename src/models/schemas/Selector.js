@@ -6,13 +6,16 @@ import {
   updateRecord,
 } from '../db/local';
 import { findAllMatches } from '../../utilities/transformers';
+import { CONFIGURATION, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
+import { Configuration } from './Configuration';
 
 export class Selector {
-  constructor(key, selectorTypeName, description = null) {
+  constructor(key, selectorTypeName, description = null, active = true) {
     this.key = key;
     this.selectorTypeName = selectorTypeName;
     this.description = description;
     this.count = 0;
+    this.active = true;
   }
 
   /**
@@ -22,10 +25,11 @@ export class Selector {
   static async add(selector) {
     // normalize selector to lower case
     selector.key = selector.key.toLowerCase().trim();
-    await addRecord('selectors', 'key', selector);
+    await addRecord(SELECTOR, 'key', selector);
     // scan the existing records
-    let records = (await getLocalItem('rapports')) ?? [];
+    let records = (await getLocalItem(RAPPORT)) ?? [];
     await Selector.findAndAssignMatches(records, [selector]);
+    await Configuration.setConfigurationValue(UPDATED_ON, Date.now());
   }
 
   /**
@@ -34,14 +38,14 @@ export class Selector {
    * @returns {Promise<void>}
    */
   static async delete(selector) {
-    await deleteRecord('selectors', 'key', selector);
-    let records = (await getLocalItem('rapports')) ?? [];
+    await deleteRecord(SELECTOR, 'key', selector);
+    let records = (await getLocalItem(RAPPORT)) ?? [];
     for (let record of records) {
       record.selectors = record.selectors.filter(
         (item) => item.key === selector.key
       );
     }
-    await setLocalItem('rapports', records);
+    await setLocalItem(RAPPORT, records);
   }
 
   /***
@@ -56,11 +60,11 @@ export class Selector {
       record.selectors = findAllMatches(record.text, selectors, 1).concat(
         record.selectors ?? []
       );
-      await updateRecord('rapports', 'uuid', record);
+      await updateRecord(RAPPORT, UUID, record);
     }
 
-    const configurationRegistry = await getLocalItem('configuration');
-    configurationRegistry.lastSavedOn = Date.now().toString();
-    await setLocalItem('configuration', configurationRegistry);
+    const configuration = await getLocalItem(CONFIGURATION);
+    configuration[UPDATED_ON] = Date.now().toString();
+    await setLocalItem(CONFIGURATION, configuration);
   }
 }

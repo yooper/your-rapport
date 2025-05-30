@@ -6,6 +6,8 @@ import SelectorFormDialog from '../dialogs/SelectorFormDialog';
 import { getLocalItem } from '../../models/db/local';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import { Selector } from '../../models/schemas/Selector';
+import { BULK_AUTOMATION, RAPPORT, SELECTOR, UPDATED_ON } from '../../services/constants';
+import { Configuration } from '../../models/schemas/Configuration';
 
 export default function SelectorDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -15,12 +17,29 @@ export default function SelectorDataTable(props) {
     async function fetchData() {
       showLoader();
       setIsLoading(true);
-      const records = (await getLocalItem('selectors')) ?? [];
+      const records = (await getLocalItem(SELECTOR)) ?? [];
       setRows(records);
       setIsLoading(false);
       hideLoader();
     }
     fetchData();
+    /**
+     * Check if any updates occurred
+     * @type {number}
+     */
+    const intervalId = setInterval(async () => {
+
+      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
+      const pageCachedOn = localStorage.getItem(SELECTOR) ?? null;
+
+      if(updatedOn !== pageCachedOn){
+        await fetchData(); // check for new data every 10 seconds.
+        localStorage.setItem(UPDATED_ON, updatedOn);
+        localStorage.setItem(SELECTOR, updatedOn);
+      }
+    }, 10000); // wait 10 seconds before re-renders
+    return () => clearInterval(intervalId);
+
   }, []);
 
   const columns = [
@@ -48,12 +67,7 @@ export default function SelectorDataTable(props) {
         keys.push(rows[idx].key);
         await Selector.delete(rows[idx]);
       }
-      // deletes the rows in the ui and re-saves
-      const deleteSet = new Set(keys);
-      const filteredResults = rows.filter(
-        (record) => !deleteSet.has(record.key)
-      );
-      setRows(filteredResults);
+      setRows(await getLocalItem(SELECTOR));
       setIsLoading(false);
       hideLoader();
     },

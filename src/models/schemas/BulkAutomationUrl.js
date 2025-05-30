@@ -9,7 +9,7 @@ export class BulkAutomationUrl {
     value,
     screenShotsCollected = 0,
     createdOn = Date.now(),
-    closeTabAfterwards = true,
+    keepTabOpen = true,
     ranOn = null,
     completedOn = null,
     error = null
@@ -19,7 +19,7 @@ export class BulkAutomationUrl {
     this.unit = unit;
     this.value = value;
     this.screenShotsCollected = screenShotsCollected;
-    this.closeTabAfterwards = closeTabAfterwards
+    this.keepTabOpen = keepTabOpen
     this.createdOn = createdOn;
     this.ranOn = ranOn;
     this.completedOn = completedOn;

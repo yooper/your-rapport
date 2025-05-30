@@ -4,6 +4,7 @@ import { useEffect, useState, Fragment } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import {
+  deleteBulkRecords,
   deleteRecord,
   getLocalItem,
   updateRecord,
@@ -16,6 +17,7 @@ import {
 import { Selector } from '../../models/schemas/Selector';
 import HelperPopover from '../HelperPopover';
 import IconButton from '@mui/material/IconButton';
+import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -47,7 +49,7 @@ export default function DiscoveryPluginDataTable() {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      setRows((await getLocalItem('discoveryPlugins')) ?? []);
+      setRows((await getLocalItem(DISCOVERY_PLUGIN)) ?? []);
       let allPluginTypes = [...new Set([...basePluginTypes])];
       allPluginTypes.sort();
       setPluginTypes(allPluginTypes);
@@ -59,7 +61,7 @@ export default function DiscoveryPluginDataTable() {
 
   const handleSwitchChange = async (record, isChecked) => {
     record.active = isChecked;
-    await updateRecord('discoveryPlugins', 'uuid', record);
+    await updateRecord(DISCOVERY_PLUGIN, UUID, record);
     // TODO: fix layout issue
     //processNotification({title: 'Discovery Plugin Updated', message: `Discovery Plugin ${record.label} has been updated.`, type: 'success'});
   };
@@ -74,7 +76,7 @@ export default function DiscoveryPluginDataTable() {
 
   const columns = [
     {
-      name: 'uuid',
+      name: UUID,
       label: 'Uuid',
       options: {
         display: false,
@@ -255,16 +257,12 @@ export default function DiscoveryPluginDataTable() {
     onRowsDelete: async (records, data) => {
       setIsLoading(true);
       showLoader();
-      const keys = [];
+      const deleteRecords = [];
       for (const [idx, value] of Object.entries(records.lookup)) {
-        await deleteRecord('discoveryPlugins', 'uuid', rows[idx]);
+        deleteRecords.push(rows[idx]);
       }
-      // deletes the rows in the ui and re-saves
-      const deleteSet = new Set(keys);
-      const filteredResults = rows.filter(
-        (record) => !deleteSet.has(record.key)
-      );
-      setRows(filteredResults);
+      await deleteBulkRecords(DISCOVERY_PLUGIN, UUID, deleteRecords);
+      setRows(await getLocalItem(DISCOVERY_PLUGIN));
       setIsLoading(false);
       hideLoader();
     },

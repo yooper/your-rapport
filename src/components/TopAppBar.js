@@ -43,36 +43,8 @@ export default function TopAppBar() {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-            onClick={handleMenu}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Menu
-            id="main-menu"
-            anchorEl={anchorEl}
-            keepMounted
-            open={open}
-            onClose={handleClose}
-          >
-            {menuItems.map((menuItem) => (
-              <MenuItem
-                key={menuItem.label}
-                onClick={handleClose}
-                data-option-value={menuItem.name}
-              >
-                {menuItem.label}
-              </MenuItem>
-            ))}
-          </Menu>
-          <span>&nbsp;&nbsp;&nbsp;</span>
-          <Tooltip title="Your Rapport">
-            <a href={'https://osintliar.com/store/Who-Am-I-p598981597'}>
+          <Tooltip title="Help Support - Your Rapport">
+            <a href={'https://store.osintliar.com/product-details/product/6806a82925f8aaa6c9eb26c4/?buyNowProductId=6806a82925f8aa6bebeb26c6'} target={'_blank'}>
               <img alt="Your Rapport" src="/icon-48.png" />
             </a>
           </Tooltip>

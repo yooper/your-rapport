@@ -1,5 +1,6 @@
 import { getLocalItem } from '../models/db/local';
 import ExtensionPin from './ExtensionPin';
+import { SELECTOR } from '../services/constants';
 
 export function stringToBoolean(string) {
   switch (string.toLowerCase().trim()) {
@@ -16,6 +17,26 @@ export function stringToBoolean(string) {
       return Boolean(string);
   }
 }
+
+
+
+
+
+/**
+ * Converts a JavaScript object to a JSON file
+ *
+ * @param {Object} obj - The object to convert
+ * @param {string} fileName - The name of the file (e.g., "record.json")
+ * @returns {File} - A downloadable File object
+ */
+function _objectToJsonFile(obj, fileName) {
+  const jsonString = JSON.stringify(obj, null, 2); // pretty-printed
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  return new File([blob], fileName, { type: 'application/json' });
+}
+
+
+
 
 /**
  * Get a hash string of the message
@@ -205,7 +226,7 @@ export async function scanPage(activeTab) {
   });
   const selectors = findAllMatches(
     response.text,
-    await getLocalItem('selectors')
+    await getLocalItem(SELECTOR)
   );
   // after the scan is done, limit the max numbers for the UI
   const totalCount = Math.min(

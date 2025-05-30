@@ -1,6 +1,7 @@
 import { Store } from 'react-notifications-component';
 import { convertKeysToCamelCase } from './transformers';
 import { addRecord } from '../models/db/local';
+import { DISCOVERY_PLUGIN, UUID } from '../services/constants';
 
 /**
  * Show the loader...
@@ -103,7 +104,7 @@ export async function installPackage(record) {
   const data = await response.json();
   const dp = convertKeysToCamelCase(data);
   // doesn't overwrite the existing record if it exists
-  await addRecord('discoveryPlugins', 'uuid', dp);
+  await addRecord(DISCOVERY_PLUGIN, UUID, dp);
 }
 
 export function getSelectorTypeMap() {
@@ -145,6 +146,18 @@ export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export async function runWithMinDelay(taskFn) {
+  const start = performance.now(); // Start the timer
+  await taskFn(); // Run the task (can be sync or async)
+  const elapsed = performance.now() - start;
+  const remaining = 1500 - elapsed;
+  if (remaining > 0) {
+    await new Promise(resolve => setTimeout(resolve, remaining));
+  }
+  console.log(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
+}
+
+
 export async function initializeDiscoveryPlugins() {
   // install the default discovery plugins
   const defaultDiscoveryPlugins = [
@@ -173,10 +186,30 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/reverse-phone-checker.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/whats-my-name.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/who-am-i.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json'
   ];
   await Promise.all(
     defaultDiscoveryPlugins.map((pluginUrl) => {
       installPackage({ url: pluginUrl }).catch((err) => {});
     })
   );
+}
+
+
+/**
+ * Check for the xpath
+ * @param xpath
+ * @returns {Node|null}
+ */
+function getElementByXPath(xpath) {
+  // Evaluate the XPath against the document
+  const result = document.evaluate(
+    xpath,
+    document,
+    null,
+    XPathResult.FIRST_ORDERED_NODE_TYPE,
+    null
+  );
+  // Return the node if found
+  return result?.singleNodeValue ?? null;
 }

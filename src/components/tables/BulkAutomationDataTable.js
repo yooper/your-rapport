@@ -9,6 +9,7 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import IconButton from '@mui/material/IconButton';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
+import { BULK_AUTOMATION, UUID } from '../../services/constants';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
@@ -30,12 +31,11 @@ export default function BulkAutomationTable(props) {
    */
   async function startAutomationProcess() {
     if(rows.length === 0){
-      processNotification({title: 'No Bulk Urls', message: 'No urls have been supplied for auto downloading', type: 'info'});
       return;
     }
 
     if(!await sendAutomationMessage(rows[0])){
-      processNotification({title: 'Bulk Process Error', message: 'Bulk processing is not working.', type: 'error'});
+      alert('bulk processing is not working :(');
     }
   }
 
@@ -51,7 +51,7 @@ export default function BulkAutomationTable(props) {
     async function fetchData() {
       showLoader();
       setIsLoading(true);
-      const records = (await getLocalItem('bulk_automation')) ?? [];
+      const records = (await getLocalItem(BULK_AUTOMATION)) ?? [];
       setRows(records);
       setIsLoading(false);
       hideLoader();
@@ -62,7 +62,7 @@ export default function BulkAutomationTable(props) {
 
   const columns = [
     {
-      name: 'uuid',
+      name: UUID,
       label: 'Uuid',
       options: {
         display: 'excluded',
@@ -73,10 +73,10 @@ export default function BulkAutomationTable(props) {
     { label: 'Url', name: 'url' },
     { label: 'Unit', name: 'unit' },
     { label: 'Value', name: 'value' },
-    { label: 'Items Collected', name: 'screenShotsCollected' },
+    { label: '# Screenshots', name: 'screenShotsCollected' },
     {
-      label: 'Keep Open',
-      name: 'closeTabAfterwards',
+      label: 'Keep Tab Open',
+      name: 'keepTabOpen',
       options: {
         display: true,
         filter: false,
@@ -94,7 +94,7 @@ export default function BulkAutomationTable(props) {
               label={
                 <div>
                   <IconButton>
-                    <HelperPopover message={'After the collection process has completed do you want the tab left open?'} />
+                    <HelperPopover message={'After the collection process has completed do you want the tab to stay open?'} />
                   </IconButton>
                 </div>
               }
@@ -125,7 +125,7 @@ export default function BulkAutomationTable(props) {
             <IconButton onClick={async () => {
               record.ranOn = null;
               record.completedOn = null;
-              await updateRecord('bulk_automation', 'uuid', record);
+              await updateRecord(BULK_AUTOMATION, UUID, record);
               if(!await sendAutomationMessage(record)){
                 processNotification({title: 'Bulk Process Error', message: 'Bulk processing is not working.', type: 'error'});
               }
@@ -146,9 +146,8 @@ export default function BulkAutomationTable(props) {
    * @returns {Promise<void>}
    */
   const handleSwitchChange = async (record, isChecked) => {
-    record.closeTabAfterwards = isChecked;
-    await updateRecord('bulk_automation', 'uuid', record);
-    processNotification({title: 'Bulk Collection Updated', message: `Bulk Collection ${record.url} has been updated.`, type: 'success'});
+    record.keepTabOpen = isChecked;
+    await updateRecord(BULK_AUTOMATION, UUID, record);
   };
 
   const options = {
@@ -157,8 +156,9 @@ export default function BulkAutomationTable(props) {
       setIsLoading(true);
       showLoader();
       for (const [idx, value] of Object.entries(records.lookup)) {
-        await deleteRecord('bulk_automation', 'uuid', rows[idx]);
+        await deleteRecord(BULK_AUTOMATION, UUID, rows[idx]);
       }
+      setRows(await getLocalItem(BULK_AUTOMATION));
       setIsLoading(false);
       hideLoader();
     },

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
-import { FormControlLabel, Switch } from '@mui/material';
+import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
 import FormControl from '@mui/material/FormControl';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -8,6 +8,7 @@ import { hideLoader, showLoader } from '../../utilities/loaders';
 import HelperPopover from '../HelperPopover';
 import { stringToBoolean } from '../../utilities/transformers';
 import { StyledTextField } from '../inputs/StyledTextField';
+import Button from '@mui/material/Button';
 
 export default function BrowserSettingsForm(props) {
   const [config, setConfig] = useState(null);
@@ -84,6 +85,16 @@ export default function BrowserSettingsForm(props) {
               checked={false}
               onChange={handleSwitchChange}
             />
+          </Grid>
+          <Grid item xs={12}>
+            <Tooltip title={'Iterate through the selectors and rebuild the index for text searches. This takes awhile to run, is only enabled to debug.'}>
+            <Button
+              onClick={()=>{}}
+              variant={'contained'}
+            >
+              Rebuild Index
+            </Button>
+            </Tooltip>
           </Grid>
         </Grid>
       </form>

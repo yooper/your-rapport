@@ -3,20 +3,20 @@ import {
   createTab,
   getActiveTab,
   initializeDiscoveryPlugins,
-  installPackage,
+  installPackage, runWithMinDelay,
   sleep,
 } from '../../utilities/loaders';
 import {
-  deleteRecord,
+  addRecord,
   getLocalItem,
-  setLocalItem,
   updateRecord,
 } from '../../models/db/local';
 import { initializeContextMenus } from '../../services/context_menu_services';
 import { Selector } from '../../models/schemas/Selector';
 import ExtensionPin from '../../utilities/ExtensionPin';
-import { findAllMatches, scanPage } from '../../utilities/transformers';
+import { scanPage } from '../../utilities/transformers';
 import { Configuration } from '../../models/schemas/Configuration';
+import { BULK_AUTOMATION, RAPPORT, UUID } from '../../services/constants';
 
 /**
  * Initialize configuration values when the app is installed
@@ -41,7 +41,6 @@ chrome.commands.onCommand.addListener( (command) => {
           await capture(activeTab, response);
         })();
         return true;
-
     case 'initScanPage':
         (async () => {
           const activeTab = await getActiveTab();
@@ -64,7 +63,7 @@ chrome.commands.onCommand.addListener( (command) => {
 
 
 /**
- * Receives messages from the content script
+ * Receives messages from the content script or the extension page
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if(message.cmd === 'initStartCapture'){
@@ -75,13 +74,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return false;
   }
+  if(message.cmd === 'captureVisibleTab'){
+    (async () => {
+        await capture(sender.tab, message);
+        sendResponse({ completed: true })
+    })();
+    return true;
+  }
   else if(message.cmd === 'bulkAutomationUrl'){
     (async () => {
       try {
         await createTab(message.automation.url);
-        await sleep( parseInt( await Configuration.getConfigurationValue('automationDelayOpenTabDefault', '3000'))); // TODO: Make this a configuration value, allows for page to full load
+        await sleep( await Configuration.getConfigurationValue('automationDelayOpenTabDefault', 3000)); // TODO: Make this a configuration value, allows for page to full load
         message.automation.ranOn = Date.now();
-        await updateRecord('bulk_automation', 'uuid', message.automation);
+        await updateRecord(BULK_AUTOMATION, UUID, message.automation);
         // forward the message to the content script
         const activeTab = await getActiveTab();
         await chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: message.automation})
@@ -95,25 +101,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   else if(message.cmd === 'bulkCollectionComplete'){
     (async () => {
       try {
-        if(message.automation.closeTabAfterwards){
+        if(!message.automation.keepTabOpen){
           await chrome.tabs.remove(sender.tab.id);
         }
         /* @BulkAutomationUrl */
         let automation = message.automation;
-        automation.completedOn = Date.now();
-
         // update the record
-        await updateRecord('bulk_automation', 'uuid', automation);
-        const automations = await getLocalItem('bulk_automation');
+        await updateRecord(BULK_AUTOMATION, UUID, automation);
+        const automations = await getLocalItem(BULK_AUTOMATION);
         if(automations.length === 0){
           // stop processing requests
           return;
         }
-        await createTab(automations[0].url);
+
+        let nextAutomation = automations.find(a => !a.ranOn);
+        nextAutomation.ranOn = Date.now();
+        // TODO: There is a bug when you run a single bulk automation, it will run the other ones too
+        // kick off next automation
+        await createTab(nextAutomation.url);
         await sleep(3000); // TODO: Make this a configuration value, allows for page to full load
         // forward the message to the content script
         const activeTab = await getActiveTab();
-        await chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: automations[0]})
+        await chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: nextAutomation})
       }
       catch (err) {
         console.log(err)
@@ -124,13 +133,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   (async () => {
     switch (message.cmd) {
-      case 'captureVisibleTab':
-        await capture(sender.tab, message)
-        sendResponse({flag: true});
-        break;
-
       case 'updateScreenShotRecord':
-        await updateRecord('rapports', 'uuid', message.record);
+        await updateRecord(RAPPORT, UUID, message.record);
         sendResponse({ completed: true });
         break;
       case 'popupSingleCollect':
@@ -157,7 +161,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  * Let the 'Who Am I' extension be able to RPC the extension's functionality
  */
 // For a single request:
-chrome.runtime.onMessageExternal.addListener(async function (
+chrome.runtime.onMessageExternal.addListener(function (
   message,
   sender,
   sendResponse
@@ -166,22 +170,55 @@ chrome.runtime.onMessageExternal.addListener(async function (
     return; // deny access to all extensions, except the Who Am I
   }
 
-  switch (message.cmd) {
-    case 'singleCollect':
-      await createTab(message.url);
-      await sleep(2000);
-      const singleTabCapture = await getActiveTab();
-      await capture(singleTabCapture, message);
-      return true;
-    case 'autoscrollCollect':
-      await createTab(message.url);
-      await sleep(2000);
-      const tab = await getActiveTab();
-      await chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });
-      return true;
-    default:
-      console.log(`Unknown cmd ${message.cmd}`);
-      return true;
+  try{
+    switch (message.cmd) {
+      case 'singleCollect':
+        (async () => {
+          await createTab(message.url);
+          await sleep(3000);
+          const activeTab = await getActiveTab();
+          const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'getVisibleText' });
+          await capture(activeTab, response);
+        })();
+        return false;
+      case 'autoscrollCollect':
+        (async () => {
+          try {
+            await createTab(message.url);
+            await sleep(3000);
+            const activeTab = await getActiveTab();
+            await chrome.tabs.sendMessage(activeTab.id, { cmd: 'startCapture' })
+          } catch (err) {
+            console.log(err)
+          }
+        })();
+        return false;
+      case 'enqueueBulkAutomation':
+        (async () => {
+          const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
+          const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
+          const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
+          await addRecord(BULK_AUTOMATION, UUID, {
+            uuid: crypto.randomUUID(),
+            url: message.url,
+            createdOn: Date.now(),
+            completedOn: null,
+            ranOn: null,
+            unit: unitDefault,
+            value: valueDefault,
+            keepTabOpen: keepTabOpenDefault,
+            screenShotsCollected: 0
+          });
+        })();
+        return false;
+      default:
+
+        console.log(`Unknown external command cmd ${message.cmd}`);
+        return true;
+    }
+  }
+  catch(e){
+    ExtensionPin.setTemporaryPin('ERR')
   }
 });
 

@@ -13,17 +13,18 @@ import HelperPopover from '../HelperPopover';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import BulkAutomationTable from '../tables/BulkAutomationDataTable';
+import { BULK_AUTOMATION } from '../../services/constants';
 
 export default function AutomationLayout() {
   const urlParams = new URL(window.location.href).searchParams;
   const [selectedComponent, setSelectedComponent] = useState(
-    urlParams.get('view') ?? 'bulk_automation'
+    urlParams.get('view') ?? BULK_AUTOMATION
   );
 
   const componentMap = [
     {
       label: 'Bulk Automation',
-      key: 'bulk_automation',
+      key: BULK_AUTOMATION,
       message:
         'Insert a list of urls that will be opened in a tab and collected',
     },
@@ -72,7 +73,7 @@ export default function AutomationLayout() {
 
 function IconMapper(props) {
   switch (props.icon) {
-    case 'bulk_automation':
+    case BULK_AUTOMATION:
       return <LibraryAddIcon />;
     case 'scheduled_automation':
       return <AlarmIcon />;
@@ -85,7 +86,7 @@ function IconMapper(props) {
 
 function Renderer(props) {
   switch (props.selectedComponent) {
-    case 'bulk_automation':
+    case BULK_AUTOMATION:
       return <BulkAutomationTable />;
     case 'scheduled_automation':
       return <div>TODO...</div>;
