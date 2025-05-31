@@ -16,7 +16,7 @@ import { Selector } from '../../models/schemas/Selector';
 import ExtensionPin from '../../utilities/ExtensionPin';
 import { scanPage } from '../../utilities/transformers';
 import { Configuration } from '../../models/schemas/Configuration';
-import { BULK_AUTOMATION, RAPPORT, UUID } from '../../services/constants';
+import { BULK_AUTOMATION, RAPPORT, SELECTOR, UUID } from '../../services/constants';
 
 /**
  * Initialize configuration values when the app is installed
@@ -135,6 +135,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.cmd) {
       case 'updateScreenShotRecord':
         await updateRecord(RAPPORT, UUID, message.record);
+        await Selector.findAndAssignMatches([message.record], getLocalItem(SELECTOR));
         sendResponse({ completed: true });
         break;
       case 'popupSingleCollect':

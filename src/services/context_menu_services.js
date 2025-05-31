@@ -62,7 +62,7 @@ export async function initializeContextMenus() {
             ranOn: null,
             unit: unitDefault,
             value: valueDefault,
-            keepTabOpenDefault: keepTabOpenDefault,
+            keepTabOpen: keepTabOpenDefault,
             screenShotsCollected: 0
           });
           ExtensionPin.setTemporaryPin('SAVD');

@@ -12,7 +12,7 @@ export class BulkAutomationUrl {
     keepTabOpen = true,
     ranOn = null,
     completedOn = null,
-    error = null
+    description = null
   ) {
     this.uuid = uuid;
     this.url = url;
@@ -23,7 +23,7 @@ export class BulkAutomationUrl {
     this.createdOn = createdOn;
     this.ranOn = ranOn;
     this.completedOn = completedOn;
-    this.error = error;
+    this.description = description;
   }
   markRan() {
     this.ranOn = Date.now();

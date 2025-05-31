@@ -108,6 +108,50 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
+      name: 'ranOn',
+      label: 'Run On',
+      options: {
+        filter: false,
+        sort: true,
+        searchable: false,
+        customBodyRenderLite: (dataIndex) => {
+          if(!rows[dataIndex].ranOn){
+            return <div></div>
+          }
+          const date = new Date(parseInt(rows[dataIndex].ranOn));
+          return <div>{date.toLocaleString()}</div>;
+        },
+      },
+    },
+    {
+      name: 'Completed',
+      label: 'Completed',
+      options: {
+        filter: false,
+        sort: true,
+        searchable: false,
+        customBodyRenderLite: (dataIndex) => {
+          if(!rows[dataIndex].ranOn){
+            return <div></div>
+          }
+          const date = new Date(parseInt(rows[dataIndex].completedOn));
+          return <div>{date.toLocaleString()}</div>;
+        },
+      },
+    },
+    {
+      name: 'description',
+      label: 'Info',
+      options: {
+        filter: false,
+        sort: false,
+        searchable: false,
+        customBodyRenderLite: (dataIndex) => {
+          return <div>{rows[dataIndex].description ?? ''}</div>;
+        },
+      },
+    },
+    {
       label: 'Options',
       name: 'options',
       options: {

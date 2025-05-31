@@ -37,7 +37,7 @@ export default function PackageManagerDataTable(props) {
       (r) => r.action !== 'Middleware'
     );
 
-    const localPackages = (await getLocalItem('discoveryPlugins')) ?? [];
+    const localPackages = (await getLocalItem(DISCOVERY_PLUGIN)) ?? [];
     externalPackages.forEach((ep) => (ep.action = 'install'));
 
     // Iterate through the first list

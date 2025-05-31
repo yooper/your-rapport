@@ -57,12 +57,11 @@ export class Selector {
    */
   static async findAndAssignMatches(records, selectors) {
     for (const record of records) {
-      record.selectors = findAllMatches(record.text, selectors, 1).concat(
+      record.selectors = findAllMatches(record.text + (record.note ?? ''), selectors, 1).concat(
         record.selectors ?? []
       );
       await updateRecord(RAPPORT, UUID, record);
     }
-
     const configuration = await getLocalItem(CONFIGURATION);
     configuration[UPDATED_ON] = Date.now().toString();
     await setLocalItem(CONFIGURATION, configuration);

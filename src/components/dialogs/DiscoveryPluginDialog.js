@@ -251,35 +251,9 @@ export default function DiscoveryPluginDialog(props) {
                   copyFieldName={'pluginName'}
                 />
               </Typography>
-              <List dense={true}>
-                <ListItem
-                  dense={true}
-                  key={`plugin-${pluginValue}-open-all`}
-                  className={'clickable'}
-                  onClick={() => {
-                    // do not auto open the download or live page options
-                    plugins.forEach((plugin) =>
-                      !['Download', 'Live Page'].includes(plugin.label)
-                        ? discoveryPluginRunner(plugin, record, pluginValue)
-                        : null
-                    );
-                  }}
-                >
-                  <ListItemIcon>
-                    <OpenInNewIcon />
-                  </ListItemIcon>
-                  <ListItemText primary={'Open All'} />
-                </ListItem>
-              </List>
-
-              {groupNames &&
-                groupNames.map((groupName) => (
-                  <div>
-                    <h4>{groupName}</h4>
                     <List dense={true}>
                       {plugins &&
                         plugins
-                          .filter((plugin) => plugin.groupName === groupName)
                           .map((plugin) => (
                             <ListItem
                               dense={true}
@@ -310,8 +284,6 @@ export default function DiscoveryPluginDialog(props) {
                             </ListItem>
                           ))}
                     </List>
-                  </div>
-                ))}
             </div>
           </form>
         </DialogContent>

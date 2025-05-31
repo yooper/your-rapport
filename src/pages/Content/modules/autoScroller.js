@@ -1,12 +1,12 @@
 import { getVisibleText } from './visibleElements';
-import { updateRecord } from '../../../models/db/local';
-import { BULK_AUTOMATION, UUID } from '../../../services/constants';
 
 let state = 'stopped';
 let capturedHeight = 0;
 // global var to track the number of screenshots captured thus far, used to mark the sequential order
 let screenCollectionCount = 0;
 let automation = null;
+let previousCount = 0;
+let lastStableTime = Date.now();
 
 /**
  * Listen for the message to start scrolling and issuing page saves
@@ -53,8 +53,26 @@ function getScrollDetailsByHostName() {
  */
 export function autoScroller(message) {
 
-  const autoScroll = () => {
+  function monitorCount() {
+    const intervalId = setInterval(() => {
+        const currentCount = screenCollectionCount;
 
+        if (currentCount !== previousCount) {
+          previousCount = currentCount;
+          lastStableTime = Date.now();
+        }
+
+        const elapsed = Date.now() - lastStableTime;
+        if (elapsed >= 2000 && state !== 'stopCapture') {
+          state = 'stopCapture';
+          processAutomation(message, 'Error, could not engage autoscroller automation.')
+
+        }
+      }, 500); // poll every 500ms
+    return () => clearInterval(intervalId);
+  }
+
+  const autoScroll = () => {
     if (state !== 'startCapture') {
       console.log('capture stopped');
       return;
@@ -71,35 +89,16 @@ export function autoScroller(message) {
         console.log('could not capture text');
         return;
       }
+      const response = await chrome.runtime.sendMessage({
+        cmd: 'captureVisibleTab',
+        text: text,
+        sequence: screenCollectionCount++,
+      });
 
-      let response = null;
-      let maxRetries = 5;
-      let counter = 0;
-      do{
-        try{
-          response = await chrome.runtime.sendMessage({
-            cmd: 'captureVisibleTab',
-            text: text,
-            sequence: screenCollectionCount++,
-          });
-
-          // the capture did not complete
-          if(!('completed' in response)){
-            state = 'stopCapture'; // stops the scrolling capture if the text is not being read in
-            console.log('could not save rapport');
-          }
-        }
-        catch(error){
-          state = 'stopCapture';
-          console.error(error);
-        }
-      } while(!('completed' in response) || counter++ < maxRetries);
-
-      // too many attempts
-      if(counter >= maxRetries){
-        state = 'stopCapture';
-        processAutomation(message);
-        return;
+      // the capture did not complete
+      if(!('completed' in response)){
+        state = 'stopCapture'; // stops the scrolling capture if the text is not being read in
+        console.log('could not save rapport');
       }
 
       // TODO fix this so auto scroll doesn't fire
@@ -118,12 +117,14 @@ export function autoScroller(message) {
 
       if (direction === 'down') {
         capturedHeight += scrollAmount;
-        if (capturedHeight < scrollHeight) {
+        if (state !== 'startCapture') {
+          console.log('capture stopped');
+        }
+        else if (capturedHeight < scrollHeight) {
           // Scroll to the next part of the page, after the screenshot has been taken
           scrollElement.scrollTo(0, capturedHeight);
         }
       }
-      // TODO: Support upward scrolling sites
       else {
         capturedHeight -= scrollAmount;
         // Check if the new position is less than 0, set to 0 if it is
@@ -158,11 +159,12 @@ export function autoScroller(message) {
  * End the automation process, if there is one
  * @param automation
  */
-function processAutomation(message){
+function processAutomation(message, description = null){
   if('automation' in message){
     let automation = message.automation;
     automation.completedOn = Date.now();
     automation.screenShotsCollected = screenCollectionCount;
+    automation.description = description
     console.log('automation task completed')
     chrome.runtime.sendMessage({
       cmd: 'bulkCollectionComplete',

@@ -16,24 +16,23 @@ import { Configuration } from '../../models/schemas/Configuration';
 import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 
-export default function SearchDataTable() {
+export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectors, setSelectors] = useState([]);
-  const [discoveryPlugins, setDiscoveryPlugins] = useState([]);
-
+  const [selectors, setSelectors] = useState(null);
+  const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
 
     useEffect(() => {
       async function fetchData() {
         showLoader();
         setIsLoading(true);
         const start = performance.now()
-        setSelectors((await getLocalItem(SELECTOR)) ?? []);
+        setSelectors(await getLocalItem(SELECTOR) ?? []);
         setDiscoveryPlugins(await getLocalItem(DISCOVERY_PLUGIN) ?? []);
-        const screenshots = (await getLocalItem(RAPPORT)) ?? [];
+        const screenshots = await getLocalItem(RAPPORT) ?? [];
         const elapsed = performance.now() - start;
         console.log(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-        setRows(screenshots ?? []);
+        setRows(screenshots);
         setIsLoading(false);
         hideLoader();
       }
@@ -49,7 +48,7 @@ export default function SearchDataTable() {
       let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
       const pageCachedOn = localStorage.getItem(UPDATED_ON) ?? null;
 
-      if(updatedOn !== pageCachedOn){
+      if(updatedOn != pageCachedOn){
         await fetchData(); // check for new data every 10 seconds.
         localStorage.setItem(UPDATED_ON, updatedOn);
       }
@@ -192,11 +191,11 @@ export default function SearchDataTable() {
           filterType: 'multiselect',
           filter: true,
           sort: true,
-          customBodyRender: async(value, tableMeta, updateValue) => {
+          customBodyRender: (value, tableMeta, updateValue) => {
             const record = getRecord(tableMeta.rowData)
 
             return <DiscoveryPluginDialog
-                key={`domain-${value}-${record.Uuid}`}
+                key={`domain-${value}-${record.uuid}`}
                 plugins={discoveryPlugins.filter((plugin) => {
                   return plugin.pluginType === 'domain';
                 })}
@@ -210,7 +209,7 @@ export default function SearchDataTable() {
       },
     {
       name: 'createdOn',
-      label: 'COLLECTED OO',
+      label: 'COLLECTED ON',
       options: {
         filter: false,
         sort: true,
