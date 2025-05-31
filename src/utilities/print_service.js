@@ -1,4 +1,4 @@
-import Mustache from "mustache";
+import Mustache from 'mustache';
 
 /**
  * Opens a print window with for the selected content
@@ -6,9 +6,8 @@ import Mustache from "mustache";
  * @param configuration
  * @returns {Promise<void>}
  */
-export async function printPdfReport(templateName, configuration){
-
-  const reportBody = _mustacheService(templateName, configuration)
+export async function printPdfReport(templateName, configuration) {
+  const reportBody = _mustacheService(templateName, configuration);
   const printWindow = window.open('', '', 'width=1000,height=800');
   printWindow.document.write(`
     <html>
@@ -40,14 +39,15 @@ export async function printPdfReport(templateName, configuration){
  * @private
  */
 const _mustacheService = (templateName, configuration) => {
-
-    const templateMap = {
-        'basic' : _basicTemplate
-    }
-    Mustache.escape = function (text) { return text; }
-    const instance = Mustache.render(templateMap[templateName], configuration);
-    return instance;
-}
+  const templateMap = {
+    basic: _basicTemplate,
+  };
+  Mustache.escape = function (text) {
+    return text;
+  };
+  const instance = Mustache.render(templateMap[templateName], configuration);
+  return instance;
+};
 
 /**
  * TODO: use another site to host templates
@@ -88,5 +88,4 @@ const _basicTemplate = `
     </tr>
 </table>
 {{/records}}
-`
-
+`;

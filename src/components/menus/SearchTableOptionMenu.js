@@ -1,14 +1,17 @@
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import * as React from 'react';
-import {printPdfReport} from "../../utilities/print_service";
-import {useState} from "react";
-import JsonAttributeViewerDialog from "../dialogs/JsonAttributeViewerDialog";
+import { printPdfReport } from '../../utilities/print_service';
+import { useState } from 'react';
+import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import {downloadBase64Image, downloadJsonData} from "../../utilities/transformers";
+import {
+  downloadBase64Image,
+  downloadJsonData,
+} from '../../utilities/transformers';
 
-export default function SearchTableOptionMenu(props){
-  const {record} = props;
+export default function SearchTableOptionMenu(props) {
+  const { record } = props;
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
 
@@ -21,27 +24,27 @@ export default function SearchTableOptionMenu(props){
   };
 
   const handlePrintPdf = () => {
-    printPdfReport('basic', {records: [record]})
+    printPdfReport('basic', { records: [record] });
     setAnchorEl(null);
-  }
+  };
 
   const handleDownloadImage = () => {
-    downloadBase64Image(record.screenshot, `${record.uuid}.png`)
+    downloadBase64Image(record.screenshot, `${record.uuid}.png`);
     setAnchorEl(null);
-  }
+  };
 
   const handleDownloadRecord = () => {
-    downloadJsonData(record, `your.rapport.${record.uuid}.json`)
+    downloadJsonData(record, `your.rapport.${record.uuid}.json`);
     setAnchorEl(null);
-  }
+  };
 
   /**
    * Debug the data
-  */
+   */
   const handleMetadata = () => {
-    setIsOpen(true)
+    setIsOpen(true);
     setAnchorEl(null);
-  }
+  };
 
   return (
     <div>
@@ -51,8 +54,7 @@ export default function SearchTableOptionMenu(props){
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
-      >
-      </MoreVertIcon>
+      ></MoreVertIcon>
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}
@@ -67,7 +69,11 @@ export default function SearchTableOptionMenu(props){
         <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>
         <MenuItem onClick={handleDownloadRecord}>Download Record</MenuItem>
       </Menu>
-      <JsonAttributeViewerDialog isOpen={isOpen} setIsOpen={setIsOpen} record={record} />
+      <JsonAttributeViewerDialog
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        record={record}
+      />
     </div>
   );
 }

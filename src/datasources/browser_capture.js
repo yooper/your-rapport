@@ -1,6 +1,9 @@
-import {addRecord, getLocalItem, setLocalItem} from "../models/db/local";
-import {findAllMatches, findMatchingValues, sha256} from "../utilities/transformers";
-
+import { addRecord, getLocalItem, setLocalItem } from '../models/db/local';
+import { findAllMatches, sha256 } from '../utilities/transformers';
+import { Rapport } from '../models/schemas/Rapport';
+import ExtensionPin from '../utilities/ExtensionPin';
+import { Configuration } from '../models/schemas/Configuration';
+import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
 
 /**
  * Capture the tab and persist it into local storage
@@ -8,50 +11,52 @@ import {findAllMatches, findMatchingValues, sha256} from "../utilities/transform
  * @param message
  * @returns {Promise<void>}
  */
-export async function capture(tab, message = {}){
-    let configurationRegistry = await getLocalItem('configuration') ?? { authToken: false, productVersion: 'trial'};
-    // get/set the record count
-    configurationRegistry.screenShotCount = configurationRegistry?.screenShotCount ?? 0
+export async function capture(tab, message = {}) {
 
-    // normalize text
-    const text = tab.title.toLowerCase() + ' ' + splitCamelCase(message?.text ?? '').toLowerCase();
+  ExtensionPin.setDefaultNotSaved(tab);
+  let configuration = await Configuration.getConfiguration();
+  // get/set the record count
+  configuration.screenShotCount =
+    configuration?.screenShotCount ?? 0;
 
+  // normalize text
+  const text =
+    tab.title.toLowerCase() +
+    ' ' +
+    splitCamelCase(message?.text ?? '').toLowerCase();
+
+  try{
     // search the saved record for keywords
-    const selectors = await getLocalItem('selectors') ?? []
-
+    const selectors = (await getLocalItem(SELECTOR)) ?? [];
     const screenShot = await chrome.tabs.captureVisibleTab();
-    const uuid = crypto.randomUUID();
-    let record = {
-      uuid: uuid,
-      title: tab.title,
-      url: tab.url,
-      domain: (new URL(tab.url)).hostname,
-      text: text,
-      screenshot: screenShot,
-      createdOn: Date.now(),
-      updatedOn: Date.now(),
-      createdOnLocalTime: new Date().toLocaleString(),
-      hash: await sha256(screenShot),
-      createdBy: 'TODO-CREATE', // TODO: add support for tracking who created the record, requires authentication
-      updatedBy: 'TODO-UPDATE', // TODO: add support for tracking who updated the record, requires authentication
-      length: screenShot.length,
-      attributes: { tab: tab },
-      selectors: findAllMatches(text, selectors, 1), // limit the search scope,
-      tags: [],  // TODO: add support for tagging/annotating data
-      caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387', // TODO: add case management functionality
-      note: null
-    };
+    const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
 
-    await addRecord('rapports', 'uuid', record);
+    await addRecord(RAPPORT, UUID, record);
     // update the configuration last saved on metadata
-    configurationRegistry.lastSavedOn = Date.now().toString();
-    configurationRegistry.screenShotCount++;
-    await setLocalItem('configuration', configurationRegistry);
+    configuration[UPDATED_ON] = Date.now().toString();
+    configuration.screenShotCount++;
+    await Configuration.setConfiguration(configuration)
+    ExtensionPin.setDefaultSaved(tab);
+  }
+  catch(error){
+    // TODO: ERROR handling for too many captures
+    if(error){
+      console.log(error);
+    }
+    ExtensionPin.setBgColorAndText('red', 'ERR', tab);
+    // stop scrolling when an error occurs
+    chrome.tabs.sendMessage(tab.id, { cmd: 'stopCapture' });
+  }
+  finally {
+    setTimeout(() => {
+      ExtensionPin.setDefault(tab);
+    }, 3000)
+  }
 }
 
 function splitCamelCase(input) {
-    return input
-        .replace(/([a-z])([A-Z])/g, '$1 $2') // lower → upper: add space
-        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // split consecutive capitals like "HTMLParser" → "HTML Parser"
-        .trim(); // remove leading/trailing whitespace if any
+  return input
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // lower → upper: add space
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // split consecutive capitals like "HTMLParser" → "HTML Parser"
+    .trim(); // remove leading/trailing whitespace if any
 }

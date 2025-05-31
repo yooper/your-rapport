@@ -1,57 +1,44 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import './Search.css';
-import TopAppBar from "../../components/TopAppBar";
-import {Paper} from "@mui/material";
-import SearchDataTable from "../../components/tables/SearchDataTable";
-import {showLoader, hideLoader, } from "../../utilities/loaders"
-import {getLocalItem} from "../../models/db/local";
+import TopAppBar from '../../components/TopAppBar';
+import { Paper } from '@mui/material';
+import SearchDataTable from '../../components/tables/SearchDataTable';
+import { getLocalItem } from '../../models/db/local';
+import { DISCOVERY_PLUGIN, SELECTOR } from '../../services/constants';
+import { hideLoader, showLoader } from '../../utilities/loaders';
+import Box from '@mui/material/Box';
+import MUIDataTable from 'mui-datatables';
 
 
-export default function Search()
-{
-    const [rows, setRows] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    // upon render set the last updated time
-    localStorage.setItem('lastUpdatedOn', Date.now().toString());
+export default function Search() {
 
-   useEffect(() => {
-       async function fetchData(){
-           showLoader();
-           setIsLoading(true);
-           const screenshots = await getLocalItem('rapports') ?? []
-           setRows(screenshots ?? []);
-           setIsLoading(false);
-           hideLoader();
-       }
+  const [selectors, setSelectors] = useState([]);
+  const [discoveryPlugins, setDiscoveryPlugins] = useState([])
+  const [isLoading, setIsLoading] = useState(true);
 
-       fetchData();
+  useEffect(() => {
 
-       /**
-        * Check if any updates occurred
-        * TODO: there is a bug in the algorithm
-        * @type {number}
-        */
-       const intervalId = setInterval(async() => {
-           let configurationRegistry = await getLocalItem('configuration') ?? {};
-           const lastUpdatedOn = parseInt(localStorage.getItem('lastUpdatedOn'))
-            if('lastSavedOn' in configurationRegistry &&
-                parseInt(configurationRegistry.lastSavedOn) > lastUpdatedOn)
-            {
-                localStorage.setItem('lastUpdatedOn', configurationRegistry.lastSavedOn);
-                await fetchData(); // check for new data every 10 seconds.
-            }
+    async function fetchData(){
+      setIsLoading(true);
+      showLoader();
+      setSelectors(await getLocalItem(SELECTOR) ?? []);
+      setDiscoveryPlugins((await getLocalItem(DISCOVERY_PLUGIN) ?? []).filter(d => d.isActive));
+      setIsLoading(false);
+      hideLoader();
+    }
+    fetchData()
 
-       }, 10000); // wait 10 seconds before re-renders
-       return () => clearInterval(intervalId);
+  }, [])
 
-    }, []);
-
-    return (
-        <div>
-        <TopAppBar />
-        <Paper>
-            <SearchDataTable rows={rows} setRows={setRows} isLoading={isLoading}/>
-        </Paper>
-        </div>
-    )
+  if (isLoading) {
+    return <div></div>;
+  }
+  return (
+    <div>
+      <TopAppBar />
+      <Paper>
+        <SearchDataTable selectors={selectors} discoveryPlugins={discoveryPlugins}/>
+      </Paper>
+    </div>
+  );
 }

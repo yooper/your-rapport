@@ -44,6 +44,7 @@ var options = {
     options: path.join(__dirname, 'src', 'pages', 'Options', 'index.js'),
     popup: path.join(__dirname, 'src', 'pages', 'Popup', 'index.js'),
     login: path.join(__dirname, 'src', 'pages', 'Login', 'index.js'),
+    automation: path.join(__dirname, 'src', 'pages', 'Automation', 'index.js'),
   },
   chromeExtensionBoilerplate: {
     notHotReload: ['background', 'contentScript'],
@@ -215,6 +216,12 @@ var options = {
       template: path.join(__dirname, 'src', 'pages', 'Login', 'index.html'),
       filename: 'login.html',
       chunks: ['login'],
+      cache: false,
+    }),
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, 'src', 'pages', 'Automation', 'index.html'),
+      filename: 'automation.html',
+      chunks: ['automation'],
       cache: false,
     }),
   ].filter(Boolean),

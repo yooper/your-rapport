@@ -1,7 +1,7 @@
-import { Store } from 'react-notifications-component'
-import {convertKeysToCamelCase} from "./transformers";
-import {addRecord} from "../models/db/local";
-
+import { Store } from 'react-notifications-component';
+import { convertKeysToCamelCase } from './transformers';
+import { addRecord } from '../models/db/local';
+import { DISCOVERY_PLUGIN, UUID } from '../services/constants';
 
 /**
  * Show the loader...
@@ -27,39 +27,37 @@ export function hideLoader() {
  * Used to display notifications to the user
  * @param data
  */
-export function processNotification(data, duration = 5000)
-{
+export function processNotification(data, duration = 5000) {
   Store.addNotification({
-      title: data.title,
-      message: data.message,
-      type: data.type,
-      insert: "top",
-      container: "top-right",
-      animationIn: ["animate__animated", "animate__fadeIn"],
-      animationOut: ["animate__animated", "animate__fadeOut"],
-      dismiss: {
-        duration: duration,
-        onScreen: true
-      }
-  })
+    title: data.title,
+    message: data.message,
+    type: data.type,
+    insert: 'top',
+    container: 'top-right',
+    animationIn: ['animate__animated', 'animate__fadeIn'],
+    animationOut: ['animate__animated', 'animate__fadeOut'],
+    dismiss: {
+      duration: duration,
+      onScreen: true,
+    },
+  });
 }
 
-export function getDarkTheme()
-{
-    return {
-        palette: {
-            mode: 'dark',
-            primary: {
-                main: '#ffe88b',
-            },
-            secondary: {
-                main: '#619657',
-            },
-            cancel: {
-                main: '#E86E69',
-            }
-        }
-    }
+export function getDarkTheme() {
+  return {
+    palette: {
+      mode: 'dark',
+      primary: {
+        main: '#ffe88b',
+      },
+      secondary: {
+        main: '#619657',
+      },
+      cancel: {
+        main: '#E86E69',
+      },
+    },
+  };
 }
 
 /**
@@ -68,13 +66,12 @@ export function getDarkTheme()
  * @param onlyOneTabOpen
  * @returns {Promise<void>}
  */
-export async function createTab(url, onlyOneTabOpen = false)
-{
-  const openUrls = await getAllTabUrls() ?? []
-  if(onlyOneTabOpen && openUrls.find(openUrl => openUrl == url)){
+export async function createTab(url, onlyOneTabOpen = false) {
+  const openUrls = (await getAllTabUrls()) ?? [];
+  if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl == url)) {
     return;
   }
-  await chrome.tabs.create({url: url})
+  await chrome.tabs.create({ url: url });
 }
 
 /**
@@ -82,9 +79,13 @@ export async function createTab(url, onlyOneTabOpen = false)
  * @returns {Promise<string[]>}
  */
 async function getAllTabUrls() {
-    const tabs = await chrome.tabs.query({ windowType:'normal'})
-    const urls = tabs.map( tab => { return tab.url }).filter(u => u !== undefined)
-    return urls;
+  const tabs = await chrome.tabs.query({ windowType: 'normal' });
+  const urls = tabs
+    .map((tab) => {
+      return tab.url;
+    })
+    .filter((u) => u !== undefined);
+  return urls;
 }
 
 export async function getActiveTab() {
@@ -95,74 +96,120 @@ export async function getActiveTab() {
 }
 
 /**
-* Install a package, which installs the specific discovery plugin
-* @param record {Package}
-* */
-export async function installPackage(record){
+ * Install a package, which installs the specific discovery plugin
+ * @param record {Package}
+ * */
+export async function installPackage(record) {
   const response = await fetch(record.url);
   const data = await response.json();
   const dp = convertKeysToCamelCase(data);
   // doesn't overwrite the existing record if it exists
-  await addRecord('discoveryPlugins', 'uuid', dp);
+  await addRecord(DISCOVERY_PLUGIN, UUID, dp);
 }
 
+export function getSelectorTypeMap() {
+  return {
+    address: 'Address',
+    associate: 'Associate',
+    crypto: 'Crypto Address',
+    dob: 'Date of Birth',
+    date: 'Date',
+    email: 'Email',
+    event: 'Event',
+    family: 'Family',
+    keyword: 'Keyword',
+    name: 'Name',
+    occupation: 'Occupation',
+    organization: 'Organization',
+    phone: 'Phone',
+    religion: 'Religion',
+    username: 'Username',
+  };
+}
 
-export function getSelectorTypeMap(){
-    return {
-        'address': 'Address',
-        'associate': 'Associate',
-        'crypto': 'Crypto Address',
-        'dob': 'Date of Birth',
-        'date': 'Date',
-        'email': 'Email',
-        'event': 'Event',
-        'family': 'Family',
-        'keyword': 'Keyword',
-        'name': 'Name',
-        'occupation': 'Occupation',
-        'organization': 'Organization',
-        'phone': 'Phone',
-        'religion': 'Religion',
-        'username': 'Username'
+/**
+ * Hydrate the passed in instance with data object
+ * @param instance
+ * @param data
+ * @returns {*}
+ */
+export function hydrate(instance, data) {
+  for (const key in instance) {
+    if (instance.hasOwnProperty(key)) {
+      instance[key] = instance[key];
     }
+  }
+  return instance;
 }
-
 
 export function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function initializeDiscoveryPlugins(){
-    // install the default discovery plugins
-    const defaultDiscoveryPlugins = [
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/sec-edgar.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/california/sos-business-search.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-org.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-org-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-org.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/github/gh-save-screenshot.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-text-username.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-title-username.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-url-username.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-org.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/caller-id.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/experian-phone-verification.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/ipqs-phone-validator.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/phone-validator.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/reverse-phone-checker.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/whats-my-name.json",
-      "https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/who-am-i.json"
-    ];
-    await Promise.all(defaultDiscoveryPlugins.map(pluginUrl => {
-        installPackage({url: pluginUrl}).catch(err => {
-        })
-    }))
+export async function runWithMinDelay(taskFn) {
+  const start = performance.now(); // Start the timer
+  await taskFn(); // Run the task (can be sync or async)
+  const elapsed = performance.now() - start;
+  const remaining = 1500 - elapsed;
+  if (remaining > 0) {
+    await new Promise(resolve => setTimeout(resolve, remaining));
+  }
+  console.log(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
+}
+
+
+export async function initializeDiscoveryPlugins() {
+  // install the default discovery plugins
+  const defaultDiscoveryPlugins = [
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/sec-edgar.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/california/sos-business-search.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-name.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-org.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-name.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-org-name.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-name.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-org.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/github/gh-save-screenshot.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-text-username.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-title-username.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-url-username.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-name.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-org.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/caller-id.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/experian-phone-verification.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/ipqs-phone-validator.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/phone-validator.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/reverse-phone-checker.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/whats-my-name.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/who-am-i.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json'
+  ];
+  await Promise.all(
+    defaultDiscoveryPlugins.map((pluginUrl) => {
+      installPackage({ url: pluginUrl }).catch((err) => {});
+    })
+  );
+}
+
+
+/**
+ * Check for the xpath
+ * @param xpath
+ * @returns {Node|null}
+ */
+function getElementByXPath(xpath) {
+  // Evaluate the XPath against the document
+  const result = document.evaluate(
+    xpath,
+    document,
+    null,
+    XPathResult.FIRST_ORDERED_NODE_TYPE,
+    null
+  );
+  // Return the node if found
+  return result?.singleNodeValue ?? null;
 }

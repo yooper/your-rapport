@@ -38,6 +38,11 @@ Your Rapport is an open source commercial tool for the following reasons:
 📸 Smart Screenshot Capture
 Automatically takes screenshots of chats, posts, comments, and threads across the web.
 
+🤖 Automated Bulk Screenshot Captures
+Your Rapport lets you provide a list of URLs to scrape. This saves you time by being able to scrape large amounts of
+data, while you work on other tasks. You can also right click on a link to add the URL to the automation queue for 
+future scraping.
+
 🔍 Searchable Text Extraction
 Uses advanced algorithms to extract text from screenshots, making every captured conversation searchable by keyword, 
 username, or phrase.

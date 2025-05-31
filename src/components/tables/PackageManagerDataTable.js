@@ -1,119 +1,127 @@
-
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import {useEffect, useState} from "react";
-import MUIDataTable from "mui-datatables";
-import Chip from "@mui/material/Chip";
-import {hideLoader, installPackage, processNotification, showLoader} from "../../utilities/loaders";
-import {convertKeysToCamelCase} from "../../utilities/transformers";
-import {addRecord, deleteRecord, getLocalItem} from "../../models/db/local";
-import IconButton from "@mui/material/IconButton";
-import HelperPopover from "../HelperPopover";
-
+import { useEffect, useState } from 'react';
+import MUIDataTable from 'mui-datatables';
+import Chip from '@mui/material/Chip';
+import {
+  hideLoader,
+  installPackage,
+  processNotification,
+  showLoader,
+} from '../../utilities/loaders';
+import { convertKeysToCamelCase } from '../../utilities/transformers';
+import { addRecord, deleteRecord, getLocalItem } from '../../models/db/local';
+import IconButton from '@mui/material/IconButton';
+import HelperPopover from '../HelperPopover';
+import { DISCOVERY_PLUGIN } from '../../services/constants';
 
 export default function PackageManagerDataTable(props) {
+  const [rows, setRows] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [rows, setRows] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() =>
-  {
-      fetchData();
+  useEffect(() => {
+    fetchData();
   }, []);
 
   async function fetchData() {
-      showLoader();
-      setIsLoading(true)
-      // remote packages
-      // TODO: cache this call
-      const response = await fetch('https://raw.githubusercontent.com/osint-liar/public-packages/develop/index.json');
-      const data = await response.json();
-      // convert the data to camelCase
-      const externalPackages = convertKeysToCamelCase(data).filter(r => r.action !== 'Middleware');
+    showLoader();
+    setIsLoading(true);
+    // remote packages
+    // TODO: cache this call
+    const response = await fetch(
+      'https://raw.githubusercontent.com/osint-liar/public-packages/develop/index.json'
+    );
+    const data = await response.json();
+    // convert the data to camelCase
+    const externalPackages = convertKeysToCamelCase(data).filter(
+      (r) => r.action !== 'Middleware'
+    );
 
-      const localPackages = await getLocalItem('discoveryPlugins') ?? [];
-      externalPackages.forEach(ep => ep.action = 'install');
+    const localPackages = (await getLocalItem(DISCOVERY_PLUGIN)) ?? [];
+    externalPackages.forEach((ep) => (ep.action = 'install'));
 
-      // Iterate through the first list
-      externalPackages.forEach(remoteRecord => {
-            // Check for a match in the second list
-            const found = localPackages.find(localRecord => localRecord.uuid === remoteRecord.uuid);
-            if (found) {
-                if(found.version !== remoteRecord.version){
-                    remoteRecord.action = 'updatable';
-                }
-                else if(!found.active){
-                    remoteRecord.action = 'deactivated';
-                }
-                else{
-                    remoteRecord.action = 'installed';
-                }
-            }
-        });
-
-      setRows(externalPackages)
-      // merge discovery plugin or view
-      setIsLoading(false);
-      hideLoader();
-  }
-
-  const getRecord = (rowData) =>
-  {
-      let record = {}
-      const columns = getColumns()
-      for(let idx=0; idx < columns.length; idx++)
-      {
-          record[columns[idx].name] = rowData[idx]
+    // Iterate through the first list
+    externalPackages.forEach((remoteRecord) => {
+      // Check for a match in the second list
+      const found = localPackages.find(
+        (localRecord) => localRecord.uuid === remoteRecord.uuid
+      );
+      if (found) {
+        if (found.version !== remoteRecord.version) {
+          remoteRecord.action = 'updatable';
+        } else if (!found.active) {
+          remoteRecord.action = 'deactivated';
+        } else {
+          remoteRecord.action = 'installed';
+        }
       }
-      return record
+    });
+
+    setRows(externalPackages);
+    // merge discovery plugin or view
+    setIsLoading(false);
+    hideLoader();
   }
+
+  const getRecord = (rowData) => {
+    let record = {};
+    const columns = getColumns();
+    for (let idx = 0; idx < columns.length; idx++) {
+      record[columns[idx].name] = rowData[idx];
+    }
+    return record;
+  };
 
   const getColor = (value) => {
-      switch(value){
-          case 'install':
-              return 'secondary';
-          case 'update':
-              return 'primary';
-          default:
-              return 'default';
-      }
+    switch (value) {
+      case 'install':
+        return 'secondary';
+      case 'update':
+        return 'primary';
+      default:
+        return 'default';
+    }
   };
 
   /**
-  * Install the package
-  * @param record
-  * */
-  const upsert = async(record) => {
-      setIsLoading(true);
-      showLoader();
-      await installPackage(record);
-      // TODO: fix layout issue with notifications
-      //processNotification({title: `Discovery Plugin Installed`, message: `The discovery plugin ${dp.label}`, type: 'success'});
-      // TODO: refresh the package table without re-pulling the data
-      await fetchData();
-      hideLoader();
-      setIsLoading(false);
-  }
+   * Install the package
+   * @param record
+   * */
+  const upsert = async (record) => {
+    setIsLoading(true);
+    showLoader();
+    await installPackage(record);
+    // TODO: fix layout issue with notifications
+    //processNotification({title: `Discovery Plugin Installed`, message: `The discovery plugin ${dp.label}`, type: 'success'});
+    // TODO: refresh the package table without re-pulling the data
+    await fetchData();
+    hideLoader();
+    setIsLoading(false);
+  };
 
   const getColumns = () => {
     let columns = [
       {
-          label: ' ',
-          name: 'description',
-          options: {
-              display: true,
-              filter: true,
-              sort: false,
-              customBodyRender: (value, tableMeta, updateValue) => {
-                  const record = getRecord(tableMeta.rowData)
-                  return (
-                      <div><IconButton><HelperPopover message={record.description}/></IconButton></div>
-                  )
-              },
-          }
+        label: ' ',
+        name: 'description',
+        options: {
+          display: true,
+          filter: true,
+          sort: false,
+          customBodyRender: (value, tableMeta, updateValue) => {
+            const record = getRecord(tableMeta.rowData);
+            return (
+              <div>
+                <IconButton>
+                  <HelperPopover message={record.description} />
+                </IconButton>
+              </div>
+            );
+          },
+        },
       },
-      { label: 'Label', name: 'label'},
-      { label: 'Version', name: 'version'},
+      { label: 'Label', name: 'label' },
+      { label: 'Version', name: 'version' },
       {
         name: 'action',
         label: 'Action',
@@ -122,15 +130,24 @@ export default function PackageManagerDataTable(props) {
           filter: false,
           sort: false,
           customBodyRender: (value, tableMeta, updateValue) => {
-            const record = getRecord(tableMeta.rowData)
+            const record = getRecord(tableMeta.rowData);
             if (value === undefined) {
               return <div></div>;
-            }
-            else{
-                return <div><Chip label={value} color={getColor(value)} onClick={async() => { await upsert(record)}} /></div>;
+            } else {
+              return (
+                <div>
+                  <Chip
+                    label={value}
+                    color={getColor(value)}
+                    onClick={async () => {
+                      await upsert(record);
+                    }}
+                  />
+                </div>
+              );
             }
           },
-        }
+        },
       },
       {
         name: 'country',
@@ -142,12 +159,15 @@ export default function PackageManagerDataTable(props) {
           customBodyRender: (value, tableMeta, updateValue) => {
             if (value === undefined) {
               return <div></div>;
-            }
-            else{
-                return <div><Chip label={value} color={'primary'} /></div>;
+            } else {
+              return (
+                <div>
+                  <Chip label={value} color={'primary'} />
+                </div>
+              );
             }
           },
-        }
+        },
       },
       {
         name: 'updatedOn',
@@ -159,69 +179,66 @@ export default function PackageManagerDataTable(props) {
           customBodyRender: (value, tableMeta, updateValue) => {
             if (value === undefined) {
               return <div>??</div>;
-            }
-            else if(!value){
-                return <div>{new Date().toLocaleString()}</div>;
-            }
-            else{
-                return <div>{new Date(value).toLocaleString()}</div>;
+            } else if (!value) {
+              return <div>{new Date().toLocaleString()}</div>;
+            } else {
+              return <div>{new Date(value).toLocaleString()}</div>;
             }
           },
-        }
+        },
       },
     ];
 
-    const notVisibleColumns = ['uuid', 'url', 'type']
-    notVisibleColumns.forEach(fieldName => {
-        columns.push({
-            name: fieldName,
-            label: fieldName,
-            options: {
-                display: 'excluded',
-                filter: false,
-                sort: false
-            }
-        })
-    })
+    const notVisibleColumns = [UUID, 'url', 'type'];
+    notVisibleColumns.forEach((fieldName) => {
+      columns.push({
+        name: fieldName,
+        label: fieldName,
+        options: {
+          display: 'excluded',
+          filter: false,
+          sort: false,
+        },
+      });
+    });
     return columns;
-  }
+  };
 
   const options = {
-      searchAlwaysOpen: true,
-      setTableProps: () => {
-          return {
-              size: 'small',
-          }
-      },
-      print: false,
-      filter: true,
-      download: false,
-      onRowsDelete: async(records, data) => {
-        setIsLoading(true)
-        showLoader()
-        for (const [idx, value] of Object.entries(records.lookup)) {
-           await deleteRecord('discoveryPlugins', 'uuid', rows[idx])
-        }
-        await fetchData();
-        setIsLoading(false);
-        hideLoader();
-      },
-  }
+    searchAlwaysOpen: true,
+    setTableProps: () => {
+      return {
+        size: 'small',
+      };
+    },
+    print: false,
+    filter: true,
+    download: false,
+    onRowsDelete: async (records, data) => {
+      setIsLoading(true);
+      showLoader();
+      for (const [idx, value] of Object.entries(records.lookup)) {
+        await deleteRecord(DISCOVERY_PLUGIN, UUID, rows[idx]);
+      }
+      await fetchData();
+      setIsLoading(false);
+      hideLoader();
+    },
+  };
 
   if (isLoading) {
-      return <div></div>
+    return <div></div>;
   }
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
-      {!isLoading &&
+      {!isLoading && (
         <MUIDataTable
           title={'Package Management'}
           data={rows}
           columns={getColumns()}
           options={options}
         />
-      }
+      )}
     </Box>
   );
 }
-

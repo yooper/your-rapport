@@ -1,16 +1,16 @@
-import React, {useState, useEffect, Fragment} from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import JsonView from "react18-json-view";
+import JsonView from 'react18-json-view';
 
 export default function JsonAttributeViewerDialog(props) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setOpen(props.isOpen)
+    setOpen(props.isOpen);
   }, [props.isOpen]);
 
   const handleClose = () => {
@@ -19,7 +19,7 @@ export default function JsonAttributeViewerDialog(props) {
   };
 
   return (
-      <>
+    <>
       <Dialog
         open={open}
         onClose={handleClose}
@@ -29,7 +29,7 @@ export default function JsonAttributeViewerDialog(props) {
       >
         <DialogTitle id="form-dialog-title">Debug Data Attributes</DialogTitle>
         <DialogContent>
-            <JsonView src={props.record} theme="vscode" />
+          <JsonView src={props.record} theme="vscode" />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="cancel" variant={'contained'}>
@@ -37,6 +37,6 @@ export default function JsonAttributeViewerDialog(props) {
           </Button>
         </DialogActions>
       </Dialog>
-      </>
+    </>
   );
 }

@@ -7,46 +7,36 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { useState } from 'react';
-import ExtensionIcon from '@mui/icons-material/Extension';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import WebIcon from '@mui/icons-material/Web';
-import ListAltIcon from '@mui/icons-material/ListAlt';
 import HelperPopover from '../HelperPopover';
-import BrowserSettingsForm from '../forms/BrowserSettingsForm';
-import PackageManagerDataTable from '../tables/PackageManagerDataTable';
-import SelectorDataTable from '../tables/SelectorDataTable';
-import DiscoveryPluginDataTable from '../tables/DiscoveryPluginDataTable';
-import { DISCOVERY_PLUGIN } from '../../services/constants';
+import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import BulkAutomationTable from '../tables/BulkAutomationDataTable';
+import { BULK_AUTOMATION } from '../../services/constants';
 
-export default function OptionsLayout() {
+export default function AutomationLayout() {
   const urlParams = new URL(window.location.href).searchParams;
-
   const [selectedComponent, setSelectedComponent] = useState(
-    urlParams.get('view') ?? 'browser'
+    urlParams.get('view') ?? BULK_AUTOMATION
   );
 
   const componentMap = [
     {
-      label: 'Browser Settings',
-      key: 'browser',
-      message: 'Modify browser specific settings',
-    },
-    {
-      label: 'Discovery Plugins',
-      key: DISCOVERY_PLUGIN,
+      label: 'Bulk Automation',
+      key: BULK_AUTOMATION,
       message:
-        'Connect or enrich your data to other service providers. Autolinks data repositories to your selectors.',
+        'Insert a list of urls that will be opened in a tab and collected',
     },
     {
-      label: 'Package Management',
-      key: 'package_management',
-      message:
-        'Packages enhance and extend Your Rapport functionality. When you install a package it becomes a discovery plugin. Discovery plugins help you search for selectors.',
+      label: 'Scheduled Automation',
+      key: 'scheduled_automation',
+      message: 'TODO: implement scheduling collection subsystem',
     },
     {
-      label: 'Selectors',
-      key: 'selector',
-      message: 'Create or Delete selectors',
+      label: 'Selector Automation',
+      key: 'selector_automation',
+      message: 'TODO: Discover selectors on a live page',
     },
   ];
 
@@ -83,13 +73,11 @@ export default function OptionsLayout() {
 
 function IconMapper(props) {
   switch (props.icon) {
-    case 'browser':
-      return <WebIcon />;
-    case DISCOVERY_PLUGIN:
-      return <ExtensionIcon />;
-    case 'package_management':
-      return <ListAltIcon />;
-    case 'selector':
+    case BULK_AUTOMATION:
+      return <LibraryAddIcon />;
+    case 'scheduled_automation':
+      return <AlarmIcon />;
+    case 'selector_automation':
       return <LocalOfferIcon />;
     default:
       return <WebIcon />;
@@ -98,14 +86,12 @@ function IconMapper(props) {
 
 function Renderer(props) {
   switch (props.selectedComponent) {
-    case 'browser':
-      return <BrowserSettingsForm />;
-    case DISCOVERY_PLUGIN:
-      return <DiscoveryPluginDataTable />;
-    case 'package_management':
-      return <PackageManagerDataTable />;
-    case 'selector':
-      return <SelectorDataTable />;
+    case BULK_AUTOMATION:
+      return <BulkAutomationTable />;
+    case 'scheduled_automation':
+      return <div>TODO...</div>;
+    case 'selector_automation':
+      return <div>TODO...</div>;
     default:
       return <div>Unknown setting</div>;
   }
