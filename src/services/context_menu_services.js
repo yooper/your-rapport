@@ -52,7 +52,7 @@ export async function initializeContextMenus() {
       case 'addBulkAutomationUrl':
         (async () => {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
-          const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 5)
+          const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
           const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
           await addRecord(BULK_AUTOMATION, UUID, {
             uuid: crypto.randomUUID(),

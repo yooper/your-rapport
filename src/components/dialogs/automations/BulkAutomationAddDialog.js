@@ -61,7 +61,7 @@ export default function BulkAutomationAddDialog(props) {
       const urls = text.split('\n').filter(t => t && _isValidUrl(t));
       const existingUrls = (await getLocalItem(BULK_AUTOMATION)) ?? [];
       const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
-      const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', '5')
+      const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
       let automateUrls = urls.map((url) => {
         return {
           uuid: crypto.randomUUID(),

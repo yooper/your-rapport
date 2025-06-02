@@ -3,7 +3,6 @@ import {
   createTab,
   getActiveTab,
   initializeDiscoveryPlugins,
-  installPackage, runWithMinDelay,
   sleep,
 } from '../../utilities/loaders';
 import {

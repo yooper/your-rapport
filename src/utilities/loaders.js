@@ -158,6 +158,10 @@ export async function runWithMinDelay(taskFn) {
 }
 
 
+/**
+ * Installs a set of default packages
+ * @returns {Promise<void>}
+ */
 export async function initializeDiscoveryPlugins() {
   // install the default discovery plugins
   const defaultDiscoveryPlugins = [
@@ -170,7 +174,6 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-name.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-org.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/github/gh-save-screenshot.json',
@@ -186,13 +189,31 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/reverse-phone-checker.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/whats-my-name.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/who-am-i.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json'
+    // domain tools
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/dnslytics.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/censys.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/robtex.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/securitytrails.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/shodan.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/threatminer.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/viewdns.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/virustotal.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-archive.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-check.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/domainiq.json'
+
+
+
   ];
-  await Promise.all(
-    defaultDiscoveryPlugins.map((pluginUrl) => {
-      installPackage({ url: pluginUrl }).catch((err) => {});
-    })
-  );
+  for (const pluginUrl of defaultDiscoveryPlugins) {
+    try{
+      await installPackage({ url: pluginUrl });
+    }
+    catch(e){
+      console.log(e)
+    }
+  }
 }
 
 

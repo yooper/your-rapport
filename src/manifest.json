@@ -9,7 +9,7 @@
     "default_title": "Your Rapport is a screenshot tool with auto scroll capabilities. Right click, select Collect or Ctrl+Shift+S to save. Ctrl+Shift+Z for auto scrolling captures. Ctrl+Shift+X open the dashboard.",
     "default_popup": "popup.html"
   },
-  "version": "0.7.0",
+  "version": "0.7.1",
   "icons": {
     "128": "icon-128.png",
     "48": "icon-48.png",
