@@ -2,7 +2,7 @@
 <img src="src/assets/main.png" width="100%"/>
 </p>
 
-# 🧩 Your Rapport – Collect, Reflect, and Collaborate.
+# Your Rapport – Collect, Reflect, and Collaborate.
 
 Your Rapport is an open source "Chrome Extension" digital archiving and intelligence tool that collects online conversations using intelligent screenshot automation 
 and makes the content fully searchable for professionals, amateurs, and archivists who need to preserve, analyze, or audit digital 
@@ -19,7 +19,7 @@ After installing the Chrome extension from https://chromewebstore.google.com/det
 "Your Rapport" will automatically be ready to collect.
 
 There are several options for collecting a screenshot of a web page:
- * `Mouse - Right Click` and select the **Collect** menu option with the "Your Rapport" logo
+ * `Mouse - Right Click` and select the **Autoscroll Collect** menu option with the "Your Rapport" logo
  * `Ctrl+Shift+S` collects a single screenshot.
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
