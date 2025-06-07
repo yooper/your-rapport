@@ -8,5 +8,6 @@
 import { initAutoScrollerHandler } from './modules/autoScroller';
 import { initMarkJsHandler } from './modules/markText';
 
+
 initAutoScrollerHandler();
 initMarkJsHandler();

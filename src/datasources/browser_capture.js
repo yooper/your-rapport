@@ -1,5 +1,4 @@
 import { addRecord, getLocalItem, setLocalItem } from '../models/db/local';
-import { findAllMatches, sha256 } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';
@@ -31,9 +30,12 @@ export async function capture(tab, message = {}) {
     const screenShot = await chrome.tabs.captureVisibleTab();
     const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
 
+    record.sequenceId = ('sequence' in message) ? message.sequence : 0;
+    record.bulkAutomationUuid = ('automation' in message && message.automation) ? message.automation.uuid : null;
+
     await addRecord(RAPPORT, UUID, record);
     // update the configuration last saved on metadata
-    configuration[UPDATED_ON] = Date.now().toString();
+    configuration[UPDATED_ON] = Date.now();
     configuration.screenShotCount++;
     await Configuration.setConfiguration(configuration)
     ExtensionPin.setDefaultSaved(tab);

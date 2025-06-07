@@ -6,14 +6,13 @@ import Chip from '@mui/material/Chip';
 import {
   hideLoader,
   installPackage,
-  processNotification,
   showLoader,
 } from '../../utilities/loaders';
 import { convertKeysToCamelCase } from '../../utilities/transformers';
 import { addRecord, deleteRecord, getLocalItem } from '../../models/db/local';
 import IconButton from '@mui/material/IconButton';
 import HelperPopover from '../HelperPopover';
-import { DISCOVERY_PLUGIN } from '../../services/constants';
+import { DISCOVERY_PLUGIN, UUID } from '../../services/constants';
 
 export default function PackageManagerDataTable(props) {
   const [rows, setRows] = useState([]);

@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { deleteRecord, getLocalItem, updateRecord } from '../../models/db/local';
-import { createTab, getActiveTab, hideLoader, processNotification, showLoader } from '../../utilities/loaders';
+import { hideLoader, processNotification, showLoader } from '../../utilities/loaders';
 import BulkAutomationAddDialog from '../dialogs/automations/BulkAutomationAddDialog';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import IconButton from '@mui/material/IconButton';
@@ -70,7 +70,33 @@ export default function BulkAutomationTable(props) {
         sort: false,
       },
     },
-    { label: 'Url', name: 'url' },
+    {
+      name: 'url',
+      label: 'URL',
+      options: {
+        filter: true,
+        sort: false,
+        searchable: true,
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData);
+          let url = record.url;
+          if (url.length > 32) {
+            url = record.url.substring(0, 32) + '...';
+          }
+          return (
+            <div>
+              <span>
+                <Tooltip title={record.url}>
+                  <a href={record.url} target={'_blank'} rel={'noreferrer'}>
+                    {url}
+                  </a>
+                </Tooltip>
+              </span>
+            </div>
+          );
+        },
+      },
+    },
     { label: 'Unit', name: 'unit' },
     { label: 'Value', name: 'value' },
     { label: '# Screenshots', name: 'screenShotsCollected' },

@@ -10,6 +10,7 @@ let lastStableTime = Date.now();
 
 /**
  * Listen for the message to start scrolling and issuing page saves
+ * TODO: Abstract the message handling away from this handler
  */
 export function initAutoScrollerHandler() {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -93,6 +94,7 @@ export function autoScroller(message) {
         cmd: 'captureVisibleTab',
         text: text,
         sequence: screenCollectionCount++,
+        automation: automation
       });
 
       // the capture did not complete

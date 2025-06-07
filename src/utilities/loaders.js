@@ -201,9 +201,8 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/virustotal.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-archive.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-check.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/domainiq.json'
-
-
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/domainiq.json',
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/built-with.json'
 
   ];
   for (const pluginUrl of defaultDiscoveryPlugins) {
