@@ -1,4 +1,6 @@
 import { getVisibleText } from './visibleElements';
+import { updateRecord } from '../../../models/db/local';
+import { BULK_AUTOMATION, UUID } from '../../../services/constants';
 
 let state = 'stopped';
 let capturedHeight = 0;
@@ -18,7 +20,13 @@ export function initAutoScrollerHandler() {
     if(['autoscrollCollect'].includes(message.cmd)){
       return; // ignore this command
     }
-    if (state === 'startCapture' && message.cmd === 'startCapture') {
+
+    // check if the on message is running
+    if(message.cmd === 'ping'){
+      sendResponse({cmd: 'pong'})
+    }
+
+    else if (state === 'startCapture' && message.cmd === 'startCapture') {
       // we are already scrolling, lets cancel the auto scrolling.
       state = 'stopCapture';
     }
@@ -167,11 +175,13 @@ function processAutomation(message, description = null){
     automation.completedOn = Date.now();
     automation.screenShotsCollected = screenCollectionCount;
     automation.description = description
-    console.log('automation task completed')
-    chrome.runtime.sendMessage({
-      cmd: 'bulkCollectionComplete',
-      automation: automation
-    });
+    updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
+      console.log('automation task completed')
+      chrome.runtime.sendMessage({
+        cmd: 'bulkCollectionComplete',
+        automation: automation
+      });
+    })
   }
 
 }

@@ -15,3 +15,9 @@ export const USER = 'user';
  */
 export const UPDATED_ON = 'updated_on';
 export const UUID = 'uuid';
+
+
+/**
+ * State mapping
+ */
+export const INITIALIZED = 'initialized';
