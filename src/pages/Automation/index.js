@@ -5,6 +5,7 @@ import { getDarkTheme } from '../../utilities/loaders';
 import { ReactNotifications } from 'react-notifications-component';
 import TopAppBar from '../../components/TopAppBar';
 import './index.css';
+import 'react-notifications-component/dist/theme.css';
 import AutomationLayout from '../../components/layouts/AutomationLayout';
 
 function App() {

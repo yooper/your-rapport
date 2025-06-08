@@ -29,6 +29,7 @@ export class BulkAutomationUrl {
     this.completedOn = completedOn;
     this.description = description
     this.tabId = null;
+    this.tab = null;
   }
 
   /**

@@ -196,9 +196,10 @@ export default function BulkAutomationTable(props) {
               record.ranOn = null;
               record.completedOn = null;
               await updateRecord(BULK_AUTOMATION, UUID, record);
-              if(!await sendAutomationMessage(record)){
-                processNotification({title: 'Bulk Process Error', message: 'Bulk processing is not working.', type: 'error'});
-              }
+
+
+              processNotification({title: 'Restarting Job', message: 'Automation job is restarting.', type: 'success'});
+
             }}>
               <DirectionsRunIcon />
             </IconButton>
