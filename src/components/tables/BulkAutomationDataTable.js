@@ -17,7 +17,7 @@ export default function BulkAutomationTable(props) {
 
   async function sendAutomationMessage(record) {
     try{
-      chrome.runtime.sendMessage({ cmd: 'bulkAutomationUrl', automation: record });
+      chrome.runtime.sendMessage({ cmd: 'queueAutomationUrl'});
       return true;
     }
     catch(e){

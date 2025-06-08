@@ -34,7 +34,8 @@
     "storage",
     "contextMenus",
     "activeTab",
-    "tabs"
+    "tabs",
+    "webNavigation"
   ],
   "commands": {
     "initStartCapture": {

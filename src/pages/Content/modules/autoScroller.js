@@ -62,25 +62,6 @@ function getScrollDetailsByHostName() {
  */
 export function autoScroller(message) {
 
-  function monitorCount() {
-    const intervalId = setInterval(() => {
-        const currentCount = screenCollectionCount;
-
-        if (currentCount !== previousCount) {
-          previousCount = currentCount;
-          lastStableTime = Date.now();
-        }
-
-        const elapsed = Date.now() - lastStableTime;
-        if (elapsed >= 2000 && state !== 'stopCapture') {
-          state = 'stopCapture';
-          processAutomation(message, 'Error, could not engage autoscroller automation.')
-
-        }
-      }, 500); // poll every 500ms
-    return () => clearInterval(intervalId);
-  }
-
   const autoScroll = () => {
     if (state !== 'startCapture') {
       console.log('capture stopped');
@@ -104,6 +85,11 @@ export function autoScroller(message) {
         sequence: screenCollectionCount++,
         automation: automation
       });
+      // update the bulk automation record
+      if(automation){
+        automation.screenShotsCollected = screenCollectionCount;
+        await updateRecord(BULK_AUTOMATION, UUID, automation)
+      }
 
       // the capture did not complete
       if(!('completed' in response)){
@@ -177,10 +163,8 @@ function processAutomation(message, description = null){
     automation.description = description
     updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
       console.log('automation task completed')
-      chrome.runtime.sendMessage({
-        cmd: 'bulkCollectionComplete',
-        automation: automation
-      });
+      // start the next item in the queue
+      chrome.runtime.sendMessage({ cmd: 'queueAutomationUrl'});
     })
   }
 

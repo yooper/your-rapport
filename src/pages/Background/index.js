@@ -16,6 +16,7 @@ import ExtensionPin from '../../utilities/ExtensionPin';
 import { scanPage } from '../../utilities/transformers';
 import { Configuration } from '../../models/schemas/Configuration';
 import { BULK_AUTOMATION, RAPPORT, SELECTOR, UUID } from '../../services/constants';
+import { BulkAutomationUrl } from '../../models/schemas/BulkAutomationUrl';
 
 /**
  * Initialize configuration values when the app is installed
@@ -23,37 +24,52 @@ import { BULK_AUTOMATION, RAPPORT, SELECTOR, UUID } from '../../services/constan
 await initializeContextMenus();
 await initializeDiscoveryPlugins();
 
+/**
+ * Global var for tracking the currently running automation
+ * @type {BulkAutomationUrl}
+ */
+let activeAutomation = null;
 
-chrome.runtime.onConnect.addListener((port) => {
-  console.assert(port.name === RAPPORT);
-  if(port.name !== RAPPORT){
-    console.log('Cannot process ' + port.name);
-    return;
-  }
+/**
+ * The page failed to load
+ */
+chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
+  // an error occurred, unset the active automation
+  if(details.url === activeAutomation.url &&
+    (!activeAutomation.completedOn || activeAutomation.screenShotsCollected >= 0)){
+    activeAutomation.ranOn =  activeAutomation.ranOn ?? Date.now();
+    activeAutomation.description = details.error;
+    activeAutomation.completedOn = Date.now();
+    await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+    activeAutomation = null;
 
-  // TODO: Upon connection initialize automation setup
-  if (port.sender?.tab) {
-    const tab = port.sender.tab;
-    console.log("Connected from tab:", tab.id, tab.url);
-  } else {
-    console.log("No tab associated with this port. Ignoring message");
-    return;
-  }
+    // invoke next automation when tab fails to load
+    const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
+    const found = automations.find(a => !a.ranOn);
 
-  // TODO: receive messages and route them
-  port.onMessage.addListener((message) => {
-    if (port.sender?.tab) {
-      const tab = port.sender.tab;
-      console.log("Received message from tab:", tab.id, tab.url);
-      port.postMessage({question: "I don't get it."});
-    } else {
-      console.log("No tab associated with this port. Ignoring message");
-      return;
+    if(!found){
+      console.log('No automations to run');
     }
-
-  });
+    else{
+      activeAutomation = found;
+      await createTab(activeAutomation.url);
+      console.log(`Initializing automation ${activeAutomation.url}`);
+    }
+  }
 });
 
+/**
+ * After the page has successful loaded initialize the capture
+ */
+chrome.webNavigation.onCompleted.addListener(async(details) => {
+  // an error occurred, unset the active automation
+  if(details.url === activeAutomation.url && !activeAutomation.completedOn){
+    await sleep(3000);
+    activeAutomation.ranOn = Date.now();
+    await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+    await chrome.tabs.sendMessage(details.tabId, {cmd: 'startCapture', automation: activeAutomation})
+  }
+});
 
 
 /**
@@ -113,39 +129,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return true;
   }
-  else if(message.cmd === 'bulkAutomationUrl'){
+  else if(message.cmd === 'queueAutomationUrl'){
     (async () => {
-      try {
-        // prevent previous automations from re-running
-        if(message.automation?.ranOn){
-          return;
-        }
 
-        await createTab(message.automation.url);
-        await sleep( await Configuration.getConfigurationValue('automationDelayOpenTabDefault', 3000)); // TODO: Make this a configuration value, allows for page to full load
-        message.automation.ranOn = Date.now();
-        await updateRecord(BULK_AUTOMATION, UUID, message.automation);
-        // forward the message to the content script
-        const activeTab = await getActiveTab();
-        // verify messages can be sent to the tab
-        chrome.tabs.sendMessage(activeTab.id, {cmd: 'ping'}).then(response => {
-          chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: message.automation})
-        }).catch(error => {
-          // the tab is not a web page that can be processed, could be a bad url
-          message.automation.completedOn = Date.now();
-          message.automation.description = "Failed to run automation " + error.message
-          updateRecord(BULK_AUTOMATION, UUID, message.automation);
-          // TODO: call next automation
-        });
+      const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
+      const found = automations.find(a => !a.ranOn);
+
+      if(!found){
+        console.log('No automations to run');
+        activeAutomation = null;
       }
-      catch (err) {
-        console.log(err);
-        // the tab is not a web page that can be processed, could be a bad url
-        message.automation.completedOn = Date.now();
-        message.automation.description = "Failed to run automation " + err.message
-        updateRecord(BULK_AUTOMATION, UUID, message.automation);
-        // TODO: call next automation
+      // the active is already set to
+      if(found.uuid === activeAutomation?.uuid ?? null){
+        console.log(`Automation Url is active ${activeAutomation.url}`);
       }
+      else{
+        activeAutomation = found;
+        await createTab(activeAutomation.url);
+        console.log(`Initializing automation ${activeAutomation.url}`);
+      }
+
     })();
     return false;
   }
@@ -176,14 +179,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // forward the message to the content script
         const activeTab = await getActiveTab();
         // verify messages can be sent to the tab
-        chrome.tabs.sendMessage(activeTab.id, {cmd: 'ping'}).then(response => {
-          chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: message.automation})
-        }).catch(error => {
-          // the tab is not a web page that can be processed, could be a bad url
-          nextAutomation.completedOn = Date.now();
-          nextAutomation.description = "Failed to run automation " + error.message
-          updateRecord(BULK_AUTOMATION, UUID, nextAutomation);
-        });
+        chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: nextAutomation})
       }
       catch (err) {
         console.log(err)
