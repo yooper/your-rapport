@@ -10,21 +10,12 @@ import IconButton from '@mui/material/IconButton';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
 import { BULK_AUTOMATION, UUID } from '../../services/constants';
+import { Configuration } from '../../models/schemas/Configuration';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-
-  async function sendAutomationMessage(record) {
-    try{
-      chrome.runtime.sendMessage({ cmd: 'queueAutomationUrl'});
-      return true;
-    }
-    catch(e){
-      return false;
-    }
-  }
   /**
    * Initiate the process of bulk downloading the list of urls
    * @param records
@@ -34,8 +25,13 @@ export default function BulkAutomationTable(props) {
       return;
     }
 
-    if(!await sendAutomationMessage(rows[0])){
-      alert('bulk processing is not working :(');
+    await Configuration.setConfigurationValue('automationBulkCollectionModel', true);
+    try{
+      chrome.runtime.sendMessage({ cmd: 'queueAutomationUrl'});
+      return true;
+    }
+    catch(e){
+      return false;
     }
   }
 
@@ -193,6 +189,7 @@ export default function BulkAutomationTable(props) {
             }
           >
             <IconButton onClick={async () => {
+              await Configuration.setConfigurationValue('automationBulkCollectionModel', false);
               record.ranOn = null;
               record.completedOn = null;
               const automationQueue = await updateRecord(BULK_AUTOMATION, UUID, record) ?? [];
@@ -201,6 +198,7 @@ export default function BulkAutomationTable(props) {
               automation.active = true;
               await setLocalItem(BULK_AUTOMATION, automationQueue);
               processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
+              await createTab(automation.url);
             }}>
               <DirectionsRunIcon />
             </IconButton>

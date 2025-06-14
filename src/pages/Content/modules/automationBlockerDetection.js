@@ -26,7 +26,6 @@ function isCloudflareChallenge() {
 function isAccessDeniedPage() {
   const keywords = ["access denied", "verify you are human", "are you a robot"];
   const bodyText = document.body.innerText.toLowerCase();
-
   return keywords.some(keyword => bodyText.includes(keyword));
 }
 

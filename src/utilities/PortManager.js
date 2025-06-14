@@ -1,5 +1,6 @@
-import { RAPPORT } from '../services/constants';
+import { ACTIVATE_AUTOMATION, PAGE_INITIALIZED, RAPPORT } from '../services/constants';
 import { capture } from '../datasources/browser_capture';
+import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
 
 export class PortManager {
   constructor() {
@@ -33,9 +34,9 @@ export class PortManager {
       return;
     }
     console.log("Message received:", message);
-    const response = processReceivedMessage(message, this.port.sender.tab)
+    const response = await processReceivedMessage(message, this.port.sender.tab)
     if(response){
-      this.port.postMessage();
+      this.port.postMessage(response);
     }
   }
 
@@ -56,10 +57,27 @@ export function initializePortConnection() {
  */
 async function processReceivedMessage(message, tab) {
   switch (message.cmd) {
+    case PAGE_INITIALIZED:
+      if(message.isAutomationBlockerDetected){
+        console.log(`Page Automation Blocker detected`);
+        return false; // stop processing in calling function if false is returned
+      }
+      else{
+        const activeAutomation = await BulkAutomationUrl.getActiveAutomation();
+        if(!activeAutomation){
+          console.log('No active automation');
+          return false // stop processing in calling function if false is returned
+        }
+        return { cmd: ACTIVATE_AUTOMATION, automation: activeAutomation }
+      }
+
     case 'getVisibleText':
       await capture(tab, message);
       break;
+    default:
+      return { }
   }
+  console.log('Unknown command '+ message.cmd, message)
 }
 
 export const portManager = new PortManager();

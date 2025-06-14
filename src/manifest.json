@@ -59,7 +59,7 @@
     },
     "reload": {
       "suggested_key": {
-        "default": "Ctrl+Shift+L"
+        "default": "Ctrl+Shift+D"
       },
       "description": "Reloads the runtime."
     }

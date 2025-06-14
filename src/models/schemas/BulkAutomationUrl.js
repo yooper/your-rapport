@@ -1,9 +1,8 @@
 /**
  * Used for tracking the bulk collection objects
  */
-import { createTab, getActiveTab, sleep } from '../../utilities/loaders';
-import { updateRecord } from '../db/local';
-import { BULK_AUTOMATION, UUID } from '../../services/constants';
+import { getLocalItem, updateRecord } from '../db/local';
+import { BULK_AUTOMATION } from '../../services/constants';
 
 export class BulkAutomationUrl {
   constructor(
@@ -35,17 +34,9 @@ export class BulkAutomationUrl {
     this.pageId = null;
   }
 
-  /**
-   * Initiate the automation
-   * @param automation
-   * @returns {Promise<void>}
-   */
-  static async run(automation){
-    await createTab(automation.url);
-    await sleep( 4000); // TODO: Make this a configuration value, allows for page to full load
-    automation.ranOn = Date.now();
-    await updateRecord(BULK_AUTOMATION, UUID, automation);
-    const activeTab = await getActiveTab();
-    chrome.tabs.sendMessage(activeTab.id, {cmd: 'startCapture', automation: automation})
+  static async getActiveAutomation(){
+    const automationQueue = await getLocalItem(BULK_AUTOMATION);
+    const activeAutomation = automationQueue.find(a => a.active);
+    return activeAutomation;
   }
 }

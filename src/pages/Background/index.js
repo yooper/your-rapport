@@ -38,9 +38,16 @@ initializePortConnection();
  * The page failed to load
  */
 chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
+  const automationQueue = await getLocalItem(BULK_AUTOMATION) ?? [];
+  const activeAutomation = automationQueue.find(a => a.url == details.url && a.active);
   if(!activeAutomation){
     return; // no active automation running
   }
+
+  activeAutomation.ranOn = Date.now();
+  activeAutomation.description = details.error;
+  activeAutomation.completedOn = Date.now();
+  await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
 
   // an error occurred, unset the active automation
   if(details.url === activeAutomation?.url &&
@@ -48,23 +55,24 @@ chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
     activeAutomation.ranOn =  activeAutomation.ranOn ?? Date.now();
     activeAutomation.description = details.error;
     activeAutomation.completedOn = Date.now();
+    activeAutomation.active = false;
     await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-    // unset the active automation
-    activeAutomation = null;
 
-    // invoke next automation when tab fails to load
-    const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
-    const found = automations.find(a => !a.ranOn);
+    const bulkCollect = await Configuration.getConfigurationValue('automationBulkCollectionModel', false);
+    if(!bulkCollect){
+      return; // single automation request
+    }
 
-    if(!found){
+    const nextAutomation = automationQueue.find(a => !a.ranOn);
+    if(!nextAutomation){
       console.log('No automations to run');
     }
     else{
-      activeAutomation = found;
-      const tab = await createTab(activeAutomation.url);
-      activeAutomation.tab = tab;
-      await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-      console.log(`Initializing automation ${activeAutomation.url}`);
+      nextAutomation.active = true;
+      nextAutomation.ranOn = Date.now();
+      await updateRecord(BULK_AUTOMATION, UUID, nextAutomation);
+      // start the next automation
+      await createTab(activeAutomation.url);
     }
   }
 });
@@ -98,8 +106,9 @@ chrome.webNavigation.onCompleted.addListener(async(details) => {
  * Add in support for short-cut keys
  */
 chrome.commands.onCommand.addListener( (command) => {
-  if (command === 'openDashboard') {
+  if (command === 'reload') {
     chrome.runtime.reload();
+    console.log('Run time reload');
     //createTab(chrome.runtime.getURL('search.html'), false);
     return false;
   }
@@ -315,6 +324,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
  */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
+    // TODO: Fix bug with autocompleting, can cause loop that requires disabling the extension to exit out.
     ExtensionPin.setDefault(tab);
   }
 });

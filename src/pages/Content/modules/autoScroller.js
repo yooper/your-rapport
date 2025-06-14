@@ -1,13 +1,11 @@
 import { getVisibleText } from './visibleElements';
 import { updateRecord } from '../../../models/db/local';
-import { BULK_AUTOMATION, UUID } from '../../../services/constants';
+import { ACTIVATE_AUTOMATION, BULK_AUTOMATION, UUID } from '../../../services/constants';
 
 let capturedHeight = 0;
 // global var to track the number of screenshots captured thus far, used to mark the sequential order
 let screenCollectionCount = 0;
 let automation = null;
-let previousCount = 0;
-let lastStableTime = Date.now();
 let state = 'stopped';
 
 /**
@@ -57,10 +55,18 @@ function getScrollDetailsByHostName() {
 
 /**
  * Scrolls up or down depending upon which host it is trying to scan.
- * @param message the message received
+ * @param message the message received from the background worker
  * @returns {boolean}
  */
 export function autoScroller(message) {
+
+  if(message.cmd === ACTIVATE_AUTOMATION){
+    state = 'startCapture';
+    automation = message.automation;
+  }
+  else {
+    state = 'stopped';
+  }
 
   const autoScroll = () => {
     if (state !== 'startCapture') {
@@ -77,21 +83,26 @@ export function autoScroller(message) {
       if (!text) {
         state = 'stopCapture'; // stops the scrolling capture if the text is not being read in
         console.log('could not capture text');
+        if(automation){
+          processAutomation(message, 'Text could not be read in.')
+        }
         return;
       }
+      // send message to the service worker
       const response = await chrome.runtime.sendMessage({
         cmd: 'captureVisibleTab',
         text: text,
         sequence: screenCollectionCount++,
         automation: automation
       });
+
       // update the bulk automation record
       if(automation){
         automation.screenShotsCollected = screenCollectionCount;
         await updateRecord(BULK_AUTOMATION, UUID, automation)
       }
 
-      // the capture did not complete
+      // the capture did not persist in the service worker
       if(!('completed' in response)){
         state = 'stopCapture'; // stops the scrolling capture if the text is not being read in
         console.log('could not save rapport');
