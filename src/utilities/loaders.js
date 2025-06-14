@@ -27,7 +27,7 @@ export function hideLoader() {
  * Used to display notifications to the user
  * @param data
  */
-export function processNotification(data, duration = 5000) {
+export function processNotification(data, duration = 3000) {
   Store.addNotification({
     title: data.title,
     message: data.message,

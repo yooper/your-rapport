@@ -49,6 +49,7 @@ export async function updateRecord(key, idFieldName, record) {
     records[index] = record;
     await setLocalItem(key, records);
   }
+  return records;
 }
 
 export async function updateBulkRecords(key, idFieldName, updatedRecords) {

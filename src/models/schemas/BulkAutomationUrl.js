@@ -16,6 +16,7 @@ export class BulkAutomationUrl {
     keepTabOpen = true,
     ranOn = null,
     completedOn = null,
+    pageId = null,
     description = null
   ) {
     this.uuid = uuid;
@@ -27,9 +28,11 @@ export class BulkAutomationUrl {
     this.createdOn = createdOn;
     this.ranOn = ranOn;
     this.completedOn = completedOn;
-    this.description = description
+    this.description = description;
+    this.active = false;
     this.tabId = null;
     this.tab = null;
+    this.pageId = null;
   }
 
   /**

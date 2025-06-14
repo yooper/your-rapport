@@ -2,8 +2,8 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
-import { deleteRecord, getLocalItem, updateRecord } from '../../models/db/local';
-import { hideLoader, processNotification, showLoader } from '../../utilities/loaders';
+import { deleteRecord, getLocalItem, setLocalItem, updateRecord } from '../../models/db/local';
+import { createTab, hideLoader, processNotification, showLoader } from '../../utilities/loaders';
 import BulkAutomationAddDialog from '../dialogs/automations/BulkAutomationAddDialog';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import IconButton from '@mui/material/IconButton';
@@ -15,6 +15,7 @@ export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+
   async function sendAutomationMessage(record) {
     try{
       chrome.runtime.sendMessage({ cmd: 'queueAutomationUrl'});
@@ -23,7 +24,6 @@ export default function BulkAutomationTable(props) {
     catch(e){
       return false;
     }
-
   }
   /**
    * Initiate the process of bulk downloading the list of urls
@@ -195,11 +195,12 @@ export default function BulkAutomationTable(props) {
             <IconButton onClick={async () => {
               record.ranOn = null;
               record.completedOn = null;
-              await updateRecord(BULK_AUTOMATION, UUID, record);
-
-
-              processNotification({title: 'Restarting Job', message: 'Automation job is restarting.', type: 'success'});
-
+              const automationQueue = await updateRecord(BULK_AUTOMATION, UUID, record) ?? [];
+              automationQueue.forEach(a => a.active = false);
+              const automation = automationQueue.find(a => a.uuid === record.uuid);
+              automation.active = true;
+              await setLocalItem(BULK_AUTOMATION, automationQueue);
+              processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
             }}>
               <DirectionsRunIcon />
             </IconButton>

@@ -25,7 +25,8 @@
     {
       "matches": ["<all_urls>"],
       "js": ["contentScript.bundle.js"],
-      "css": ["content.styles.css"]
+      "css": ["content.styles.css"],
+      "run_at": "document_idle"
     }
   ],
   "host_permissions": ["<all_urls>"],
@@ -44,12 +45,6 @@
       },
       "description": "Save the current page"
     },
-    "openDashboard": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+X"
-      },
-      "description": "Open Dashboard"
-    },
     "initAutoScroll": {
       "suggested_key": {
         "default": "Ctrl+Shift+Z"
@@ -61,6 +56,12 @@
         "default": "Ctrl+Shift+F"
       },
       "description": "Scan the current web page for known selectors."
+    },
+    "reload": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+L"
+      },
+      "description": "Reloads the runtime."
     }
   },
   "externally_connectable": {

@@ -6,67 +6,17 @@ let capturedHeight = 0;
 // global var to track the number of screenshots captured thus far, used to mark the sequential order
 let screenCollectionCount = 0;
 let automation = null;
-let previousCount = 0;
-let lastStableTime = Date.now();
 let state = 'stopped';
 
-/**
- * Listen for the message to start scrolling and issuing page saves
- * TODO: Abstract the message handling away from this handler
- */
-export function initAutoScrollerHandler() {
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    return; // deprecated
-    console.log(`message received ${message.cmd}`);
-    if(['autoscrollCollect'].includes(message.cmd)){
-      return; // ignore this command
-    }
-
-    // check if the on message is running
-    if(message.cmd === 'ping'){
-      sendResponse({cmd: 'pong'})
-    }
-
-    //else if (state === 'startCapture' && message.cmd === 'startCapture') {//   // we are already scrolling, lets cancel the auto scrolling.
-    //  state = 'stopCapture';
-    //}
-    else if (message.cmd === 'getVisibleText') {
-      sendResponse({ text: getVisibleText() });
-      return; // stop processing the request
-    }
-    else {
-      state = message.cmd;
-    }
-
-    if('automation' in message){
-      automation = message.automation;
-    }
-
-    // TODO check for an invalid state before proceeding
-    //autoScroller(message);
-  });
-}
 
 /**
- * TODO: Utility function for doing scrolling captures dependent on the website.
- * @returns {{scrollElement: Node, direction: string}|{scrollElement: HTMLElement, direction: string}|{scrollElement: Element, direction: string}}
+ * Scrolls through web page
+ * @param port
+ * @param message
  */
-function getScrollDetailsByHostName() {
-  return { scrollElement: document.documentElement, direction: 'down' };
-}
-
-/**
- * Scrolls up or down depending upon which host it is trying to scan.
- * @param message the message received
- * @returns {boolean}
- */
-export function autoScroller(message) {
+export function autoScrollerCollect(port, configuration, message) {
 
   const autoScroll = () => {
-    if (state !== 'startCapture') {
-      console.log('capture stopped');
-      return;
-    }
     const { scrollElement, direction } = getScrollDetailsByHostName();
     // Get the initial values for the height
     const { scrollHeight, clientHeight } = scrollElement;
@@ -79,6 +29,7 @@ export function autoScroller(message) {
         console.log('could not capture text');
         return;
       }
+      // send the message
       const response = await chrome.runtime.sendMessage({
         cmd: 'captureVisibleTab',
         text: text,
@@ -146,11 +97,16 @@ export function autoScroller(message) {
       }
     })();
   };
-
   autoScroll();
-  return true;
 }
 
+/**
+ * TODO: Utility function for doing scrolling captures dependent on the website.
+ * @returns {{scrollElement: Node, direction: string}|{scrollElement: HTMLElement, direction: string}|{scrollElement: Element, direction: string}}
+ */
+function getScrollDetailsByHostName() {
+  return { scrollElement: document.documentElement, direction: 'down' };
+}
 
 /**
  * End the automation process, if there is one

@@ -17,6 +17,7 @@ import { scanPage } from '../../utilities/transformers';
 import { Configuration } from '../../models/schemas/Configuration';
 import { BULK_AUTOMATION, RAPPORT, SELECTOR, UUID } from '../../services/constants';
 import { BulkAutomationUrl } from '../../models/schemas/BulkAutomationUrl';
+import { initializePortConnection, portManager } from '../../utilities/PortManager';
 
 /**
  * Initialize configuration values when the app is installed
@@ -30,10 +31,17 @@ await initializeDiscoveryPlugins();
  */
 let activeAutomation = null;
 
+initializePortConnection();
+
+
 /**
  * The page failed to load
  */
 chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
+  if(!activeAutomation){
+    return; // no active automation running
+  }
+
   // an error occurred, unset the active automation
   if(details.url === activeAutomation?.url &&
     (!activeAutomation.completedOn || activeAutomation.screenShotsCollected >= 0)){
@@ -41,6 +49,7 @@ chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
     activeAutomation.description = details.error;
     activeAutomation.completedOn = Date.now();
     await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+    // unset the active automation
     activeAutomation = null;
 
     // invoke next automation when tab fails to load
@@ -52,7 +61,9 @@ chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
     }
     else{
       activeAutomation = found;
-      await createTab(activeAutomation.url);
+      const tab = await createTab(activeAutomation.url);
+      activeAutomation.tab = tab;
+      await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
       console.log(`Initializing automation ${activeAutomation.url}`);
     }
   }
@@ -62,13 +73,24 @@ chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
  * After the page has successful loaded initialize the collection
  */
 chrome.webNavigation.onCompleted.addListener(async(details) => {
+  // don't run check if no automation is active
+  if(!activeAutomation){
+    return;
+  }
+
+
+
   // an error occurred, unset the active automation
-  if(details.url === activeAutomation?.url && !activeAutomation?.completedOn){
-    await sleep(5000);
+  setTimeout(async() => {
+    const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
+    const automation = automations.find(a => !a.ranOn && a.url === details.url);
+    activeAutomation = automation;
+    // TODO: further filter by tab info
     activeAutomation.ranOn = Date.now();
     await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
     chrome.tabs.sendMessage(details.tabId, {cmd: 'startCapture', automation: activeAutomation})
-  }
+
+  }, 500);
 });
 
 
@@ -77,7 +99,8 @@ chrome.webNavigation.onCompleted.addListener(async(details) => {
  */
 chrome.commands.onCommand.addListener( (command) => {
   if (command === 'openDashboard') {
-    createTab(chrome.runtime.getURL('search.html'), false);
+    chrome.runtime.reload();
+    //createTab(chrome.runtime.getURL('search.html'), false);
     return false;
   }
 
@@ -111,9 +134,11 @@ chrome.commands.onCommand.addListener( (command) => {
 
 
 /**
- * Receives messages from the content script or the extension page
+ * Receives messages from the content script or the extension page. Some of the incoming
+ * requests will need to be mapped to the portManager
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+
   if(message.cmd === 'initStartCapture'){
     (async () => {
       const activeTab = await getActiveTab();
@@ -129,32 +154,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return true;
   }
+  else if(message.cmd === 'setActiveAutomation'){
+    (async () => {
+      activeAutomation = message.automation;
+      sendResponse({ completed: true });
+    })();
+    return true;
+  }
+
   else if(message.cmd === 'queueRerunAutomationUrl'){
     (async () => {
       const automation = message.automation;
       console.log(`Re-running automation ${activeAutomation.url}`);
-
+      activeAutomation = automation;
       const tab = await createTab(automation.url);
       activeAutomation.tab = tab;
+      activeAutomation.ranOn = Date.now();
       // persist the tab data
       await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
       // Further processing happens in the chrome.webNavigation api calls
     })();
     return false;
-
-
-
   }
 
   else if(message.cmd === 'queueAutomationUrl'){
     (async () => {
-
+      // reset the current automation
+      activeAutomation = null;
       const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
       const found = automations.find(a => !a.ranOn);
 
       if(!found){
         console.log('No automations to run');
-        activeAutomation = null;
       }
       else{
         activeAutomation = found;
