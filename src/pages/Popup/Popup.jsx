@@ -12,6 +12,8 @@ import Typography from '@mui/material/Typography';
 import { ButtonBase, Tooltip } from '@mui/material';
 import { scanPage } from '../../utilities/transformers';
 import { capture } from '../../datasources/browser_capture';
+import { captureSingleScreenShot } from '../../services/collection_services';
+import { AUTO_COLLECT_STARTING } from '../../services/constants';
 
 export default function Popup() {
   const [isLoading, setIsLoading] = useState(true);
@@ -40,8 +42,7 @@ function LargeButtonGrid() {
       onClick: () => {
         (async () => {
           const tab = await getActiveTab();
-          const response = await chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });
-          await capture(tab, response);
+          await chrome.runtime.sendMessage({cmd: AUTO_COLLECT_STARTING });
           processNotification({
             title: 'Autoscroll Collect Started',
             message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
@@ -56,11 +57,9 @@ function LargeButtonGrid() {
       toolTipTitle: `Collect a single screenshot. Press Crtl+Shift+S to take a single screenshot.`,
       onClick: () => {
         (async () => {
-          const tab = await getActiveTab();
-          const response = await chrome.tabs.sendMessage(tab.id, { cmd: 'getVisibleText' });
-          await capture(tab, response);
+          await chrome.runtime.sendMessage({cmd: 'popupSingleCollect' });
           processNotification({
-            title: 'Single Collect Started',
+            title: 'Single Collected',
             message: `A single screenshot has been collected. You can press Crtl+Shift+S to take a single screenshot.`,
             type: 'success',
           });

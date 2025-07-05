@@ -1,49 +1,46 @@
 import { getVisibleText } from './visibleElements';
 import { updateRecord } from '../../../models/db/local';
-import { ACTIVATE_AUTOMATION, BULK_AUTOMATION, UUID } from '../../../services/constants';
+import {
+  ACTIVATE_AUTOMATION, ACTIVATE_CAPTURE,
+  BULK_AUTOMATION, CAPTURE_VISIBLE_TAB,
+  PROCESS_QUEUE_AUTOMATION_URLS,
+  UUID,
+} from '../../../services/constants';
+import { port } from '../index';
+import { debug } from '../../../services/logger_services';
+
+
+const STATE_STOPPED = 'stopped';
+const STATE_INITIALIZED = 'initialized';
+const STATE_ACTIVE = 'active';
+const STATE_ERROR = 'error';
+const MAX_SCREENSHOTS = 100;
 
 let capturedHeight = 0;
 // global var to track the number of screenshots captured thus far, used to mark the sequential order
 let screenCollectionCount = 0;
 let automation = null;
-let state = 'stopped';
-
 /**
- * Listen for the message to start scrolling and issuing page saves
- * TODO: Abstract the message handling away from this handler
+ * Used to detect non-scrolling issue
+ * @type {number}
  */
-export function initAutoScrollerHandler() {
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    return; // deprecated
-    console.log(`message received ${message.cmd}`);
-    if(['autoscrollCollect'].includes(message.cmd)){
-      return; // ignore this command
-    }
+let previousWindowScrollY = -1;
 
-    // check if the on message is running
-    if(message.cmd === 'ping'){
-      sendResponse({cmd: 'pong'})
-    }
+let state = STATE_INITIALIZED;
 
-    //else if (state === 'startCapture' && message.cmd === 'startCapture') {//   // we are already scrolling, lets cancel the auto scrolling.
-    //  state = 'stopCapture';
-    //}
-    else if (message.cmd === 'getVisibleText') {
-      sendResponse({ text: getVisibleText() });
-      return; // stop processing the request
-    }
-    else {
-      state = message.cmd;
-    }
 
-    if('automation' in message){
-      automation = message.automation;
-    }
-
-    // TODO check for an invalid state before proceeding
-    //autoScroller(message);
-  });
+export function getAutoScrollState(){
+  return state;
 }
+
+export function setAutoScrollState(setState){
+  return state = setState;
+}
+
+export function getAutomation(){
+  return automation;
+}
+
 
 /**
  * TODO: Utility function for doing scrolling captures dependent on the website.
@@ -60,17 +57,33 @@ function getScrollDetailsByHostName() {
  */
 export function autoScroller(message) {
 
-  if(message.cmd === ACTIVATE_AUTOMATION){
-    state = 'startCapture';
-    automation = message.automation;
+  previousWindowScrollY = -1;
+
+  if(state === STATE_ACTIVE){
+    state = STATE_STOPPED;
   }
-  else {
-    state = 'stopped';
+  else if(message.cmd === ACTIVATE_AUTOMATION){
+    automation = message.automation;
+    state = STATE_ACTIVE;
+  }
+  else if(message.cmd === ACTIVATE_CAPTURE){
+    state = STATE_ACTIVE;
+  }
+  else
+  {
+    // stop the script from running
+    state = STATE_STOPPED;
+  }
+
+  if(state === STATE_STOPPED){
+    processAutomation();
+    debug('stop', message);
+    return  false;
   }
 
   const autoScroll = () => {
-    if (state !== 'startCapture') {
-      console.log('capture stopped');
+    if (state !== STATE_ACTIVE) {
+      debug('capture stopped');
       return;
     }
     const { scrollElement, direction } = getScrollDetailsByHostName();
@@ -79,21 +92,19 @@ export function autoScroller(message) {
     const scrollAmount = clientHeight;
 
     (async() => {
-      const text = getVisibleText();
-      if (!text) {
-        state = 'stopCapture'; // stops the scrolling capture if the text is not being read in
-        console.log('could not capture text');
-        if(automation){
-          processAutomation(message, 'Text could not be read in.')
-        }
+      const visibleText = getVisibleText();
+      if (!visibleText) {
+        state = STATE_STOPPED; // stops the scrolling capture if the text is not being read in
+        debug('could not capture text');
+        processAutomation('Text could not be read in.')
         return;
       }
       // send message to the service worker
       const response = await chrome.runtime.sendMessage({
-        cmd: 'captureVisibleTab',
-        text: text,
+        cmd: CAPTURE_VISIBLE_TAB,
+        visibleText: visibleText,
         sequence: screenCollectionCount++,
-        automation: automation
+        automation: automation // can be null
       });
 
       // update the bulk automation record
@@ -104,27 +115,40 @@ export function autoScroller(message) {
 
       // the capture did not persist in the service worker
       if(!('completed' in response)){
-        state = 'stopCapture'; // stops the scrolling capture if the text is not being read in
-        console.log('could not save rapport');
+        state = STATE_STOPPED; // stops the scrolling capture if the text is not being read in
+        processAutomation('storage failed to save');
+        debug('Could not save rapport');
+        return
       }
 
       // TODO fix this so auto scroll doesn't fire
       // don't scroll, it's only a single page, no scroll bar
       if (scrollAmount == 0 || document.documentElement.scrollHeight === document.documentElement.clientHeight) {
-        state = 'stopCapture'; // stops the scrolling capture
-        processAutomation(message);
+        state = STATE_STOPPED; // stops the scrolling capture
+        processAutomation('scroll stopped by user');
         return;
       }
       //TODO needs some work
       if(window.innerHeight + window.scrollY >= document.documentElement.scrollHeight){
-        state = 'stopCapture';
-        processAutomation(message);
+        state = STATE_STOPPED;
+        processAutomation();
+        return;
+      }
+
+      if(previousWindowScrollY !== window.scrollY){
+        previousWindowScrollY = window.scrollY;
+      }
+      // the screen is not scrolling
+      else{
+        debug('Window not scrolling');
+        state = STATE_STOPPED;
+        processAutomation('window not scrolling');
         return;
       }
 
       if (direction === 'down') {
         capturedHeight += scrollAmount;
-        if (state !== 'startCapture') {
+        if (state !== STATE_ACTIVE) {
           console.log('capture stopped');
         }
         else if (capturedHeight < scrollHeight) {
@@ -142,16 +166,23 @@ export function autoScroller(message) {
         }
       }
 
-      if('automation' in message){
-        if(state !== "startCapture" || (message.automation.unit === 'count' && message.automation.value < screenCollectionCount)){
-          state = 'stopCapture'; // max screenshots
-          processAutomation(message);
+      if(automation){
+        if(state !== STATE_ACTIVE || (automation.unit === 'count' && automation.value < screenCollectionCount)){
+          state = STATE_STOPPED; // max screenshots
+          debug(`Max screenshots captured for automation ${automation.url}`, automation);
+          processAutomation('Max screenshots captured');
           return;
         }
       }
+      else if(screenCollectionCount > MAX_SCREENSHOTS){
+        debug(`Max screenshots captured for autoscroll collect.`, message);
+        state = STATE_STOPPED;
+        return
+      }
+
 
       // do not keep scrolling and capturing if the state is invalid
-      if (state == 'startCapture') {
+      if (state === STATE_ACTIVE) {
         // restart the functionality for scraping
         setTimeout(autoScroll, 1500); // TODO: Adjust the delay as needed, make it a configuration setting
       }
@@ -167,16 +198,20 @@ export function autoScroller(message) {
  * End the automation process, if there is one
  * @param automation
  */
-function processAutomation(request, description = null){
-  if('automation' in request){
-    let automation = request.pageInfo.automation;
+function processAutomation(description = null){
+  if(automation){
     automation.completedOn = Date.now();
     automation.screenShotsCollected = screenCollectionCount;
     automation.description = description
+    automation.active = false;
     updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
-      console.log('automation task completed')
-      // start the next item in the queue
-      chrome.runtime.sendMessage({ cmd: 'queueAutomationUrl'});
+      debug('automation task completed', automation);
+      updateRecord(BULK_AUTOMATION, UUID, automation, automation).then(response => {
+        port.postMessage({cmd: PROCESS_QUEUE_AUTOMATION_URLS})
+        debug(`closing automation`, automation);
+        // we no longer need to track this page
+        automation = null;
+      })
     })
   }
 }

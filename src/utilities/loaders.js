@@ -2,6 +2,7 @@ import { Store } from 'react-notifications-component';
 import { convertKeysToCamelCase } from './transformers';
 import { addRecord } from '../models/db/local';
 import { DISCOVERY_PLUGIN, UUID } from '../services/constants';
+import { debug } from '../services/logger_services';
 
 /**
  * Show the loader...
@@ -66,9 +67,10 @@ export function getDarkTheme() {
  * @param onlyOneTabOpen
  * @returns {Promise<void>}
  */
-export async function createTab(url, onlyOneTabOpen = false) {
+export async function createTab(url, onlyOneTabOpen = true) {
   const openUrls = (await getAllTabUrls()) ?? [];
   if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl == url)) {
+    debug('too many urls')
     return;
   }
   await chrome.tabs.create({ url: url });

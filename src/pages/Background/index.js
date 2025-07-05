@@ -15,9 +15,20 @@ import { Selector } from '../../models/schemas/Selector';
 import ExtensionPin from '../../utilities/ExtensionPin';
 import { scanPage } from '../../utilities/transformers';
 import { Configuration } from '../../models/schemas/Configuration';
-import { BULK_AUTOMATION, RAPPORT, SELECTOR, UUID } from '../../services/constants';
+import {
+  ACTIVATE_CAPTURE,
+  AUTO_COLLECT_STARTING,
+  BULK_AUTOMATION,
+  CAPTURE_VISIBLE_TAB, ENQUEUE_BULK_AUTOMATION_URL, PROCESS_QUEUE_AUTOMATION_URLS,
+  RAPPORT,
+  SELECTOR,
+  START_CAPTURE,
+  UUID,
+} from '../../services/constants';
 import { BulkAutomationUrl } from '../../models/schemas/BulkAutomationUrl';
-import { initializePortConnection, portManager } from '../../utilities/PortManager';
+import { getTabInfo, initializePortConnection, portManager, processReceivedMessage } from '../../utilities/PortManager';
+import { debug } from '../../services/logger_services';
+import { captureSingleScreenShot } from '../../services/collection_services';
 
 /**
  * Initialize configuration values when the app is installed
@@ -30,12 +41,11 @@ await initializeDiscoveryPlugins();
  * @type {BulkAutomationUrl}
  */
 let activeAutomation = null;
-
 initializePortConnection();
 
 
 /**
- * The page failed to load
+ * The web page failed to load
  */
 chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
   const automationQueue = await getLocalItem(BULK_AUTOMATION) ?? [];
@@ -47,58 +57,26 @@ chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
   activeAutomation.ranOn = Date.now();
   activeAutomation.description = details.error;
   activeAutomation.completedOn = Date.now();
+  activeAutomation.active = false;
   await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
 
-  // an error occurred, unset the active automation
-  if(details.url === activeAutomation?.url &&
-    (!activeAutomation.completedOn || activeAutomation.screenShotsCollected >= 0)){
-    activeAutomation.ranOn =  activeAutomation.ranOn ?? Date.now();
-    activeAutomation.description = details.error;
-    activeAutomation.completedOn = Date.now();
-    activeAutomation.active = false;
-    await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-
-    const bulkCollect = await Configuration.getConfigurationValue('automationBulkCollectionModel', false);
-    if(!bulkCollect){
-      return; // single automation request
-    }
-
-    const nextAutomation = automationQueue.find(a => !a.ranOn);
-    if(!nextAutomation){
-      console.log('No automations to run');
-    }
-    else{
-      nextAutomation.active = true;
-      nextAutomation.ranOn = Date.now();
-      await updateRecord(BULK_AUTOMATION, UUID, nextAutomation);
-      // start the next automation
-      await createTab(activeAutomation.url);
-    }
-  }
-});
-
-/**
- * After the page has successful loaded initialize the collection
- */
-chrome.webNavigation.onCompleted.addListener(async(details) => {
-  // don't run check if no automation is active
-  if(!activeAutomation){
-    return;
+  // Determines if it was a single automation request or multiple
+  const bulkCollect = await Configuration.getConfigurationValue('automationBulkCollectionModel', false);
+  if(!bulkCollect){
+    return; // single automation request
   }
 
-
-
-  // an error occurred, unset the active automation
-  setTimeout(async() => {
-    const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
-    const automation = automations.find(a => !a.ranOn && a.url === details.url);
-    activeAutomation = automation;
-    // TODO: further filter by tab info
-    activeAutomation.ranOn = Date.now();
-    await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-    chrome.tabs.sendMessage(details.tabId, {cmd: 'startCapture', automation: activeAutomation})
-
-  }, 500);
+  const nextAutomation = automationQueue.find(a => !a.ranOn);
+  if(!nextAutomation){
+    debug('No more automations to run.');
+  }
+  else{
+    nextAutomation.active = true;
+    nextAutomation.ranOn = Date.now();
+    await updateRecord(BULK_AUTOMATION, UUID, nextAutomation);
+    // start the next automation
+    //await createTab(activeAutomation.url);
+  }
 });
 
 
@@ -116,9 +94,7 @@ chrome.commands.onCommand.addListener( (command) => {
   switch (command) {
     case 'initStartCapture':
         (async () => {
-          const activeTab = await getActiveTab();
-          const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'getVisibleText' });
-          await capture(activeTab, response);
+          await captureSingleScreenShot();
         })();
         return true;
     case 'initScanPage':
@@ -130,10 +106,11 @@ chrome.commands.onCommand.addListener( (command) => {
     case 'initAutoScroll':
         (async () => {
           const activeTab = await getActiveTab();
-          chrome.tabs.sendMessage(activeTab.id, { cmd: 'startCapture' });
+          processReceivedMessage(activeTab, {cmd: AUTO_COLLECT_STARTING});
         })();
         return false;
     default:
+      debug('Unknown command');
       //response = await chrome.tabs.sendMessage(activeTab.id, { cmd: command });
       //await capture(activeTab, response);
       break;
@@ -150,19 +127,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if(message.cmd === 'initStartCapture'){
     (async () => {
-      const activeTab = await getActiveTab();
-      const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'getVisibleText' });
-      await capture(activeTab, response);
+      await captureSingleScreenShot();
     })();
     return false;
   }
-  if(message.cmd === 'captureVisibleTab'){
+
+  /**
+   * Received from the content script
+   */
+  if(message.cmd === CAPTURE_VISIBLE_TAB){
     (async () => {
         await capture(sender.tab, message);
         sendResponse({ completed: true })
     })();
     return true;
   }
+
   else if(message.cmd === 'setActiveAutomation'){
     (async () => {
       activeAutomation = message.automation;
@@ -171,40 +151,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  else if(message.cmd === 'queueRerunAutomationUrl'){
-    (async () => {
-      const automation = message.automation;
-      console.log(`Re-running automation ${activeAutomation.url}`);
-      activeAutomation = automation;
-      const tab = await createTab(automation.url);
-      activeAutomation.tab = tab;
-      activeAutomation.ranOn = Date.now();
-      // persist the tab data
-      await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-      // Further processing happens in the chrome.webNavigation api calls
-    })();
-    return false;
-  }
-
-  else if(message.cmd === 'queueAutomationUrl'){
-    (async () => {
-      // reset the current automation
-      activeAutomation = null;
-      const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
-      const found = automations.find(a => !a.ranOn);
-
-      if(!found){
-        console.log('No automations to run');
-      }
-      else{
-        activeAutomation = found;
-        await createTab(activeAutomation.url);
-        console.log(`Initializing automation ${activeAutomation.url}`);
-      }
-
-    })();
-    return false;
-  }
 
   (async () => {
     switch (message.cmd) {
@@ -214,23 +160,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ completed: true });
         break;
       case 'popupSingleCollect':
-        const activeTab = await getActiveTab();
-        const response = await chrome.tabs.sendMessage(activeTab.id, {
-          cmd: 'getVisibleText',
-        });
-        await capture(activeTab, response);
+        await captureSingleScreenShot();
         sendResponse({ completed: true });
         break;
-      case 'autoscrollCollect':
+      case AUTO_COLLECT_STARTING:
         const tab = await getActiveTab();
-        await chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });
+        await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
         break;
       case 'indexSelector':
         await Selector.add(message.selector);
         break;
     }
   })();
-  return message.cmd !== 'bulkAutomation';
+  return false;
 });
 
 /**
@@ -252,24 +194,23 @@ chrome.runtime.onMessageExternal.addListener(function (
         (async () => {
           await createTab(message.url);
           await sleep(3000);
-          const activeTab = await getActiveTab();
-          const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'getVisibleText' });
-          await capture(activeTab, response);
+          await captureSingleScreenShot();
         })();
         return false;
       case 'autoscrollCollect':
+      case AUTO_COLLECT_STARTING:
         (async () => {
           try {
             await createTab(message.url);
             await sleep(3000);
             const activeTab = await getActiveTab();
-            await chrome.tabs.sendMessage(activeTab.id, { cmd: 'startCapture' })
+            await chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE })
           } catch (err) {
             console.log(err)
           }
         })();
         return false;
-      case 'enqueueBulkAutomation':
+      case ENQUEUE_BULK_AUTOMATION_URL:
         (async () => {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
           const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
@@ -280,6 +221,7 @@ chrome.runtime.onMessageExternal.addListener(function (
             createdOn: Date.now(),
             completedOn: null,
             ranOn: null,
+            active: false,
             unit: unitDefault,
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
@@ -288,7 +230,6 @@ chrome.runtime.onMessageExternal.addListener(function (
         })();
         return false;
       default:
-
         console.log(`Unknown external command cmd ${message.cmd}`);
         return true;
     }
@@ -328,3 +269,28 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     ExtensionPin.setDefault(tab);
   }
 });
+
+
+chrome.tabs.onCreated.addListener(tab => {
+  if(tab.url && activeAutomation && tab.url === activeAutomation.url){
+    debug(`automation tab created ${activeAutomation.url}`, {tab, activeAutomation})
+    setTimeout(async() => {
+      // TODO: put in more logic to detect stuck scraper
+      if(activeAutomation.screenShotsCollected === 0){
+        debug(`Active Automation url ${activeAutomation.url} is not processing, ending automation`, {tab, activeAutomation});
+        return; // TODO; more debugging
+        activeAutomation.description = 'Automation failed, skipping';
+        activeAutomation.active = false;
+        activeAutomation.completedOn = Date.now();
+        await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+        activeAutomation = null; // unset the active automation
+        // TODO: Working on multiple tab bug fix
+        processReceivedMessage(tab, {cmd: PROCESS_QUEUE_AUTOMATION_URLS})
+      }
+      else{
+        // success!
+        debug(`automation is running correctly ${activeAutomation.url}`, activeAutomation)
+      }
+    }, 3000) // wait 3 seconds before failing
+  }
+})

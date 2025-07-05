@@ -39,4 +39,12 @@ export class BulkAutomationUrl {
     const activeAutomation = automationQueue.find(a => a.active);
     return activeAutomation;
   }
+
+  static async getNext(){
+    const automationQueue = await getLocalItem(BULK_AUTOMATION);
+    const activeAutomation = automationQueue.find(a => a.active);
+    return activeAutomation;
+  }
+
+
 }

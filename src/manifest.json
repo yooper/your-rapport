@@ -43,13 +43,13 @@
       "suggested_key": {
         "default": "Ctrl+Shift+S"
       },
-      "description": "Save the current page"
+      "description": "Save a single web page page screenshot"
     },
     "initAutoScroll": {
       "suggested_key": {
         "default": "Ctrl+Shift+Z"
       },
-      "description": "Starts and stops auto scroll"
+      "description": "Starts and stops auto scroll collection process."
     },
     "initScanPage": {
       "suggested_key": {

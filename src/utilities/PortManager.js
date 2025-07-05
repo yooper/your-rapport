@@ -1,10 +1,24 @@
-import { ACTIVATE_AUTOMATION, PAGE_INITIALIZED, RAPPORT } from '../services/constants';
+import {
+  ACTIVATE_AUTOMATION, ACTIVATE_CAPTURE, AUTO_COLLECT_STARTING,
+  BULK_AUTOMATION,
+  PAGE_INITIALIZED, PROCESS_QUEUE_AUTOMATION_URLS,
+  RAPPORT, START_CAPTURE, STOP_SCRIPT, STOPPED, UUID,
+} from '../services/constants';
 import { capture } from '../datasources/browser_capture';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
+import { getLocalItem, updateRecord } from '../models/db/local';
+import { createTab } from './loaders';
+import { debug } from '../services/logger_services';
+import { captureSingleScreenShot } from '../services/collection_services';
 
 export class PortManager {
   constructor() {
+    this.tabInfo = {}
     this.port = null;
+  }
+
+  getTabInfo(){
+    return this.tabInfo;
   }
 
   connect(port) {
@@ -16,16 +30,33 @@ export class PortManager {
     this.port = port;
 
     if (!port.sender?.tab) {
-      console.warn("No tab associated with this port.");
+      console.log("No tab associated with this port.");
       return;
     }
 
-    port.onMessage.addListener(this.onMessage.bind(this));
+    if(this.tabInfo[port.sender.tab.id]){
+      debug('tab id should not exist.', port.sender.tab)
+      //new Error('tab id should not already exist');
+    }
 
+    this.tabInfo[port.sender.tab.id] = port.sender.tab;
+
+    port.onMessage.addListener(this.onMessage.bind(this));
     port.onDisconnect.addListener(() => {
       console.log('Port disconnected');
       this.port = null;
     });
+  }
+
+  addTabInfo(tab, message){
+    this.tabInfo[tab.id] = { tab, pageInfo: message}
+  }
+
+  deleteTabInfo(tab){
+    if(Object.hasOwn(this.tabInfo, tab.id)){
+      debug("tab deleted ", this.tabInfo[tab.id]);
+      delete this.tabInfo[tab.id];
+    }
   }
 
   async onMessage(message) {
@@ -33,8 +64,8 @@ export class PortManager {
       console.warn("Message received but no tab.");
       return;
     }
-    console.log("Message received:", message);
-    const response = await processReceivedMessage(message, this.port.sender.tab)
+    debug("Message received:", message)
+    const response = await processReceivedMessage(this.port.sender.tab, message)
     if(response){
       this.port.postMessage(response);
     }
@@ -50,35 +81,83 @@ export function initializePortConnection() {
 }
 
 /**
- * Process the message, send a null or false to not send a response back to the content script
+ * Process the message, send a null or false to void sending a response back to the content script.
+ * TODO: add statefulness validation
  * @param message
  * @param tab
  * @returns {{}}
  */
-async function processReceivedMessage(message, tab) {
+export async function processReceivedMessage(tab, message) {
+
+  // whenever a request comes in to activate autoscroll while the ui is already scrolling
+  // deactivate the scroll and end the automation.
+
   switch (message.cmd) {
+    case AUTO_COLLECT_STARTING: // autoscroll collect was initiated through a manual action
+      // capture the 1st screenshot then proceed
+      await captureSingleScreenShot();
+      chrome.tabs.sendMessage(tab.id, {
+        cmd: ACTIVATE_CAPTURE,
+        pageInfo: message,
+        automation: null
+      })
+      break;
+    case PROCESS_QUEUE_AUTOMATION_URLS: // autoscroll collect was initiated through automation request
+        const automations = await getLocalItem(BULK_AUTOMATION) ?? [];
+        const found = automations.find(a => !a.ranOn);
+        if(!found){
+          debug('No automations to run')
+          return;
+        }
+        else{
+          debug(`Initializing automation ${found.url}`, found);
+          found.active = true;
+          found.ranOn = Date.now();
+          await updateRecord(BULK_AUTOMATION, UUID, found);
+          const tab = await createTab(found.url);
+          // PAGE_INITIALIZED will get called after a successful page load
+          if(tab === undefined){
+            debug('createTab in processReceivedMessage was undefined.');
+            return
+          }
+          debug(`Automation ${found.url} Tab Opened`, {tab, found});
+        }
+      break;
+    // the content script is ready
     case PAGE_INITIALIZED:
+      portManager.addTabInfo(tab, message);
+      // TODO: perform check in service worker too,
       if(message.isAutomationBlockerDetected){
-        console.log(`Page Automation Blocker detected`);
+        debug(`Page Automation Blocker detected, pausing automation.`);
         return false; // stop processing in calling function if false is returned
       }
       else{
+
         const activeAutomation = await BulkAutomationUrl.getActiveAutomation();
         if(!activeAutomation){
-          console.log('No active automation');
+          debug('No active automation');
           return false // stop processing in calling function if false is returned
         }
-        return { cmd: ACTIVATE_AUTOMATION, automation: activeAutomation }
-      }
 
-    case 'getVisibleText':
-      await capture(tab, message);
-      break;
+        // host names match does better than exact url match
+        if(new URL(message.url).hostname === new URL(activeAutomation.url).hostname){
+          // capture the 1st screenshot then proceed
+          await capture(tab, message)
+          // initialize the autocollect functionality in the content script
+          chrome.tabs.sendMessage(tab.id, {
+            cmd: ACTIVATE_AUTOMATION,
+            automation: activeAutomation,
+            pageInfo: message,
+          })
+        }
+        return false;
+      }
     default:
-      return { }
+      return false
   }
-  console.log('Unknown command '+ message.cmd, message)
+  debug('Unknown command '+ message.cmd, message)
 }
 
 export const portManager = new PortManager();
+export const getTabInfo = () => portManager.getTabInfo();
 

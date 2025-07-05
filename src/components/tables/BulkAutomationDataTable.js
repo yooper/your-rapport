@@ -9,12 +9,14 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import IconButton from '@mui/material/IconButton';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
-import { BULK_AUTOMATION, UUID } from '../../services/constants';
+import { BULK_AUTOMATION, PROCESS_QUEUE_AUTOMATION_URLS, RAPPORT, UUID } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const port = chrome.runtime.connect({name: RAPPORT});
+
 
   /**
    * Initiate the process of bulk downloading the list of urls
@@ -24,15 +26,8 @@ export default function BulkAutomationTable(props) {
     if(rows.length === 0){
       return;
     }
-
     await Configuration.setConfigurationValue('automationBulkCollectionModel', true);
-    try{
-      chrome.runtime.sendMessage({ cmd: 'queueAutomationUrl'});
-      return true;
-    }
-    catch(e){
-      return false;
-    }
+    port.postMessage({cmd: PROCESS_QUEUE_AUTOMATION_URLS})
   }
 
   const getRecord = (rowData) => {
@@ -131,7 +126,7 @@ export default function BulkAutomationTable(props) {
     },
     {
       name: 'ranOn',
-      label: 'Run On',
+      label: 'Ran On',
       options: {
         filter: false,
         sort: true,
@@ -146,14 +141,14 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
-      name: 'Completed',
+      name: 'CompletedOn',
       label: 'Completed',
       options: {
         filter: false,
         sort: true,
         searchable: false,
         customBodyRenderLite: (dataIndex) => {
-          if(!rows[dataIndex].ranOn){
+          if(!rows[dataIndex].completedOn){
             return <div></div>
           }
           const date = new Date(parseInt(rows[dataIndex].completedOn));
@@ -189,6 +184,7 @@ export default function BulkAutomationTable(props) {
             }
           >
             <IconButton onClick={async () => {
+
               await Configuration.setConfigurationValue('automationBulkCollectionModel', false);
               record.ranOn = null;
               record.completedOn = null;
@@ -196,8 +192,10 @@ export default function BulkAutomationTable(props) {
               automationQueue.forEach(a => a.active = false);
               const automation = automationQueue.find(a => a.uuid === record.uuid);
               automation.active = true;
+              automation.ranOn = Date.now();
               await setLocalItem(BULK_AUTOMATION, automationQueue);
               processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
+              await
               await createTab(automation.url);
             }}>
               <DirectionsRunIcon />

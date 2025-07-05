@@ -5,14 +5,19 @@
  * Please contact support@bakerstreet.llc for assistance
  */
 
-import { autoScroller, initAutoScrollerHandler } from './modules/autoScroller';
+import { autoScroller } from './modules/autoScroller';
 import { initMarkJsHandler } from './modules/markText';
-import { ACTIVATE_AUTOMATION, AUTOMATION_RUNNING, BULK_AUTOMATION, RAPPORT } from '../../services/constants';
+import {
+  ACTIVATE_AUTOMATION, ACTIVATE_CAPTURE,
+  AUTOMATION_RUNNING,
+  BULK_AUTOMATION, PAGE_INITIALIZED,
+  RAPPORT, START_CAPTURE, STOP_SCRIPT,
+} from '../../services/constants';
 import { getVisibleText } from './modules/visibleElements';
-import { isAutomationBlockerDetected } from './modules/automationBlockerDetection';
+import { debug } from '../../services/logger_services';
 
-const pageUuid = crypto.randomUUID();
-let port = chrome.runtime.connect({name: RAPPORT});
+export const pageUuid = crypto.randomUUID();
+export const port = chrome.runtime.connect({name: RAPPORT});
 
 /**
  *
@@ -20,14 +25,18 @@ let port = chrome.runtime.connect({name: RAPPORT});
  */
 function getPageInfo(){
   return {
-    cmd: 'pageInitialized',
+    cmd: PAGE_INITIALIZED,
     uuid: pageUuid,
     title: document.title,
     contentType: document.contentType,
+    html: document.documentElement.innerHTML,
     url: document.URL,
     screenShotCount: 0,
     isAutomationBlockerDetected: false,
-    text: getVisibleText()
+    visibleText: getVisibleText(),
+    text: document.documentElement.innerText,
+    createdOn: Date.now(),
+    tab: null
   }
 }
 
@@ -44,26 +53,33 @@ port.onMessage.addListener((message) => {
   route(message);
 });
 
+/** route one time messages */
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  route(message)
+})
+
+
 
 /**
  * Process the incoming messages
  * @param message
  */
 const route = (message) => {
+  if(!('cmd' in message)){
+    debug('invalid command', message);
+    return false;
+  }
+
   const cmd = message.cmd;
-  console.log(`received `, [], message);
+  debug('Message received', message);
+
+  autoScroller(message);
+
   switch(cmd){
+    // automated trigger
     case ACTIVATE_AUTOMATION:
-      autoScroller(message);
-      port.postMessage({cmd: AUTOMATION_RUNNING, automation: message.automation })
+      port.postMessage({cmd: AUTOMATION_RUNNING, automation: message.automation });
       return;
-    case 'startCapture':
-    case 'startAutomation':
-      autoScroller(message);
-      break;
-    case 'getVisibleText':
-      port.postMessage(composeMessage({ cmd : message.cmd, text: getVisibleText() }));
-      break;
   }
 }
 
@@ -77,5 +93,5 @@ const composeMessage = (message) => {
 }
 
 
-initAutoScrollerHandler();
+//initAutoScrollerHandler();
 initMarkJsHandler();

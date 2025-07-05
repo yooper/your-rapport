@@ -22,7 +22,7 @@ export async function capture(tab, message = {}) {
   const text =
     tab.title.toLowerCase() +
     ' ' +
-    splitCamelCase(message?.text ?? '').toLowerCase();
+    splitCamelCase(message?.visibleText ?? '').toLowerCase();
 
   try{
     // search the saved record for keywords
