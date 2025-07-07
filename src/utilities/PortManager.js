@@ -10,6 +10,7 @@ import { getLocalItem, updateRecord } from '../models/db/local';
 import { createTab } from './loaders';
 import { debug } from '../services/logger_services';
 import { captureSingleScreenShot } from '../services/collection_services';
+import { getActiveAutomation, setActiveAutomation } from '../pages/Background';
 
 export class PortManager {
   constructor() {
@@ -114,6 +115,7 @@ export async function processReceivedMessage(tab, message) {
           found.active = true;
           found.ranOn = Date.now();
           await updateRecord(BULK_AUTOMATION, UUID, found);
+          setActiveAutomation(found)
           const tab = await createTab(found.url);
           // PAGE_INITIALIZED will get called after a successful page load
           if(tab === undefined){
@@ -126,32 +128,42 @@ export async function processReceivedMessage(tab, message) {
     // the content script is ready
     case PAGE_INITIALIZED:
       portManager.addTabInfo(tab, message);
+      const activeAutomation = getActiveAutomation();
+      if(!activeAutomation){
+        debug('No active automation');
+        return false // stop processing in calling function if false is returned
+      }
+
       // TODO: perform check in service worker too,
+      //const parser = new DOMParser();
+      //const document = parser.parseFromString(message.html ?? '', message.contentType)
+
       if(message.isAutomationBlockerDetected){
-        debug(`Page Automation Blocker detected, pausing automation.`);
+        debug(`Page Automation Blocker detected, pausing automation.`, activeAutomation);
+        activeAutomation.description = 'Page automation blocker detected';
+        activeAutomation.active = false;
+        await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+        // start next automation, since this one failed.
+        const nextActiveAutomation = await BulkAutomationUrl.getNextAutomation();
+        if(nextActiveAutomation){
+          debug('Launching next automation url', nextActiveAutomation);
+          setActiveAutomation(nextActiveAutomation);
+          await createTab(nextActiveAutomation.url);
+        }
         return false; // stop processing in calling function if false is returned
       }
-      else{
-
-        const activeAutomation = await BulkAutomationUrl.getActiveAutomation();
-        if(!activeAutomation){
-          debug('No active automation');
-          return false // stop processing in calling function if false is returned
-        }
-
-        // host names match does better than exact url match
-        if(new URL(message.url).hostname === new URL(activeAutomation.url).hostname){
-          // capture the 1st screenshot then proceed
-          await capture(tab, message)
-          // initialize the autocollect functionality in the content script
-          chrome.tabs.sendMessage(tab.id, {
-            cmd: ACTIVATE_AUTOMATION,
-            automation: activeAutomation,
-            pageInfo: message,
-          })
-        }
-        return false;
+      // host names match does better than exact url match
+      if(new URL(message.url).hostname === new URL(activeAutomation.url).hostname){
+        // capture the 1st screenshot then proceed
+        await capture(tab, message)
+        // initialize the autocollect functionality in the content script
+        chrome.tabs.sendMessage(tab.id, {
+          cmd: ACTIVATE_AUTOMATION,
+          automation: activeAutomation,
+          pageInfo: message,
+        })
       }
+      return false;
     default:
       return false
   }

@@ -40,43 +40,52 @@ await initializeDiscoveryPlugins();
  * Global var for tracking the currently running automation
  * @type {BulkAutomationUrl}
  */
-let activeAutomation = null;
+let _activeAutomationUrl = null;
+
+export function getActiveAutomation(){
+  return _activeAutomationUrl;
+}
+
+export function setActiveAutomation(bulkAutomationUrl){
+  _activeAutomationUrl = bulkAutomationUrl;
+}
+
 initializePortConnection();
 
 
 /**
  * The web page failed to load
  */
-chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
-  const automationQueue = await getLocalItem(BULK_AUTOMATION) ?? [];
-  const activeAutomation = automationQueue.find(a => a.url == details.url && a.active);
+chrome.webNavigation.onErrorOccurred.addListener((details) => {
+  const activeAutomation = getActiveAutomation();
+  debug('web navigation error detected', details);
   if(!activeAutomation){
-    return; // no active automation running
+    return; // no global active automation running, don't monitor errors
+  }
+  else if(new URL(details.url).hostname === new URL(activeAutomation.url).hostname){
+    debug('Active automation detected', activeAutomation);
+  }
+  else{
+    // host names did not match
+    debug(`Details url ${details.url} did not match active automation ${activeAutomation.url}`, {details, activeAutomation });
+    return;
   }
 
   activeAutomation.ranOn = Date.now();
   activeAutomation.description = details.error;
   activeAutomation.completedOn = Date.now();
   activeAutomation.active = false;
-  await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+  updateRecord(BULK_AUTOMATION, UUID, activeAutomation).then(async() => {
+    // Determines if it was a single automation request or multiple
+    const bulkCollect = await Configuration.getConfigurationValue('automationBulkCollectionModel', true);
+    if(!bulkCollect){
+      debug(`Single automation request failed. See record for details.`)
+      return; // single automation request
+    }
+    // process the next automation request
+    processReceivedMessage(null, {cmd: PROCESS_QUEUE_AUTOMATION_URLS})
+  })
 
-  // Determines if it was a single automation request or multiple
-  const bulkCollect = await Configuration.getConfigurationValue('automationBulkCollectionModel', false);
-  if(!bulkCollect){
-    return; // single automation request
-  }
-
-  const nextAutomation = automationQueue.find(a => !a.ranOn);
-  if(!nextAutomation){
-    debug('No more automations to run.');
-  }
-  else{
-    nextAutomation.active = true;
-    nextAutomation.ranOn = Date.now();
-    await updateRecord(BULK_AUTOMATION, UUID, nextAutomation);
-    // start the next automation
-    //await createTab(activeAutomation.url);
-  }
 });
 
 
@@ -84,12 +93,6 @@ chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
  * Add in support for short-cut keys
  */
 chrome.commands.onCommand.addListener( (command) => {
-  if (command === 'reload') {
-    chrome.runtime.reload();
-    console.log('Run time reload');
-    //createTab(chrome.runtime.getURL('search.html'), false);
-    return false;
-  }
 
   switch (command) {
     case 'initStartCapture':
@@ -272,19 +275,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 
 chrome.tabs.onCreated.addListener(tab => {
+  const activeAutomation = getActiveAutomation();
   if(tab.url && activeAutomation && tab.url === activeAutomation.url){
     debug(`automation tab created ${activeAutomation.url}`, {tab, activeAutomation})
     setTimeout(async() => {
-      // TODO: put in more logic to detect stuck scraper
-      if(activeAutomation.screenShotsCollected === 0){
+      // TODO: put in more logic to detect stuck automation
+      if(activeAutomation.screenShotsCollected <= 1){
         debug(`Active Automation url ${activeAutomation.url} is not processing, ending automation`, {tab, activeAutomation});
         return; // TODO; more debugging
         activeAutomation.description = 'Automation failed, skipping';
         activeAutomation.active = false;
         activeAutomation.completedOn = Date.now();
         await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-        activeAutomation = null; // unset the active automation
-        // TODO: Working on multiple tab bug fix
+        await setActiveAutomation(null); // unset the active automation
         processReceivedMessage(tab, {cmd: PROCESS_QUEUE_AUTOMATION_URLS})
       }
       else{

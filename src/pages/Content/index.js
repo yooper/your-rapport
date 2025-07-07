@@ -15,6 +15,7 @@ import {
 } from '../../services/constants';
 import { getVisibleText } from './modules/visibleElements';
 import { debug } from '../../services/logger_services';
+import { isAutomationBlockerDetected } from './modules/automationBlockerDetection';
 
 export const pageUuid = crypto.randomUUID();
 export const port = chrome.runtime.connect({name: RAPPORT});
@@ -32,7 +33,7 @@ function getPageInfo(){
     html: document.documentElement.innerHTML,
     url: document.URL,
     screenShotCount: 0,
-    isAutomationBlockerDetected: false,
+    isAutomationBlockerDetected: isAutomationBlockerDetected(document),
     visibleText: getVisibleText(),
     text: document.documentElement.innerText,
     createdOn: Date.now(),

@@ -195,7 +195,6 @@ export default function BulkAutomationTable(props) {
               automation.ranOn = Date.now();
               await setLocalItem(BULK_AUTOMATION, automationQueue);
               processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
-              await
               await createTab(automation.url);
             }}>
               <DirectionsRunIcon />

@@ -67,7 +67,7 @@ export function getDarkTheme() {
  * @param onlyOneTabOpen
  * @returns {Promise<void>}
  */
-export async function createTab(url, onlyOneTabOpen = true) {
+export async function createTab(url, onlyOneTabOpen = false) {
   const openUrls = (await getAllTabUrls()) ?? [];
   if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl == url)) {
     debug('too many urls')

@@ -5,6 +5,7 @@ import { Configuration } from '../models/schemas/Configuration';
 import { addRecord } from '../models/db/local';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { BULK_AUTOMATION, UUID } from './constants';
+import { captureSingleScreenShot } from './collection_services';
 
 /**
  * Add the selectors as menu items
@@ -17,7 +18,7 @@ export async function initializeContextMenus() {
   chrome.contextMenus.create({
     id: 'autocollectPage',
     title: 'Autoscroll Collect',
-    contexts: ['page'],
+    contexts: ['page', 'image','video','audio'],
   });
 
   // add link to bulk capture for future research
@@ -25,6 +26,13 @@ export async function initializeContextMenus() {
     id: 'addBulkAutomationUrl',
     title: 'Add url to Automation Queue',
     contexts: ['link'],
+  });
+
+  // Add right click for capturing these other types of contexts
+  chrome.contextMenus.create({
+    id: 'singleCollect',
+    title: 'Single Collect',
+    contexts: ['image','video','audio'],
   });
 
   // add a seperator
@@ -44,6 +52,11 @@ export async function initializeContextMenus() {
   // add event listeners
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     switch (info.menuItemId) {
+      case 'singleCollect':
+        (async () => {
+          await captureSingleScreenShot();
+        })();
+        return false;
       case 'autocollectPage':
         (async () => {
           chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });

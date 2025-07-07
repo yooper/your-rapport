@@ -2,7 +2,7 @@
  * Used for tracking the bulk collection objects
  */
 import { getLocalItem, updateRecord } from '../db/local';
-import { BULK_AUTOMATION } from '../../services/constants';
+import { BULK_AUTOMATION, UUID } from '../../services/constants';
 
 export class BulkAutomationUrl {
   constructor(
@@ -40,9 +40,15 @@ export class BulkAutomationUrl {
     return activeAutomation;
   }
 
-  static async getNext(){
+  static async getNextAutomation(){
     const automationQueue = await getLocalItem(BULK_AUTOMATION);
-    const activeAutomation = automationQueue.find(a => a.active);
+    const activeAutomation = automationQueue.find(a => !a.ranOn);
+    if(!activeAutomation){
+      return null;
+    }
+    activeAutomation.ranOn = Date.now();
+    activeAutomation.active = true;
+    await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
     return activeAutomation;
   }
 
