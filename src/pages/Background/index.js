@@ -148,7 +148,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   else if(message.cmd === 'setActiveAutomation'){
     (async () => {
-      activeAutomation = message.automation;
+      setActiveAutomation(message.automation);
       sendResponse({ completed: true });
     })();
     return true;
@@ -247,11 +247,11 @@ chrome.runtime.onMessageExternal.addListener(function (
  */
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-    await createTab('https://github.com/yooper/your-rapport');
+    await createTab('https://github.com/yooper/your-rapport/wiki');
   } else if (details.reason === 'update') {
     chrome.tabs.create(
       {
-        url: 'https://github.com/yooper/your-rapport',
+        url: 'https://github.com/yooper/your-rapport/wiki',
       },
       (tab) => {}
     );
@@ -278,22 +278,5 @@ chrome.tabs.onCreated.addListener(tab => {
   const activeAutomation = getActiveAutomation();
   if(tab.url && activeAutomation && tab.url === activeAutomation.url){
     debug(`automation tab created ${activeAutomation.url}`, {tab, activeAutomation})
-    setTimeout(async() => {
-      // TODO: put in more logic to detect stuck automation
-      if(activeAutomation.screenShotsCollected <= 1){
-        debug(`Active Automation url ${activeAutomation.url} is not processing, ending automation`, {tab, activeAutomation});
-        return; // TODO; more debugging
-        activeAutomation.description = 'Automation failed, skipping';
-        activeAutomation.active = false;
-        activeAutomation.completedOn = Date.now();
-        await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-        await setActiveAutomation(null); // unset the active automation
-        processReceivedMessage(tab, {cmd: PROCESS_QUEUE_AUTOMATION_URLS})
-      }
-      else{
-        // success!
-        debug(`automation is running correctly ${activeAutomation.url}`, activeAutomation)
-      }
-    }, 3000) // wait 3 seconds before failing
   }
 })
