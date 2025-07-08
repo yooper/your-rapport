@@ -260,6 +260,8 @@ export default function BulkAutomationTable(props) {
   };
 
   const options = {
+    rowsPerPage: 50,
+    rowsPerPageOptions: [20, 50],
     searchAlwaysOpen: true,
     onRowsDelete: async (records, data) => {
       setIsLoading(true);

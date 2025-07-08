@@ -158,7 +158,6 @@ export async function processReceivedMessage(tab, message) {
           pageInfo: message,
         })
       }
-
       return false;
     default:
       return false

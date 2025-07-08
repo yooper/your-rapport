@@ -15,6 +15,7 @@ import { Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
+import { debug } from '../../services/logger_services';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
