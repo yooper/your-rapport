@@ -9,14 +9,53 @@ import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import IconButton from '@mui/material/IconButton';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
-import { BULK_AUTOMATION, PROCESS_QUEUE_AUTOMATION_URLS, RAPPORT, UUID } from '../../services/constants';
+import {
+  BULK_AUTOMATION,
+  DISCOVERY_PLUGIN,
+  PROCESS_QUEUE_AUTOMATION_URLS,
+  RAPPORT,
+  SELECTOR, UPDATED_ON,
+  UUID,
+} from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
+import { debug } from '../../services/logger_services';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const port = chrome.runtime.connect({name: RAPPORT});
 
+    useEffect(() => {
+      async function fetchData() {
+        showLoader();
+        setIsLoading(true);
+        const start = performance.now()
+        const data = await getLocalItem(BULK_AUTOMATION)
+        setRows(data)
+        const elapsed = performance.now() - start;
+        debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
+        hideLoader();
+      }
+
+    fetchData();
+
+    /**
+     * Check if any updates occurred
+     * @type {number}
+     */
+    const intervalId = setInterval(async () => {
+
+      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
+      const pageCachedOn = localStorage.getItem(UPDATED_ON) ?? null;
+
+      if(updatedOn != pageCachedOn){
+        await fetchData(); // check for new data every 3 seconds.
+        localStorage.setItem(UPDATED_ON, updatedOn);
+      }
+    }, 3000); // wait 3 seconds before re-renders
+    return () => clearInterval(intervalId);
+  }, []);  
+  
 
   /**
    * Initiate the process of bulk downloading the list of urls
@@ -27,6 +66,9 @@ export default function BulkAutomationTable(props) {
       return;
     }
     await Configuration.setConfigurationValue('automationBulkCollectionModel', true);
+    const automationQueue = await getLocalItem(BULK_AUTOMATION) ?? []
+    automationQueue.forEach(a => a.active = false);
+    await setLocalItem(BULK_AUTOMATION, automationQueue);
     port.postMessage({cmd: PROCESS_QUEUE_AUTOMATION_URLS})
   }
 
@@ -184,7 +226,6 @@ export default function BulkAutomationTable(props) {
             }
           >
             <IconButton onClick={async () => {
-
               await Configuration.setConfigurationValue('automationBulkCollectionModel', false);
               record.ranOn = null;
               record.completedOn = null;
@@ -193,6 +234,7 @@ export default function BulkAutomationTable(props) {
               const automation = automationQueue.find(a => a.uuid === record.uuid);
               automation.active = true;
               automation.ranOn = Date.now();
+              automation.description = 'User Restarted Automation'
               await setLocalItem(BULK_AUTOMATION, automationQueue);
               processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
               await createTab(automation.url);

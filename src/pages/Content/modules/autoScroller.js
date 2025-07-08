@@ -149,7 +149,7 @@ export function autoScroller(message) {
       if (direction === 'down') {
         capturedHeight += scrollAmount;
         if (state !== STATE_ACTIVE) {
-          console.log('capture stopped');
+          debug('capture stopped');
         }
         else if (capturedHeight < scrollHeight) {
           // Scroll to the next part of the page, after the screenshot has been taken

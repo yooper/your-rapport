@@ -209,7 +209,7 @@ chrome.runtime.onMessageExternal.addListener(function (
             const activeTab = await getActiveTab();
             await chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE })
           } catch (err) {
-            console.log(err)
+            debug(err)
           }
         })();
         return false;
@@ -233,7 +233,7 @@ chrome.runtime.onMessageExternal.addListener(function (
         })();
         return false;
       default:
-        console.log(`Unknown external command cmd ${message.cmd}`);
+        debug(`Unknown external command cmd ${message.cmd}`);
         return true;
     }
   }

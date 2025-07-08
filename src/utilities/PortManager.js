@@ -31,7 +31,7 @@ export class PortManager {
     this.port = port;
 
     if (!port.sender?.tab) {
-      console.log("No tab associated with this port.");
+      debug("No tab associated with this port.");
       return;
     }
 
@@ -44,7 +44,7 @@ export class PortManager {
 
     port.onMessage.addListener(this.onMessage.bind(this));
     port.onDisconnect.addListener(() => {
-      console.log('Port disconnected');
+      debug('Port disconnected');
       this.port = null;
     });
   }
@@ -116,12 +116,7 @@ export async function processReceivedMessage(tab, message) {
           found.ranOn = Date.now();
           await updateRecord(BULK_AUTOMATION, UUID, found);
           setActiveAutomation(found)
-          const tab = await createTab(found.url);
-          // PAGE_INITIALIZED will get called after a successful page load
-          if(tab === undefined){
-            debug('createTab in processReceivedMessage was undefined.');
-            return
-          }
+          await createTab(found.url);
           debug(`Automation ${found.url} Tab Opened`, {tab, found});
         }
       break;
@@ -144,7 +139,7 @@ export async function processReceivedMessage(tab, message) {
         activeAutomation.active = false;
         await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
         // start next automation, since this one failed.
-        const nextActiveAutomation = await BulkAutomationUrl.getNextAutomation();
+        const nextActiveAutomation = await BulkAutomationUrl.getAndSetNextAutomation();
         if(nextActiveAutomation){
           debug('Launching next automation url', nextActiveAutomation);
           setActiveAutomation(nextActiveAutomation);
@@ -163,6 +158,7 @@ export async function processReceivedMessage(tab, message) {
           pageInfo: message,
         })
       }
+
       return false;
     default:
       return false

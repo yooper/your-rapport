@@ -43,7 +43,7 @@ export async function capture(tab, message = {}) {
   catch(error){
     // TODO: ERROR handling for too many captures
     if(error){
-      console.log(error);
+      debug(error);
     }
     ExtensionPin.setBgColorAndText('red', 'ERR', tab);
     // stop scrolling when an error occurs

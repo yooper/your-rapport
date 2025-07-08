@@ -48,7 +48,7 @@ export class User {
     // verify has not been run, yet
     // TODO: add re-check condition
     if (this.verifiedOn && !override) {
-      console.log('Account verified');
+      debug('Account verified');
       return;
     }
 

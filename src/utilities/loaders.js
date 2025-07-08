@@ -156,7 +156,7 @@ export async function runWithMinDelay(taskFn) {
   if (remaining > 0) {
     await new Promise(resolve => setTimeout(resolve, remaining));
   }
-  console.log(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
+  debug(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
 }
 
 
@@ -212,7 +212,7 @@ export async function initializeDiscoveryPlugins() {
       await installPackage({ url: pluginUrl });
     }
     catch(e){
-      console.log(e)
+      debug(e)
     }
   }
 }
