@@ -14,6 +14,6 @@ export async function captureSingleScreenShot(){
       await capture(activeTab, pageInfo[activeTab.id]);
     }
     else{
-      debug(`Could not capture single screenshot, no active tab found with page info`, {activeTab})
+      debug(`Could not capture single screenshot, no active tab found with page info, is dev tools open?`, {activeTab})
     }
 }

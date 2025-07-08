@@ -105,6 +105,7 @@ chrome.commands.onCommand.addListener( (command) => {
           const activeTab = await getActiveTab();
           await scanPage(activeTab);
         })();
+        return false;
       break;
     case 'initAutoScroll':
         (async () => {
@@ -213,6 +214,7 @@ chrome.runtime.onMessageExternal.addListener(function (
           }
         })();
         return false;
+      case 'enqueueBulkAutomation': // legacy call, deprecated
       case ENQUEUE_BULK_AUTOMATION_URL:
         (async () => {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');

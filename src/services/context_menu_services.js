@@ -4,7 +4,7 @@ import { getActiveTab, getSelectorTypeMap } from '../utilities/loaders';
 import { Configuration } from '../models/schemas/Configuration';
 import { addRecord } from '../models/db/local';
 import ExtensionPin from '../utilities/ExtensionPin';
-import { BULK_AUTOMATION, UUID } from './constants';
+import { ACTIVATE_CAPTURE, BULK_AUTOMATION, UUID } from './constants';
 import { captureSingleScreenShot } from './collection_services';
 
 /**
@@ -53,15 +53,15 @@ export async function initializeContextMenus() {
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     switch (info.menuItemId) {
       case 'singleCollect':
-        (async () => {
-          await captureSingleScreenShot();
-        })();
-        return false;
+        ExtensionPin.setTemporaryPin('SAVG')
+        captureSingleScreenShot().then()
+        break;
       case 'autocollectPage':
-        (async () => {
-          chrome.tabs.sendMessage(tab.id, { cmd: 'startCapture' });
-        })();
-        return false;
+        captureSingleScreenShot().then(() => {
+          ExtensionPin.setTemporaryPin('SAVG')
+          chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
+        })
+        break;
       case 'addBulkAutomationUrl':
         (async () => {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
