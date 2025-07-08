@@ -81,7 +81,7 @@ export default function BulkAutomationAddDialog(props) {
       await setLocalItem(BULK_AUTOMATION, rows);
       processNotification({
         title: 'Bulk Automation',
-        message: `${urls.length} have been added to the bulk automation queue.`,
+        message: `${urls.length} sites have been added to the bulk automation queue.`,
         type: 'success',
       });
     }

@@ -2,6 +2,7 @@ import { Store } from 'react-notifications-component';
 import { convertKeysToCamelCase } from './transformers';
 import { addRecord } from '../models/db/local';
 import { DISCOVERY_PLUGIN, UUID } from '../services/constants';
+import { debug } from '../services/logger_services';
 
 /**
  * Show the loader...
@@ -27,7 +28,7 @@ export function hideLoader() {
  * Used to display notifications to the user
  * @param data
  */
-export function processNotification(data, duration = 5000) {
+export function processNotification(data, duration = 3000) {
   Store.addNotification({
     title: data.title,
     message: data.message,
@@ -69,6 +70,7 @@ export function getDarkTheme() {
 export async function createTab(url, onlyOneTabOpen = false) {
   const openUrls = (await getAllTabUrls()) ?? [];
   if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl == url)) {
+    debug('too many urls')
     return;
   }
   await chrome.tabs.create({ url: url });
@@ -154,7 +156,7 @@ export async function runWithMinDelay(taskFn) {
   if (remaining > 0) {
     await new Promise(resolve => setTimeout(resolve, remaining));
   }
-  console.log(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
+  debug(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
 }
 
 
@@ -210,7 +212,7 @@ export async function initializeDiscoveryPlugins() {
       await installPackage({ url: pluginUrl });
     }
     catch(e){
-      console.log(e)
+      debug(e)
     }
   }
 }

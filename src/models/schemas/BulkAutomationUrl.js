@@ -1,37 +1,62 @@
 /**
  * Used for tracking the bulk collection objects
  */
+import { getLocalItem, updateRecord } from '../db/local';
+import { BULK_AUTOMATION, UUID } from '../../services/constants';
+
 export class BulkAutomationUrl {
   constructor(
-    uuid,
-    url,
-    unit,
-    value,
-    screenShotsCollected = 0,
-    createdOn = Date.now(),
-    keepTabOpen = true,
-    ranOn = null,
-    completedOn = null,
-    description = null
   ) {
-    this.uuid = uuid;
-    this.url = url;
-    this.unit = unit;
-    this.value = value;
-    this.screenShotsCollected = screenShotsCollected;
-    this.keepTabOpen = keepTabOpen
-    this.createdOn = createdOn;
-    this.ranOn = ranOn;
-    this.completedOn = completedOn;
-    this.description = description;
+    this.uuid = crypto.randomUUID();
+    this.url = null;
+    this.unit = null;
+    this.value = null;
+    this.screenShotsCollected = 0;
+    this.keepTabOpen = false
+    this.createdOn = Date.now();
+    this.ranOn = null;
+    this.completedOn = null;
+    this.description = null;
+    this.active = false;
+    this.tabId = null;
+    this.tab = null;
   }
-  markRan() {
-    this.ranOn = Date.now();
+
+  /**
+   *
+   * @returns {Promise<BulkAutomationUrl|null>}
+   */
+  static async getActiveAutomation(){
+    const automationQueue = await getLocalItem(BULK_AUTOMATION);
+    const activeAutomation = automationQueue.find(a => a.active);
+    return activeAutomation ? BulkAutomationUrl._getInstance(activeAutomation) : null;
   }
-  markCompleted() {
-    this.completedOn = Date.now();
+
+  /**
+   * Internal function for returning an instance
+   * @param obj
+   * @returns {BulkAutomationUrl}
+   * @private
+   */
+  static _getInstance(obj){
+    const instance = new BulkAutomationUrl();
+    Object.assign(instance, obj);
+    return instance
   }
-  markError(message) {
-    this.error = message;
+
+  static async getAndSetNextAutomation(){
+    const automationQueue = await getLocalItem(BULK_AUTOMATION);
+    const activeAutomation = automationQueue.find(a => !a.ranOn);
+    if(!activeAutomation){
+      return null;
+    }
+
+    activeAutomation.ranOn = Date.now();
+    activeAutomation.active = true;
+    await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+    return activeAutomation ? BulkAutomationUrl._getInstance(activeAutomation) : null;
   }
+
+
+
 }

@@ -57,7 +57,7 @@ export default class ExtensionPin {
 
   static setTemporaryPin = (message, activeTab = null) => {
     if (activeTab) {
-      ExtensionPin.setBgColorAndText('#E86E69', message, activeTab);
+      ExtensionPin.setBgColorAndText('#ffe88b', message, activeTab);
     } else {
       // globally reset all badges
       ExtensionPin.setBgColorAndText('#E86E69', message, activeTab);

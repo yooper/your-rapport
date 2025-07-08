@@ -9,7 +9,7 @@
     "default_title": "Your Rapport is a screenshot tool with auto scroll capabilities. Right click, select Collect or Ctrl+Shift+S to save. Ctrl+Shift+Z for auto scrolling captures. Ctrl+Shift+X open the dashboard.",
     "default_popup": "popup.html"
   },
-  "version": "0.7.2",
+  "version": "0.8.0",
   "icons": {
     "128": "icon-128.png",
     "48": "icon-48.png",
@@ -25,7 +25,8 @@
     {
       "matches": ["<all_urls>"],
       "js": ["contentScript.bundle.js"],
-      "css": ["content.styles.css"]
+      "css": ["content.styles.css"],
+      "run_at": "document_idle"
     }
   ],
   "host_permissions": ["<all_urls>"],
@@ -34,32 +35,33 @@
     "storage",
     "contextMenus",
     "activeTab",
-    "tabs"
+    "tabs",
+    "webNavigation"
   ],
   "commands": {
     "initStartCapture": {
       "suggested_key": {
         "default": "Ctrl+Shift+S"
       },
-      "description": "Save the current page"
-    },
-    "openDashboard": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+X"
-      },
-      "description": "Open Dashboard"
+      "description": "Save a single web page page screenshot"
     },
     "initAutoScroll": {
       "suggested_key": {
         "default": "Ctrl+Shift+Z"
       },
-      "description": "Starts and stops auto scroll"
+      "description": "Starts and stops auto scroll collection process."
     },
     "initScanPage": {
       "suggested_key": {
         "default": "Ctrl+Shift+F"
       },
       "description": "Scan the current web page for known selectors."
+    },
+    "reload": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D"
+      },
+      "description": "Reloads the runtime."
     }
   },
   "externally_connectable": {

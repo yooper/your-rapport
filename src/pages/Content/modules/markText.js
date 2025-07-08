@@ -1,5 +1,4 @@
 import Mark from 'mark.js';
-import { autoScroller } from './autoScroller';
 
 /**
  * Listens for the message specific to mark text

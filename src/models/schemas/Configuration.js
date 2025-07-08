@@ -10,7 +10,8 @@ export class Configuration{
       automationUnitDefault: 'count',
       automationValueDefault: 100,
       automationDelayTabOpenDefault: 3000,
-      automationKeepTabOpenDefault: true
+      automationKeepTabOpenDefault: true,
+      automationBulkCollectionModel: false,
 
     };
     return configuration;

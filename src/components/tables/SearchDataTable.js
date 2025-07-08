@@ -15,6 +15,7 @@ import { Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
+import { debug } from '../../services/logger_services';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -22,7 +23,7 @@ export default function SearchDataTable(props) {
   const [selectors, setSelectors] = useState(null);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
 
-    useEffect(() => {
+  useEffect(() => {
       async function fetchData() {
         showLoader();
         setIsLoading(true);
@@ -31,7 +32,7 @@ export default function SearchDataTable(props) {
         setDiscoveryPlugins(await getLocalItem(DISCOVERY_PLUGIN) ?? []);
         const screenshots = await getLocalItem(RAPPORT) ?? [];
         const elapsed = performance.now() - start;
-        console.log(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
+        debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
         setRows(screenshots);
         setIsLoading(false);
         hideLoader();

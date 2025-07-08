@@ -6,6 +6,8 @@ import { ReactNotifications } from 'react-notifications-component';
 import OptionsLayout from '../../components/layouts/OptionsLayout';
 import TopAppBar from '../../components/TopAppBar';
 import './index.css';
+import 'react-notifications-component/dist/theme.css';
+
 
 function App() {
   return (
