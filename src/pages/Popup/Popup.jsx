@@ -11,9 +11,18 @@ import {
 import Typography from '@mui/material/Typography';
 import { ButtonBase, Tooltip } from '@mui/material';
 import { scanPage } from '../../utilities/transformers';
-import { capture } from '../../datasources/browser_capture';
-import { captureSingleScreenShot } from '../../services/collection_services';
-import { AUTO_COLLECT_STARTING } from '../../services/constants';
+import { AUTO_COLLECT_STARTING, RAPPORT } from '../../services/constants';
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
+} from '@mui/material';
+import { getLocalItem } from '../../models/db/local';
+import { debug } from '../../services/logger_services';
 
 export default function Popup() {
   const [isLoading, setIsLoading] = useState(true);
@@ -133,6 +142,53 @@ function LargeButtonGrid() {
           </Tooltip>
         </Grid>
       ))}
+      <Grid item xs={12}>
+        <BasicTable />
+      </Grid>
     </Grid>
+  );
+}
+
+
+function BasicTable() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [capturedOn, setCapturedOn] = useState(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      const currentUrl = new URL((await getActiveTab()).url);
+      const baseUrl = currentUrl.origin + currentUrl.pathname;
+      debug(`base url is ${baseUrl}`);
+      const rapports = await getLocalItem(RAPPORT);
+      const found = rapports.find(r => r.url.startsWith(baseUrl))
+      if(found){
+        debug(`found last captured on ${found.url}`);
+        setCapturedOn(found.createdOnLocalTime)
+      }
+      else{
+        setCapturedOn('NEVER')
+      }
+
+      setIsLoading(false);
+    }
+
+    fetchData();
+  }, []);
+
+
+  return (
+    <TableContainer component={Paper}>
+      <Table aria-label="vertical table">
+        <TableBody>
+          <TableRow>
+            <TableCell component="th" scope="row">
+              Last Captured On:
+            </TableCell>
+            <TableCell>{ isLoading ? '....' : capturedOn}</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
