@@ -140,7 +140,7 @@ export default function VerticalGenericTableDialog(props) {
           ) : (
             <Paper>
               <TableContainer component={Paper}>
-                <Table aria-label="verticle table">
+                <Table aria-label="vertical table">
                   <TableHead>
                     <TableRow>
                       <TableCell>Field Name</TableCell>

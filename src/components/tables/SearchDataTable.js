@@ -16,6 +16,7 @@ import { Configuration } from '../../models/schemas/Configuration';
 import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 import { debug } from '../../services/logger_services';
+import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -321,6 +322,7 @@ export default function SearchDataTable(props) {
   };
 
   const options = {
+    customSearchRender: rapportDebounceSearchRender(800),
     textLabels: {
       toolbar: {
         downloadCsv: 'Export as JSON file',
