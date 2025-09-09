@@ -41,6 +41,7 @@ export class Rapport {
     this.caseManagementUuid = caseManagementUuid;
     this.note = note;
     this.bulkAutomationUuid = bulkAutomationUuid;
+
   }
 
   static async createFromTab(tab, text, screenShot, selectors) {

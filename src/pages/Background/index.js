@@ -174,6 +174,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'indexSelector':
         await Selector.add(message.selector);
         break;
+      case 'mhtmlCapture':
+        const mhtmlData = await chrome.pageCapture.saveAsMHTML({ tabId: sender.tab.id })
+        const screenShot = await chrome.tabs.captureVisibleTab();
+        debug('mhtml data capture', {mhtmlData})
+        break;
     }
   })();
   return false;

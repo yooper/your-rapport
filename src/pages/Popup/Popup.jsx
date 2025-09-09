@@ -30,6 +30,7 @@ export default function Popup() {
   useEffect(() => {
     async function fetchData() {
       showLoader();
+      await chrome.runtime.sendMessage({cmd: 'ping'});
       setIsLoading(false);
       hideLoader();
     }
@@ -89,6 +90,21 @@ function LargeButtonGrid() {
         await chrome.tabs.create({
           url: chrome.runtime.getURL('automation.html'),
         }),
+    },
+    {
+      title: 'Full Page (beta)',
+      toolTipTitle: `Capture a web page and its content. Works best with non-dynamic pages.`,
+      onClick: () => {
+        (async () => {
+          await chrome.runtime.sendMessage({cmd: 'mhtmlCapture' });
+          processNotification({
+            title: 'Single Full Page Collected',
+            message: `The whole web page and its content has been saved`,
+            type: 'success',
+          });
+        })();
+        return true;
+      },
     },
     {
       title: 'Quick Scan',
