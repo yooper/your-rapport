@@ -12,13 +12,14 @@ import FormGroup from '@mui/material/FormGroup';
 import MenuItem from '@mui/material/MenuItem';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../HelperPopover';
+
 import {
   getSelectorTypeMap,
   hideLoader,
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
-import { Selector } from '../../models/schemas/Selector';
+import { db } from '../../models/db/dexieDb';
 
 export default function SelectorFormDialog(props) {
   const [open, setOpen] = useState(false);
@@ -39,15 +40,15 @@ export default function SelectorFormDialog(props) {
   const handleSave = async () => {
     props.setIsLoading(true);
     showLoader();
-    await Selector.add(record);
+    record.active = true;
+    await db.selectors.add(record, record.key)
     processNotification({
       title: 'Selector Added',
       message: `Selector ${record.key} has been added.`,
       type: 'success',
     });
-    let selectors = props.rows;
-    selectors.push(record);
-    props.setRows(selectors);
+
+    props.setRows(await db.selectors.toArray());
     setOpen(false);
     props.setIsLoading(false);
     hideLoader();

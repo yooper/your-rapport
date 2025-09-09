@@ -8,7 +8,7 @@ const db = new Dexie('YourRapport') as Dexie & {
 
 // Schema declaration:
 db.version(1).stores({
-  selectors: 'key, selectorTypeName, description, count, active'
+  selectors: 'key, selectorTypeName, description, count, active',
 });
 
 export type { Selector };
