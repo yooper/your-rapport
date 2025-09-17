@@ -7,11 +7,9 @@ import {
 } from '../../utilities/loaders';
 import {
   addRecord,
-  getLocalItem,
   updateRecord,
 } from '../../models/db/local';
 import { initializeContextMenus } from '../../services/context_menu_services';
-import { Selector } from '../../models/schemas/Selector';
 import ExtensionPin from '../../utilities/ExtensionPin';
 import { scanPage } from '../../utilities/transformers';
 import { Configuration } from '../../models/schemas/Configuration';
@@ -21,7 +19,6 @@ import {
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB, ENQUEUE_BULK_AUTOMATION_URL, PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
-  SELECTOR,
   START_CAPTURE,
   UUID,
 } from '../../services/constants';
@@ -29,6 +26,7 @@ import { BulkAutomationUrl } from '../../models/schemas/BulkAutomationUrl';
 import { getTabInfo, initializePortConnection, portManager, processReceivedMessage } from '../../utilities/PortManager';
 import { debug } from '../../services/logger_services';
 import { captureSingleScreenShot } from '../../services/collection_services';
+import { db } from '../../models/db/dexieDb';
 
 /**
  * Initialize configuration values when the app is installed
@@ -160,7 +158,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.cmd) {
       case 'updateScreenShotRecord':
         await updateRecord(RAPPORT, UUID, message.record);
-        await Selector.findAndAssignMatches([message.record], getLocalItem(SELECTOR));
+        // TODO fix
+        //findAllMatches([message.record], await db.selector.toArray());
         sendResponse({ completed: true });
         break;
       case 'popupSingleCollect':
@@ -172,7 +171,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
         break;
       case 'indexSelector':
-        await Selector.add(message.selector);
+        await db.selector.add(message.selector);
         break;
       case 'mhtmlCapture':
         const mhtmlData = await chrome.pageCapture.saveAsMHTML({ tabId: sender.tab.id })

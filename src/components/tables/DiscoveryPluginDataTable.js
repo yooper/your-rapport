@@ -14,7 +14,6 @@ import {
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
-import { Selector } from '../../models/schemas/Selector';
 import HelperPopover from '../HelperPopover';
 import IconButton from '@mui/material/IconButton';
 import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';

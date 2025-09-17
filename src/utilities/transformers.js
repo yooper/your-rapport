@@ -1,6 +1,7 @@
 import { getLocalItem } from '../models/db/local';
 import ExtensionPin from './ExtensionPin';
 import { SELECTOR } from '../services/constants';
+import { findAllMatches } from '../services/search_engine_service';
 
 export function stringToBoolean(string) {
   switch (string.toLowerCase().trim()) {
@@ -164,52 +165,6 @@ export function findMatchingValues(text, selectors) {
   for (let i = 0; i < selectors.length; i++) {
     const selector = selectors[i];
     if (text.includes(selector.key)) {
-      matches.push(selector);
-    }
-  }
-  return matches;
-}
-
-/**
- * Does a full scan of all the text trying to find any selectors contained with,
- * primarily used by the scan feature
- * @param text
- * @param selectors
- * @param limit
- * @returns {*[]}
- */
-export function findAllMatches(text, selectors, limit = 100) {
-  const matches = [];
-  for (const selector of selectors) {
-    const key = selector.key;
-    selector.count = 0;
-    const occurrences = [];
-
-    let index = 0;
-
-    while (index <= text.length - key.length) {
-      let match = true;
-
-      for (let k = 0; k < key.length; k++) {
-        if (text[index + k] !== key[k]) {
-          match = false;
-          break;
-        }
-      }
-
-      if (match) {
-        occurrences.push({ index, match: key });
-        index += key.length; // Move past this match to avoid overlapping
-        selector.count++;
-      } else {
-        index++;
-      }
-
-      if (selector.count >= limit) {
-        break; // stop counting if the limit has been hit
-      }
-    }
-    if (occurrences.length > 0) {
       matches.push(selector);
     }
   }

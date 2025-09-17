@@ -3,6 +3,7 @@ import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';
 import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
+import { db } from '../models/db/dexieDb';
 
 /**
  * Capture the tab and persist it into local storage
@@ -33,7 +34,7 @@ export async function capture(tab, message = {}) {
     record.sequenceId = ('sequence' in message) ? message.sequence : 0;
     record.bulkAutomationUuid = ('automation' in message && message.automation) ? message.automation.uuid : null;
 
-    await addRecord(RAPPORT, UUID, record);
+    await db.rapports.add(record, record.key)
     // update the configuration last saved on metadata
     configuration[UPDATED_ON] = Date.now();
     configuration.screenShotCount++;
