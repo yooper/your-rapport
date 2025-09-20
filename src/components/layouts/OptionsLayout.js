@@ -17,6 +17,8 @@ import PackageManagerDataTable from '../tables/PackageManagerDataTable';
 import SelectorDataTable from '../tables/SelectorDataTable';
 import DiscoveryPluginDataTable from '../tables/DiscoveryPluginDataTable';
 import { DISCOVERY_PLUGIN } from '../../services/constants';
+import TagDataTable from '../tables/TagDataTable';
+import TagIcon from '@mui/icons-material/Tag';
 
 export default function OptionsLayout() {
   const urlParams = new URL(window.location.href).searchParams;
@@ -47,6 +49,11 @@ export default function OptionsLayout() {
       label: 'Selectors',
       key: 'selector',
       message: 'Create or Delete selectors',
+    },
+    {
+      label: 'Tags',
+      key: 'tag',
+      message: 'Annotate your data with tags',
     },
   ];
 
@@ -91,6 +98,8 @@ function IconMapper(props) {
       return <ListAltIcon />;
     case 'selector':
       return <LocalOfferIcon />;
+    case 'tag':
+      return <TagIcon />;
     default:
       return <WebIcon />;
   }
@@ -106,6 +115,8 @@ function Renderer(props) {
       return <PackageManagerDataTable />;
     case 'selector':
       return <SelectorDataTable />;
+    case 'tag':
+      return <TagDataTable />;
     default:
       return <div>Unknown setting</div>;
   }

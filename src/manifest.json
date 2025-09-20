@@ -36,8 +36,7 @@
     "contextMenus",
     "activeTab",
     "tabs",
-    "webNavigation",
-    "pageCapture"
+    "webNavigation"
   ],
   "commands": {
     "initStartCapture": {

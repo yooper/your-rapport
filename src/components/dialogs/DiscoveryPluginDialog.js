@@ -40,11 +40,10 @@ import {
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
-import { deleteRecord } from '../../models/db/local';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
 import discoveryPluginRunner from '../../services/discovery_plugin_services';
-import { SELECTOR } from '../../services/constants';
 import { db } from '../../models/db/dexieDb';
+
 
 /*
  A generalized modal for the discovery plugins
@@ -195,7 +194,7 @@ export default function DiscoveryPluginDialog(props) {
 
   const handleDelete = async (pluginValue) => {
     showLoader();
-
+    await db.selector.where('name').equals(pluginValue).delete()
     hideLoader();
   };
 

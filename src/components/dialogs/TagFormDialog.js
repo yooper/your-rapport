@@ -9,21 +9,20 @@ import IconButton from '@mui/material/IconButton';
 import FormControl from '@mui/material/FormControl';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import FormGroup from '@mui/material/FormGroup';
-import MenuItem from '@mui/material/MenuItem';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../HelperPopover';
 
 import {
-  getSelectorTypeMap,
   hideLoader,
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
 import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
+import { Tag } from '../../models/schemas/Tag';
 import { debug } from '../../services/logger_services';
 
-export default function SelectorFormDialog(props) {
+export default function TagFormDialog(props) {
   const [open, setOpen] = useState(false);
   const [record, setRecord] = useState({});
 
@@ -44,23 +43,23 @@ export default function SelectorFormDialog(props) {
     showLoader();
     record.active = true;
     try{
-      await Selector.add(new Selector(record.name, record.selectorTypeName));
+      db.tag.add(new Tag(record.name))
       processNotification({
-        title: 'Selector Added',
-        message: `Selector ${record.name} has been added.`,
+        title: 'Tag Added',
+        message: `Tag ${record.name} has been added.`,
         type: 'success',
       });
     }
     catch(e){
       debug(e.toString());
       processNotification({
-        title: 'Selector Add Error',
+        title: 'Tag Add Error',
         message: e.toString(),
         type: 'danger',
       });
     }
     finally {
-      props.setRows(await db.selector.toArray());
+      props.setRows(await db.tag.toArray());
       setOpen(false);
       props.setIsLoading(false);
       hideLoader();
@@ -85,7 +84,7 @@ export default function SelectorFormDialog(props) {
         onClose={handleClose}
         aria-labelledby="form-dialog-title"
       >
-        <DialogTitle id="form-dialog-title">Add Selector</DialogTitle>
+        <DialogTitle id="form-dialog-title">Add Tag</DialogTitle>
         <DialogContent>
           <form noValidate>
             <FormGroup>
@@ -95,7 +94,7 @@ export default function SelectorFormDialog(props) {
                   required
                   name="name"
                   id="name"
-                  label="Selector Value"
+                  label="Tag Value"
                   defaultValue={record?.name ?? ''}
                   inputProps={{ 'aria-label': 'controlled' }}
                   onChange={handleChange}
@@ -104,44 +103,13 @@ export default function SelectorFormDialog(props) {
                       <InputAdornment position={'end'} sx={{ mr: 1 }}>
                         <HelperPopover
                           message={
-                            'A unique name / value that will be used to search through your collected content.'
+                            'A unique name / value that will be used to annotate your data.'
                           }
                         />
                       </InputAdornment>
                     ),
                   }}
                 />
-              </FormControl>
-              <br />
-              <FormControl>
-                <StyledTextField
-                  sx={{ m: 0.5 }}
-                  required
-                  name="selectorTypeName"
-                  id="selectorTypeName"
-                  label="Selector Type"
-                  defaultValue={record?.selectorTypeName ?? ''}
-                  inputProps={{ 'aria-label': 'controlled' }}
-                  onChange={handleChange}
-                  select
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position={'end'} sx={{ mr: 1 }}>
-                        <HelperPopover
-                          message={
-                            'The selector type determines which Discovery Plugins will be available to the selector.'
-                          }
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                >
-                  {Object.entries(getSelectorTypeMap()).map(([key, label]) => (
-                    <MenuItem key={key} value={key}>
-                      {label}
-                    </MenuItem>
-                  ))}
-                </StyledTextField>
               </FormControl>
             </FormGroup>
           </form>

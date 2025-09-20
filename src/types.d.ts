@@ -1,4 +1,4 @@
-export type Selector = {
+export interface ISelector {
   name: string;
   selectorTypeName: string;
   description: string | null;
@@ -125,20 +125,9 @@ export interface INameOnly{
   name: string
 }
 
-export type SelectorType = INameOnly & {
-  name: string
-}
-
-export type Domain = INameOnly & {
-  name: string
-}
-
-export type Url = INameOnly & {
-  name: string
-}
-
-export type Tag = INameOnly & {
-  name: string
+// Chrome Tab interface helper
+interface ActiveTab {
+  id?: number;
 }
 
 

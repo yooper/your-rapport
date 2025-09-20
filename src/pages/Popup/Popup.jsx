@@ -92,21 +92,6 @@ function LargeButtonGrid() {
         }),
     },
     {
-      title: 'Full Page (beta)',
-      toolTipTitle: `Capture a web page and its content. Works best with non-dynamic pages.`,
-      onClick: () => {
-        (async () => {
-          await chrome.runtime.sendMessage({cmd: 'mhtmlCapture' });
-          processNotification({
-            title: 'Single Full Page Collected',
-            message: `The whole web page and its content has been saved`,
-            type: 'success',
-          });
-        })();
-        return true;
-      },
-    },
-    {
       title: 'Quick Scan',
       toolTipTitle: `Scans the open page for your pre-existing selectors. The Extension pin will show the counts. Ctrl+Shift+F will run this command.`,
       onClick: async () => {

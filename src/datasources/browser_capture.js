@@ -3,6 +3,7 @@ import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';
 import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
+import { debug } from '../services/logger_services';
 import { db } from '../models/db/dexieDb';
 
 /**
@@ -27,14 +28,14 @@ export async function capture(tab, message = {}) {
 
   try{
     // search the saved record for keywords
-    const selectors = (await getLocalItem(SELECTOR)) ?? [];
+    const selectors = await db.selector.toArray()
     const screenShot = await chrome.tabs.captureVisibleTab();
     const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
 
     record.sequenceId = ('sequence' in message) ? message.sequence : 0;
     record.bulkAutomationUuid = ('automation' in message && message.automation) ? message.automation.uuid : null;
 
-    await db.rapports.add(record, record.key)
+    await addRecord(RAPPORT, UUID, record);
     // update the configuration last saved on metadata
     configuration[UPDATED_ON] = Date.now();
     configuration.screenShotCount++;

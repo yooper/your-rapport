@@ -27,6 +27,7 @@ import { getTabInfo, initializePortConnection, portManager, processReceivedMessa
 import { debug } from '../../services/logger_services';
 import { captureSingleScreenShot } from '../../services/collection_services';
 import { db } from '../../models/db/dexieDb';
+import { Selector } from '../../models/schemas/Selector';
 
 /**
  * Initialize configuration values when the app is installed
@@ -171,12 +172,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
         break;
       case 'indexSelector':
-        await db.selector.add(message.selector);
-        break;
-      case 'mhtmlCapture':
-        const mhtmlData = await chrome.pageCapture.saveAsMHTML({ tabId: sender.tab.id })
-        const screenShot = await chrome.tabs.captureVisibleTab();
-        debug('mhtml data capture', {mhtmlData})
+        try{
+          await Selector.add(message.selector);
+        }
+        catch(e){
+          // ignore
+          debug(e);
+        }
         break;
     }
   })();

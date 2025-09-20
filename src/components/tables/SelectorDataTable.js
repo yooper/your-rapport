@@ -3,11 +3,11 @@ import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
 import SelectorFormDialog from '../dialogs/SelectorFormDialog';
-import { getLocalItem } from '../../models/db/local';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import { BULK_AUTOMATION, RAPPORT, SELECTOR, UPDATED_ON } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
 import { db } from '../../models/db/dexieDb';
+import { Selector } from '../../models/schemas/Selector';
 
 export default function SelectorDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -17,7 +17,7 @@ export default function SelectorDataTable(props) {
     async function fetchData() {
       showLoader();
       setIsLoading(true);
-      const records = await db.selectors.toArray();
+      const records = await db.selector.toArray();
       setRows(records);
       setIsLoading(false);
       hideLoader();
@@ -53,7 +53,7 @@ export default function SelectorDataTable(props) {
         searchable: false,
       },
     },
-    { label: 'Selector', name: 'key' },
+    { label: 'Selector', name: 'name' },
     { label: 'Selector Type', name: 'selectorTypeName' },
     {
       label: 'Description',
@@ -72,12 +72,15 @@ export default function SelectorDataTable(props) {
     onRowsDelete: async (records, data) => {
       setIsLoading(true);
       showLoader();
-      const keys = [];
+      const names = [];
       for (const [idx, value] of Object.entries(records.lookup)) {
-        keys.push(rows[idx].key);
-        await db.selectors.bulkDelete(keys);
+        names.push(rows[idx].name);
       }
-      setRows(await db.selectors.toArray());
+
+      await Selector.delete()
+      await db.selector.bulkDelete(names);
+
+      setRows(await db.selector.toArray());
       setIsLoading(false);
       hideLoader();
     },

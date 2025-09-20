@@ -5,6 +5,7 @@ import { ACTIVATE_CAPTURE, BULK_AUTOMATION, UUID } from './constants';
 import { captureSingleScreenShot } from './collection_services';
 import { db } from '../models/db/dexieDb';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
+import { Selector } from '../models/schemas/Selector';
 
 /**
  * Add the selectors as menu items
@@ -82,8 +83,8 @@ export async function initializeContextMenus() {
         break;
       default:
         const selectorTypeName = info.menuItemId;
-        const key = info.selectionText;
-        //db.selector.add({key, selectorTypeName}, key)
+        const value = info.selectionText;
+        Selector.add(new Selector(value, new String(selectorTypeName)));
         ExtensionPin.setTemporaryPin('SAVD');
         break;
     }

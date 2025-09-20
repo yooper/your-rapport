@@ -9,11 +9,15 @@ import {
   downloadBase64Image,
   downloadJsonData,
 } from '../../utilities/transformers';
+import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
 
 export default function SearchTableOptionMenu(props) {
-  const { record } = props;
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const {record, rows, setRows} = props;
+  const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+
+  const [openAddTagDialog, setOpenAddTagDialog] = useState(false)
 
   const [isOpen, setIsOpen] = useState(false);
   const handleClick = (event) => {
@@ -25,17 +29,17 @@ export default function SearchTableOptionMenu(props) {
 
   const handlePrintPdf = () => {
     printPdfReport('basic', { records: [record] });
-    setAnchorEl(null);
+    handleClose(null);
   };
 
   const handleDownloadImage = () => {
     downloadBase64Image(record.screenshot, `${record.uuid}.png`);
-    setAnchorEl(null);
+    handleClose(null);
   };
 
   const handleDownloadRecord = () => {
     downloadJsonData(record, `your.rapport.${record.uuid}.json`);
-    setAnchorEl(null);
+    handleClose(null);
   };
 
   /**
@@ -64,16 +68,27 @@ export default function SearchTableOptionMenu(props) {
           'aria-labelledby': 'basic-button',
         }}
       >
+        <MenuItem onClick={async() => { setOpenAddTagDialog(true); handleClose(); }}>Add Tags</MenuItem>
         <MenuItem onClick={handlePrintPdf}>Print</MenuItem>
         <MenuItem onClick={handleMetadata}>View Metadata</MenuItem>
         <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>
         <MenuItem onClick={handleDownloadRecord}>Download Record</MenuItem>
       </Menu>
+
       <JsonAttributeViewerDialog
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         record={record}
       />
+
+    <AddTagsFormDialog
+      isOpen={openAddTagDialog}
+      setIsOpen={setOpenAddTagDialog}
+      record={record}
+      rows={rows}
+      setRows={setRows}
+    />
+
     </div>
   );
 }
