@@ -164,22 +164,20 @@ export default function SearchDataTable(props) {
         filterOptions: {
           names: tags?.map((x) => x.name) ?? [],
           logic: (tags, filters) => {
-            const tagsLabels = tags.map((s) => s.name);
+            const tagsLabels = tags?.map((s) => s.name);
             return !filters.some((filter) => tagsLabels.includes(filter));
           },
         },
         customBodyRender: (value, tableMeta, updateValue) => {
-          const tags = value ?? [];
           const record = getRecord(tableMeta.rowData)
-
-          return tags.map((tag, index) => (
+          return value?.map((tag, index) => (
               <DiscoveryPluginDialog
-                  key={`tag-${tag}-${record.uuid}`}
+                  key={`tag-${tag.name}-${record.uuid}`}
                   plugins={[]}
                   title={'tag'}
                   record={record}
                   uxType={'chip'}
-                  pluginValue={tag}
+                  pluginValue={tag.name}
               />
           ))
         },

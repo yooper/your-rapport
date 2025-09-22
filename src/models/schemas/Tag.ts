@@ -15,7 +15,7 @@ export class Tag implements INameOnly{
    * @param value Tag | Array<Tag>
    */
   static async delete(value: Tag | Array<Tag>): Promise<void> {
-    let names = []
+    let names: string[] = []
     if(Array.isArray(value)){
       names = value.map(tag => tag.name)
       await db.tag.bulkDelete(names);
@@ -27,11 +27,7 @@ export class Tag implements INameOnly{
 
     const records: any[] = (await getLocalItem(RAPPORT)) ?? [];
     for (let record of records) {
-      for(const name in names){
-        record.tags = (record.tags ?? []).filter(
-          (item: { name: string }) => item.name !== name
-        );
-      }
+      record.tags = records.tags.filter(tag => !names.includes(tag.name));
     }
     // re-save the rapport records
     await setLocalItem(RAPPORT, records);

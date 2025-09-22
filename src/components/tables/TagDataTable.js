@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import { db } from '../../models/db/dexieDb';
-import { Tag } from '@mui/icons-material';
 import TagFormDialog from '../dialogs/TagFormDialog';
+import { Tag } from '../../models/schemas/Tag';
 
 export default function TagDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -33,12 +33,12 @@ export default function TagDataTable(props) {
     onRowsDelete: async (records, data) => {
       setIsLoading(true);
       showLoader();
-      const names = [];
+      const deleteTags = [];
       for (const [idx, value] of Object.entries(records.lookup)) {
-        names.push(rows[idx].name);
+        deleteTags.push(new Tag(rows[idx].name));
       }
 
-      await Tag.delete(names)
+      await Tag.delete(deleteTags);
       setRows(await db.tag.toArray());
       setIsLoading(false);
       hideLoader();
@@ -70,7 +70,7 @@ export default function TagDataTable(props) {
     <Box sx={{ height: '100%', width: '100%' }}>
       {!isLoading && (
         <MUIDataTable
-          title={'Selector Management'}
+          title={'Tag Management'}
           data={rows}
           columns={columns}
           options={options}

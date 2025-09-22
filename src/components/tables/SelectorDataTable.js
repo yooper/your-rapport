@@ -68,7 +68,7 @@ export default function SelectorDataTable(props) {
   ];
 
   const options = {
-    searchAlwaysOpen: true,
+    searchAlwaysOpen: false,
     onRowsDelete: async (records, data) => {
       setIsLoading(true);
       showLoader();

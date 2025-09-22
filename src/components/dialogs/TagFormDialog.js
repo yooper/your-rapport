@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, Fragment, useEffect } from 'react';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -9,8 +9,6 @@ import IconButton from '@mui/material/IconButton';
 import FormControl from '@mui/material/FormControl';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import FormGroup from '@mui/material/FormGroup';
-import InputAdornment from '@mui/material/InputAdornment';
-import HelperPopover from '../HelperPopover';
 
 import {
   hideLoader,
@@ -18,21 +16,24 @@ import {
   showLoader,
 } from '../../utilities/loaders';
 import { db } from '../../models/db/dexieDb';
-import { Selector } from '../../models/schemas/Selector';
 import { Tag } from '../../models/schemas/Tag';
 import { debug } from '../../services/logger_services';
+import { Autocomplete } from '@mui/material';
+import Chip from '@mui/material/Chip';
 
 export default function TagFormDialog(props) {
   const [open, setOpen] = useState(false);
   const [record, setRecord] = useState({});
+  const [tags, setTags] = useState([]);
+  const [userAddedTags, setUserAddedTags] = useState([])
 
-  const handleChange = (event) => {
-    const name = event.target.name;
-    setRecord({
-      ...record,
-      [name]: event.target.value,
-    });
-  };
+  useEffect(() => {
+    async function fetchData(){
+      setTags(await db.tag.toArray());
+    }
+    fetchData();
+  }, []);
+
 
   const handleClose = () => {
     setOpen(false);
@@ -41,12 +42,14 @@ export default function TagFormDialog(props) {
   const handleSave = async () => {
     props.setIsLoading(true);
     showLoader();
-    record.active = true;
+    const allTagNames = [...tags?.map(tag => tag.name), ...userAddedTags];
+    const allTags = [...new Set(allTagNames)].map(t => new Tag(t));
+
     try{
-      db.tag.add(new Tag(record.name))
+      await db.tag.bulkPut(allTags)
       processNotification({
         title: 'Tag Added',
-        message: `Tag ${record.name} has been added.`,
+        message: `Tag ${userAddedTags.join()} has been added.`,
         type: 'success',
       });
     }
@@ -59,7 +62,7 @@ export default function TagFormDialog(props) {
       });
     }
     finally {
-      props.setRows(await db.tag.toArray());
+      props.setRows(allTags);
       setOpen(false);
       props.setIsLoading(false);
       hideLoader();
@@ -89,27 +92,28 @@ export default function TagFormDialog(props) {
           <form noValidate>
             <FormGroup>
               <FormControl>
-                <StyledTextField
-                  sx={{ m: 0.5 }}
-                  required
-                  name="name"
-                  id="name"
-                  label="Tag Value"
-                  defaultValue={record?.name ?? ''}
-                  inputProps={{ 'aria-label': 'controlled' }}
-                  onChange={handleChange}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position={'end'} sx={{ mr: 1 }}>
-                        <HelperPopover
-                          message={
-                            'A unique name / value that will be used to annotate your data.'
-                          }
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+              <Autocomplete
+                sx={{pt:1}}
+                multiple
+                id="tags"
+                name="tags"
+                options={tags?.map((tag) => tag.name.toLowerCase())}
+                defaultValue={[]}
+                freeSolo
+                renderTags={(value, getTagProps) => {
+                  return value.map((option, index) => (
+                    <Chip
+                      label={option} size="small" sx={{margin: '3px'}}
+                    />
+                  ));
+                }}
+                renderInput={(params) => (
+                  <StyledTextField {...params} label="Add Tags.." helperText={'Press Enter after each tag phrase to add a tag. Multiple tags can be set before saving.'} />
+                )}
+                onChange={(event, newValue) => {
+                  setUserAddedTags(newValue)
+                }}
+              />
               </FormControl>
             </FormGroup>
           </form>

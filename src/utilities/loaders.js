@@ -38,7 +38,7 @@ export function processNotification(data, duration = 3000) {
     animationIn: ['animate__animated', 'animate__fadeIn'],
     animationOut: ['animate__animated', 'animate__fadeOut'],
     dismiss: {
-      duration: duration,
+      duration: data.type==='danger' ? (duration * 2): duration,
       onScreen: true,
     },
   });

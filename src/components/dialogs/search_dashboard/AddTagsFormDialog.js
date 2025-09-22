@@ -4,8 +4,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
-import AddBoxIcon from '@mui/icons-material/AddBox';
 import FormGroup from '@mui/material/FormGroup';
 
 import { Autocomplete } from '@mui/material';
@@ -19,11 +17,21 @@ import { updateRecord } from '../../../models/db/local';
 import { RAPPORT, UUID } from '../../../services/constants';
 
 export default function AddTagsFormDialog(props) {
-  const {rows, setRows} = props;
+  const {rows, setRows, record} = props;
   const [open, setOpen] = React.useState(false);
-  const [tags, setTags] = useState([]);
-  const [record, setRecord] = useState(props.record)
 
+  const [tags, setTags] = useState([]);
+  const [userAddedTags, setUserAddedTags] = useState([])
+
+
+  useEffect(() => {
+    setOpen(props.isOpen);
+  }, [props.isOpen]);
+
+  const handleClose = () => {
+    setOpen(false);
+    props.setIsOpen(false);
+  };
 
   useEffect(() => {
     async function fetchData(){
@@ -34,28 +42,17 @@ export default function AddTagsFormDialog(props) {
   }, [props.isOpen]);
 
 
-  const handleChange = (event) => {
-    const name = event.target.name;
-    setRecord({
-      ...record,
-      [name]: event.target.value,
-    });
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    props.setIsOpen(false);
-  };
-
   const handleSave = async () => {
     try{
       showLoader();
       const updatedRows = [...rows]
       const found = updatedRows.find(r => r.uuid == record.uuid);
-      found.tags = record.tags ?? []
+      const userTags = [...new Set(userAddedTags)].map(t => new Tag(t));
+      found.tags = userTags;
       setRows(updatedRows)
-      await db.tag.bulkPut(record.tags.map(t => new Tag(t)))
-      await updateRecord(RAPPORT, UUID, record);
+      await db.tag.bulkPut(userTags)
+      await updateRecord(RAPPORT, UUID, found);
+      props.setRows(updatedRows)
       processNotification({
         title: 'Tag(s) Added',
         message: `Tag(s) have been added.`,
@@ -72,6 +69,7 @@ export default function AddTagsFormDialog(props) {
     }
     finally {
       setOpen(false);
+       props.setIsOpen(false)
       hideLoader();
     }
   };
@@ -92,21 +90,22 @@ export default function AddTagsFormDialog(props) {
                 multiple
                 id="tags"
                 name="tags"
-                options={tags?.map((tag) => tag.name)}
-                defaultValue={record.tags?.map((tag) => tag)}
+                options={tags?.map((tag) => tag.name.toLowerCase())}
+                defaultValue={record.tags?.map((tag) => tag.name)}
                 freeSolo
-                renderTags={(value, getTagProps) => {
-                  return value.map((option, index) => (
-                    <Chip
-                      label={option} size="small" sx={{margin: '3px'}}
-                    />
-                  ));
-                }}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => {
+                    const { key, ...tagProps } = getTagProps({ index });
+                    return (
+                      <Chip variant="outlined" label={option} key={key} {...tagProps} />
+                    );
+                  })
+                }
                 renderInput={(params) => (
                   <StyledTextField {...params} label="Assign Tags.." helperText={'Press Enter to add a tag. Multiple tags can set.'} />
                 )}
                 onChange={(event, newValue) => {
-                    setRecord(prevState => ({...prevState, tags: newValue.map(tagName => tagName.toLowerCase())}))
+                  setUserAddedTags(newValue)
                 }}
               />
             </FormGroup>

@@ -29,8 +29,9 @@ export default function Popup() {
 
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true)
       showLoader();
-      await chrome.runtime.sendMessage({cmd: 'ping'});
+      //await chrome.runtime.sendMessage({cmd: 'ping'});
       setIsLoading(false);
       hideLoader();
     }
@@ -116,6 +117,7 @@ function LargeButtonGrid() {
     },
   ];
 
+
   return (
     <Grid container spacing={2}>
       {buttons.map((button, index) => (
@@ -157,6 +159,7 @@ function BasicTable() {
 
   useEffect(() => {
     async function fetchData() {
+      showLoader()
       setIsLoading(true);
       const currentUrl = new URL((await getActiveTab()).url);
       const baseUrl = currentUrl.origin + currentUrl.pathname;
@@ -172,6 +175,7 @@ function BasicTable() {
       }
 
       setIsLoading(false);
+      hideLoader()
     }
 
     fetchData();
