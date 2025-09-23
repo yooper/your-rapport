@@ -98,7 +98,7 @@ export default function SearchDataTable(props) {
       name: 'url',
       label: 'URL',
       options: {
-        filter: true,
+        filter: false,
         sort: false,
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
@@ -316,7 +316,7 @@ export default function SearchDataTable(props) {
     ].map((fieldName) => {
       return {
         name: fieldName,
-        label: fieldName,
+        label: fieldName.toUpperCase(),
         options: {
           display: false,
           filter: false,

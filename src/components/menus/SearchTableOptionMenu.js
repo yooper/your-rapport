@@ -68,7 +68,7 @@ export default function SearchTableOptionMenu(props) {
           'aria-labelledby': 'basic-button',
         }}
       >
-        <MenuItem onClick={async() => { setOpenAddTagDialog(true); handleClose(); }}>Add Tags</MenuItem>
+        <MenuItem onClick={async() => { setOpenAddTagDialog(true); handleClose(); }}>Modify Tag(s)</MenuItem>
         <MenuItem onClick={handlePrintPdf}>Print</MenuItem>
         <MenuItem onClick={handleMetadata}>View Metadata</MenuItem>
         <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>

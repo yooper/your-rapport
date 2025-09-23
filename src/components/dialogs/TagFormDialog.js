@@ -47,11 +47,13 @@ export default function TagFormDialog(props) {
 
     try{
       await db.tag.bulkPut(allTags)
+      props.setRows(allTags);
       processNotification({
         title: 'Tag Added',
         message: `Tag ${userAddedTags.join()} has been added.`,
         type: 'success',
       });
+
     }
     catch(e){
       debug(e.toString());
@@ -62,7 +64,6 @@ export default function TagFormDialog(props) {
       });
     }
     finally {
-      props.setRows(allTags);
       setOpen(false);
       props.setIsLoading(false);
       hideLoader();
@@ -103,7 +104,7 @@ export default function TagFormDialog(props) {
                 renderTags={(value, getTagProps) => {
                   return value.map((option, index) => (
                     <Chip
-                      label={option} size="small" sx={{margin: '3px'}}
+                      label={option} size="small" sx={{margin: '3px'}} key={`${option}_${index}`}
                     />
                   ));
                 }}

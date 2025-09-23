@@ -27,7 +27,7 @@ export class Tag implements INameOnly{
 
     const records: any[] = (await getLocalItem(RAPPORT)) ?? [];
     for (let record of records) {
-      record.tags = records.tags.filter(tag => !names.includes(tag.name));
+      record.tags = records.tags?.filter(tag => !names.includes(tag.name));
     }
     // re-save the rapport records
     await setLocalItem(RAPPORT, records);
