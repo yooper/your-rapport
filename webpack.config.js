@@ -7,7 +7,7 @@ var webpack = require('webpack'),
   TerserPlugin = require('terser-webpack-plugin');
 var { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-var ReactRefreshTypeScript = require('react-refresh-typescript');
+var ReactRefreshTypeScript = require('react-refresh-typescript').default;
 
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 

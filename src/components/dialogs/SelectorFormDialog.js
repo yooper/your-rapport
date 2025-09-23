@@ -12,13 +12,16 @@ import FormGroup from '@mui/material/FormGroup';
 import MenuItem from '@mui/material/MenuItem';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../HelperPopover';
+
 import {
   getSelectorTypeMap,
   hideLoader,
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
+import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
+import { debug } from '../../services/logger_services';
 
 export default function SelectorFormDialog(props) {
   const [open, setOpen] = useState(false);
@@ -39,18 +42,29 @@ export default function SelectorFormDialog(props) {
   const handleSave = async () => {
     props.setIsLoading(true);
     showLoader();
-    await Selector.add(record);
-    processNotification({
-      title: 'Selector Added',
-      message: `Selector ${record.key} has been added.`,
-      type: 'success',
-    });
-    let selectors = props.rows;
-    selectors.push(record);
-    props.setRows(selectors);
-    setOpen(false);
-    props.setIsLoading(false);
-    hideLoader();
+    record.active = true;
+    try{
+      await Selector.add(new Selector(record.name, record.selectorTypeName));
+      processNotification({
+        title: 'Selector Added',
+        message: `Selector ${record.name} has been added.`,
+        type: 'success',
+      });
+    }
+    catch(e){
+      debug(e.toString());
+      processNotification({
+        title: 'Selector Add Error',
+        message: e.toString(),
+        type: 'danger',
+      });
+    }
+    finally {
+      props.setRows(await db.selector.toArray());
+      setOpen(false);
+      props.setIsLoading(false);
+      hideLoader();
+    }
   };
 
   return (
@@ -79,10 +93,10 @@ export default function SelectorFormDialog(props) {
                 <StyledTextField
                   sx={{ m: 0.5 }}
                   required
-                  name="key"
-                  id="key"
+                  name="name"
+                  id="name"
                   label="Selector Value"
-                  defaultValue={record?.key ?? ''}
+                  defaultValue={record?.name ?? ''}
                   inputProps={{ 'aria-label': 'controlled' }}
                   onChange={handleChange}
                   InputProps={{

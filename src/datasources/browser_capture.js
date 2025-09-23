@@ -3,6 +3,8 @@ import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';
 import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
+import { debug } from '../services/logger_services';
+import { db } from '../models/db/dexieDb';
 
 /**
  * Capture the tab and persist it into local storage
@@ -26,7 +28,7 @@ export async function capture(tab, message = {}) {
 
   try{
     // search the saved record for keywords
-    const selectors = (await getLocalItem(SELECTOR)) ?? [];
+    const selectors = await db.selector.toArray()
     const screenShot = await chrome.tabs.captureVisibleTab();
     const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
 

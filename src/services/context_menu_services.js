@@ -1,11 +1,11 @@
-import { capture } from '../datasources/browser_capture';
-import { Selector } from '../models/schemas/Selector';
-import { getActiveTab, getSelectorTypeMap } from '../utilities/loaders';
+import { getSelectorTypeMap } from '../utilities/loaders';
 import { Configuration } from '../models/schemas/Configuration';
-import { addRecord } from '../models/db/local';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { ACTIVATE_CAPTURE, BULK_AUTOMATION, UUID } from './constants';
 import { captureSingleScreenShot } from './collection_services';
+import { db } from '../models/db/dexieDb';
+import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
+import { Selector } from '../models/schemas/Selector';
 
 /**
  * Add the selectors as menu items
@@ -67,8 +67,7 @@ export async function initializeContextMenus() {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
           const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
           const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
-          await addRecord(BULK_AUTOMATION, UUID, {
-            uuid: crypto.randomUUID(),
+          await db.bulkAutomation.add(new BulkAutomationUrl({
             url: info.linkUrl,
             createdOn: Date.now(),
             completedOn: null,
@@ -77,14 +76,15 @@ export async function initializeContextMenus() {
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
             screenShotsCollected: 0
-          });
+          })
+          )
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;
       default:
         const selectorTypeName = info.menuItemId;
-        const key = info.selectionText;
-        Selector.add(new Selector(key, selectorTypeName)).then()
+        const value = info.selectionText;
+        Selector.add(new Selector(value, new String(selectorTypeName)));
         ExtensionPin.setTemporaryPin('SAVD');
         break;
     }

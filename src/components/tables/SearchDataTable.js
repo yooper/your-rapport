@@ -17,11 +17,13 @@ import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../ser
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
+import { db } from '../../models/db/dexieDb';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectors, setSelectors] = useState(null);
+  const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
 
   useEffect(() => {
@@ -29,7 +31,8 @@ export default function SearchDataTable(props) {
         showLoader();
         setIsLoading(true);
         const start = performance.now()
-        setSelectors(await getLocalItem(SELECTOR) ?? []);
+        setSelectors(await db.selector.toArray());
+        setTags(await db.tag.toArray());
         setDiscoveryPlugins(await getLocalItem(DISCOVERY_PLUGIN) ?? []);
         const screenshots = await getLocalItem(RAPPORT) ?? [];
         const elapsed = performance.now() - start;
@@ -95,7 +98,7 @@ export default function SearchDataTable(props) {
       name: 'url',
       label: 'URL',
       options: {
-        filter: true,
+        filter: false,
         sort: false,
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
@@ -152,6 +155,35 @@ export default function SearchDataTable(props) {
       },
     },
     {
+      name: 'tags',
+      label: 'TAGS',
+      options: {
+        filterType: 'multiselect',
+        filter: true,
+        sort: false,
+        filterOptions: {
+          names: tags?.map((x) => x.name) ?? [],
+          logic: (tags, filters) => {
+            const tagsLabels = tags?.map((s) => s.name);
+            return !filters.some((filter) => tagsLabels.includes(filter));
+          },
+        },
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData)
+          return value?.map((tag, index) => (
+              <DiscoveryPluginDialog
+                  key={`tag-${tag.name}-${record.uuid}`}
+                  plugins={[]}
+                  title={'tag'}
+                  record={record}
+                  uxType={'chip'}
+                  pluginValue={tag.name}
+              />
+          ))
+        },
+      },
+    },
+    {
       name: 'selectors',
       label: 'SELECTORS',
       options: {
@@ -159,9 +191,9 @@ export default function SearchDataTable(props) {
         filter: true,
         sort: false,
         filterOptions: {
-          names: selectors?.map((x) => x.key) ?? [],
+          names: selectors?.map((x) => x.name) ?? [],
           logic: (selectors, filters) => {
-            const selectorLabels = selectors.map((s) => s.key);
+            const selectorLabels = selectors.map((s) => s.name);
             return !filters.some((filter) => selectorLabels.includes(filter));
           },
         },
@@ -173,14 +205,14 @@ export default function SearchDataTable(props) {
           // TODO add support for regex activated discovery plugins.
           return record.selectors.map((selector, index) => (
             <DiscoveryPluginDialog
-              key={`selector-${selector.key}-${selector.selectorTypeName}-${record.uuid}`}
+              key={`selector-${selector.name}-${selector.selectorTypeName}-${record.uuid}`}
               plugins={discoveryPlugins.filter((plugin) => {
                 return plugin.pluginType === selector.selectorTypeName;
               })}
               title={selector.selectorTypeName}
               record={record}
               uxType={'chip'}
-              pluginValue={selector.key}
+              pluginValue={selector.name}
             />
           ));
         },
@@ -232,7 +264,7 @@ export default function SearchDataTable(props) {
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
-          return <SearchTableOptionMenu record={record} />;
+          return <SearchTableOptionMenu record={record} rows={rows} setRows={setRows}/>;
         },
       },
     },
@@ -284,7 +316,7 @@ export default function SearchDataTable(props) {
     ].map((fieldName) => {
       return {
         name: fieldName,
-        label: fieldName,
+        label: fieldName.toUpperCase(),
         options: {
           display: false,
           filter: false,

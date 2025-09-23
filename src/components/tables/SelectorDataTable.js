@@ -3,11 +3,11 @@ import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
 import SelectorFormDialog from '../dialogs/SelectorFormDialog';
-import { getLocalItem } from '../../models/db/local';
 import { hideLoader, showLoader } from '../../utilities/loaders';
-import { Selector } from '../../models/schemas/Selector';
 import { BULK_AUTOMATION, RAPPORT, SELECTOR, UPDATED_ON } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
+import { db } from '../../models/db/dexieDb';
+import { Selector } from '../../models/schemas/Selector';
 
 export default function SelectorDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -17,7 +17,7 @@ export default function SelectorDataTable(props) {
     async function fetchData() {
       showLoader();
       setIsLoading(true);
-      const records = (await getLocalItem(SELECTOR)) ?? [];
+      const records = await db.selector.toArray();
       setRows(records);
       setIsLoading(false);
       hideLoader();
@@ -43,7 +43,17 @@ export default function SelectorDataTable(props) {
   }, []);
 
   const columns = [
-    { label: 'Selector', name: 'key' },
+    {
+      label: 'Active',
+      name: 'Active',
+      options: {
+        display: 'excluded',
+        filter: false,
+        sort: false,
+        searchable: false,
+      },
+    },
+    { label: 'Selector', name: 'name' },
     { label: 'Selector Type', name: 'selectorTypeName' },
     {
       label: 'Description',
@@ -58,16 +68,19 @@ export default function SelectorDataTable(props) {
   ];
 
   const options = {
-    searchAlwaysOpen: true,
+    searchAlwaysOpen: false,
     onRowsDelete: async (records, data) => {
       setIsLoading(true);
       showLoader();
-      const keys = [];
+      const names = [];
       for (const [idx, value] of Object.entries(records.lookup)) {
-        keys.push(rows[idx].key);
-        await Selector.delete(rows[idx]);
+        names.push(rows[idx].name);
       }
-      setRows(await getLocalItem(SELECTOR));
+
+      await Selector.delete()
+      await db.selector.bulkDelete(names);
+
+      setRows(await db.selector.toArray());
       setIsLoading(false);
       hideLoader();
     },
