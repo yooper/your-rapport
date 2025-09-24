@@ -102,7 +102,7 @@ var options = {
                   Boolean
                 ),
               }),
-              transpileOnly: isDevelopment,
+              transpileOnly: true,
             },
           },
         ],
