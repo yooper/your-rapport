@@ -1,6 +1,8 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { Domain, SelectorType, Tag, Url } from '../../types';
 import { Selector } from '../schemas/Selector';
+import { Artifact } from '../schemas/Artifact';
+
 
 
 const db = new Dexie('YourRapport') as Dexie & {
@@ -9,6 +11,7 @@ const db = new Dexie('YourRapport') as Dexie & {
   tag: EntityTable<Tag, 'name'>;
   domain: EntityTable<Domain, 'name'>;
   url: EntityTable<Url, 'name'>;
+  artifact: EntityTable<Artifact, 'id'>
 }
   db.version(1).stores({
       selector: 'name, selectorTypeName',
@@ -17,5 +20,8 @@ const db = new Dexie('YourRapport') as Dexie & {
       url: '&name',
       selectorType: '&name',
     });
+  db.version(2).stores({
+      artifact: 'id, rapportUuid, domain'
+  })
 
 export { db };

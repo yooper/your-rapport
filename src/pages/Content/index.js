@@ -16,6 +16,7 @@ import {
 import { getVisibleText } from './modules/visibleElements';
 import { debug } from '../../services/logger_services';
 import { isAutomationBlockerDetected } from './modules/automationBlockerDetection';
+import { waitForAllImagesToLoad } from '../../services/image_loading_services';
 
 export const pageUuid = crypto.randomUUID();
 export const port = chrome.runtime.connect({name: RAPPORT});
@@ -96,3 +97,6 @@ const composeMessage = (message) => {
 
 //initAutoScrollerHandler();
 initMarkJsHandler();
+
+waitForAllImagesToLoad()
+

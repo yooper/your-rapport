@@ -278,6 +278,15 @@ export default function SearchDataTable(props) {
       },
     },
     {
+      name: 'artifacts',
+      label: 'ARTIFACTS',
+      options: {
+        display: 'excluded',
+        filter: false,
+        sort: false,
+      },
+    },
+    {
       name: 'text',
       label: 'Text',
       options: {
@@ -339,10 +348,13 @@ export default function SearchDataTable(props) {
     setIsLoading(true);
     showLoader();
     const deleteRecords = [];
+    const deleteArtifacts = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
       deleteRecords.push(rows[idx])
+      deleteArtifacts.push(...rows[idx].artifacts);
     }
 
+    await db.artifact.bulkDelete(deleteArtifacts);
     await deleteBulkRecords(RAPPORT, UUID, deleteRecords);
     setRows(await getLocalItem(RAPPORT));
     // update the configuration last

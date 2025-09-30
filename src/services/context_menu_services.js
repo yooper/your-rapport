@@ -54,7 +54,7 @@ export async function initializeContextMenus() {
     switch (info.menuItemId) {
       case 'singleCollect':
         ExtensionPin.setTemporaryPin('SAVG')
-        captureSingleScreenShot().then()
+        captureSingleScreenShot(true).then()
         break;
       case 'autocollectPage':
         captureSingleScreenShot().then(() => {

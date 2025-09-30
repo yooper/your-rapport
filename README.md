@@ -20,7 +20,7 @@ After installing the Chrome extension from https://chromewebstore.google.com/det
 
 There are several options for collecting a screenshot of a web page:
  * `Mouse - Right Click` and select the **Autoscroll Collect** menu option with the "Your Rapport" logo
- * `Ctrl+Shift+S` collects a single screenshot.
+ * `Ctrl+Shift+S` collects a single screenshot and deep copy which is an mhtml file
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
  * `Ctrl+Shift+F` quick scan the web page for selectors and show the counts on the extension pin. 
@@ -31,7 +31,7 @@ Your Rapport is an open source commercial tool for the following reasons:
  * A commercial tool is the only viable way to support developing a standard set of open source tools, useful for doing online research
  * Keeps the infrastructure costs lower by not having additional overhead with privatized Software as a Service approach
  * Implement best practices based on community feedback
- * The target price for the Pro license can be set to $3 a month. 
+ * The target price for the Pro license can be set to $3 a month support us [here](https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00) 
 
 🌟 Key Features
 
@@ -51,6 +51,7 @@ username, or phrase.
 Shows how many of your keyword selectors are contained on the web page within the Extension Pin. Making it
 easy to determine if the current page has any pertinent information
 
+
 📚 Discovery Plugins
 Are small json scripts that allow you to link your selectors to specific websites for enrichment. Example, if you find a 
 phone number and have installed the Discovery Plugin from the Package Management screen, you will now be able to streamline
@@ -58,7 +59,7 @@ searching against several of the data brokers.
 
 🌱 Companion Extensions
 Are chrome extensions that will provide improvements to your workflow. For example, "[Who Am I](https://chromewebstore.google.com/detail/who-am-i/gdnhlhadhgnhaenfcphpeakdghkccfoo)"
- a chrome extension, provides username enumeration across a couple thousand websites. Who Am I has a button in its
+ a Chrome extension, provides username enumeration across a couple thousand websites. Who Am I has a button in its
 UI that will trigger the "Your Rapport" extension to scrape the selected social website with the click of a button. 
 
 💬 Platform-Agnostic
@@ -70,12 +71,15 @@ Your captured content stays on your machine utilizing your browser's security an
 🔗 Share Your Rapport Collection 
 The data exported from Your Rapport is in a Non-Proprietary format known as JSON.
 Your collection can be downloaded as "json" file(s) which lets you easily share them with
-others using email or other file sharing apps. 
+others using email or other file sharing apps. The screenshots can be individually downloaded, too. 
 
-The screenshots can be individually downloaded, too. 
+🖨️ Printable Report(s)
+There is a lightweight print function that lets you download a PDF with the screenshot and metadata.
+
 
 🧠 Best Data Integrity Practices, so far:
 * Signed Hash for verifying each screenshot's integrity
 * Multiple timestamps are collected
 * Multiple attributes about the computer that took the screenshot are captured
 * Source code is Open Source
+

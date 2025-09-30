@@ -1,4 +1,4 @@
-export interface ISelector {
+export type Selector = {
   name: string;
   selectorTypeName: string;
   description: string | null;
@@ -125,10 +125,33 @@ export interface INameOnly{
   name: string
 }
 
-// Chrome Tab interface helper
-interface ActiveTab {
-  id?: number;
+export type SelectorType = INameOnly & {
+  name: string
 }
 
+export type Domain = INameOnly & {
+  name: string
+}
 
+export type Url = INameOnly & {
+  name: string
+}
+
+export type Tag = INameOnly & {
+  name: string
+}
+
+export interface IArtifact extends ICreatedBy, IUpdatedBy {
+  id?: string; // UUID string, primary key
+  rapportUuid: string; // pointer to rapport record this attachment originated from
+  size: number;
+  hash: string;
+  hashAlgorithm: string;
+  mimeType: string;
+  data: Blob;
+  url: string;
+  domain: string;
+  title?: string;
+  note?: string;
+}
 

@@ -10,12 +10,14 @@ import {
   downloadJsonData,
 } from '../../utilities/transformers';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
+import { Tooltip } from '@mui/material';
+import { Artifact } from '../../models/schemas/Artifact';
 
 export default function SearchTableOptionMenu(props) {
   const {record, rows, setRows} = props;
   const [anchorEl, setAnchorEl] = useState(null);
+  const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(props.record.artifacts?.length > 0)
   const open = Boolean(anchorEl);
-
 
   const [openAddTagDialog, setOpenAddTagDialog] = useState(false)
 
@@ -43,6 +45,14 @@ export default function SearchTableOptionMenu(props) {
   };
 
   /**
+   * TODO: Support more than mhtml downloads
+   */
+  const handleDownloadMhtml = () => {
+    Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0]}.mhtml`);
+    handleClose(null);
+  }
+
+  /**
    * Debug the data
    */
   const handleMetadata = () => {
@@ -68,11 +78,26 @@ export default function SearchTableOptionMenu(props) {
           'aria-labelledby': 'basic-button',
         }}
       >
-        <MenuItem onClick={async() => { setOpenAddTagDialog(true); handleClose(); }}>Modify Tag(s)</MenuItem>
-        <MenuItem onClick={handlePrintPdf}>Print</MenuItem>
-        <MenuItem onClick={handleMetadata}>View Metadata</MenuItem>
-        <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>
-        <MenuItem onClick={handleDownloadRecord}>Download Record</MenuItem>
+        <Tooltip title={'Add tags to annotate your data and make it easier to find'}>
+          <MenuItem onClick={async() => { setOpenAddTagDialog(true); handleClose(); }}>Modify Tag(s)</MenuItem>
+        </Tooltip>
+        <Tooltip title={'A simple pdf with the screenshot and some metadata'}>
+          <MenuItem onClick={handlePrintPdf}>Print</MenuItem>
+        </Tooltip>
+        <Tooltip title={'View metadata about the capture'}>
+          <MenuItem onClick={handleMetadata}>View Metadata</MenuItem>
+        </Tooltip>
+        <Tooltip title={'Download the screenshot of the web page'}>
+          <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>
+        </Tooltip>
+        <Tooltip title={'Download a JSON formatted file that can be readily shared.'}>
+          <MenuItem onClick={handleDownloadRecord}>Download Record</MenuItem>
+        </Tooltip>
+        { hasMhtmlArtifact ? 
+           <Tooltip title="Download an MHTML file of the web page">
+             <MenuItem onClick={handleDownloadMhtml}>Download MHtml</MenuItem>
+           </Tooltip>
+             : ''}
       </Menu>
 
       <JsonAttributeViewerDialog

@@ -5,7 +5,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { DialogContentText } from '@mui/material';
+import { DialogContentText, Tooltip } from '@mui/material';
 import { useEffect } from 'react';
 import { Fragment } from '@emotion/react/jsx-runtime';
 import IconButton from '@mui/material/IconButton';
@@ -41,6 +41,7 @@ export default function PreviewImageDialog(props) {
       >
         <DialogTitle>
           <IconButton>
+            <Tooltip title={'Click to download the screenshot'}>
             <CloudDownload
               onClick={() =>
                 downloadBase64Image(
@@ -49,6 +50,7 @@ export default function PreviewImageDialog(props) {
                 )
               }
             />
+            </Tooltip>
           </IconButton>
           {`Collected On: ${props.record.createdOnLocalTime} - ${props.record.url}`}
         </DialogTitle>
