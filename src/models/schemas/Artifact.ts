@@ -2,11 +2,12 @@
  * ArtifactRecord is the mapped class used with Dexie.
  * Each record gets instance methods for convenience.
  */
-import { IArtifact } from '../../types';
+import { Attachment, IArtifact } from '../../types';
 import { db } from '../db/dexieDb';
 import { debug } from '../../services/logger_services';
 
 export class Artifact implements IArtifact {
+  createdOn: Date = new Date();
   id!: string;
   rapportUuid!: string;
   size!: number;
@@ -14,14 +15,21 @@ export class Artifact implements IArtifact {
   hashAlgorithm!: string;
   mimeType!: string;
   data!: Blob;
-  createdBy!: string;
-  createdOn!: Date;
-  updatedBy!: string;
-  updatedOn!: Date;
   url!: string;
-  domain!: string;
-  title?: string;
-  note?: string;
+
+  /**
+   * Return a fly weight of the artifact
+   * @param artifact
+   */
+  static getAttachment(artifact: IArtifact): Attachment {
+    return {
+      id: artifact.id,
+      mimeType: artifact.mimeType,
+      size: artifact.size,
+      url: artifact.url
+    };
+  }
+
 
   static async calculateSha256(blob: Blob): Promise<string> {
     const buffer = await blob.arrayBuffer();
@@ -30,7 +38,7 @@ export class Artifact implements IArtifact {
     return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
-  static async create(blob: Blob, rapportUuid: string, url: string, title?: string): Promise<IArtifact> {
+  static async create(blob: Blob, rapportUuid: string, url: string, mimeType: string = ''): Promise<IArtifact> {
     // Compute a hash of the content for deduplication / integrity
     const hash = await Artifact.calculateSha256(blob);
     const record: IArtifact = {
@@ -39,24 +47,19 @@ export class Artifact implements IArtifact {
       size: blob.size,
       hash,
       hashAlgorithm: 'SHA-256',
-      mimeType: blob.type, // TODO, this is empty
+      mimeType: !blob.type ? mimeType : blob.type,
       data: blob,
-      url: url,
-      domain: url,
-      createdBy: 'TODO',
-      createdOn: new Date(),
-      updatedBy: 'TODO',
-      updatedOn: new Date(),
-      title: title
+      url
     }
     debug('artifact saved', record)
     return record;
   }
 
-  static async downloadArtifact(id: string, fileName: string): Promise<void> {
-    const artifact = await db.artifact.get(id);
+
+  static async downloadArtifact(attachment: Attachment, fileName: string): Promise<void> {
+    const artifact = await db.artifact.get(attachment.id);
     if(artifact === undefined){
-      debug(`Artifact record does not exist for ${id}`)
+      debug(`Artifact record does not exist for ${attachment.id}`)
       return;
     }
     const url = URL.createObjectURL(artifact.data);

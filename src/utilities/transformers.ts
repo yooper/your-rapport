@@ -175,3 +175,7 @@ export function findAllMatches(text: string, selectors: Array<Selector>, limit: 
   }
   return matches;
 }
+
+export function anyProperty<T extends Record<string, any>>(obj: T, keys: string[]): boolean {
+  return keys.some(key => Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && obj[key] !== "");
+}

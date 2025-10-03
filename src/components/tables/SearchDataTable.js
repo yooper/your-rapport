@@ -11,13 +11,19 @@ import UploadDataDialog from '../dialogs/UploadDataDialog';
 import { downloadJsonData } from '../../utilities/transformers';
 import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
-import { Tooltip } from '@mui/material';
+import { Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
 import { db } from '../../models/db/dexieDb';
+import VerticalGenericTableDialog from '../dialogs/VerticalGenericTableDialog';
+import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
+import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
+import { Artifact } from '../../models/schemas/Artifact';
+import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
+import TagIcon from '@mui/icons-material/Tag';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -73,6 +79,7 @@ export default function SearchDataTable(props) {
         customBodyRenderLite: (dataIndex) => {
           const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
+          const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
           return (
             <>
               <img
@@ -84,10 +91,50 @@ export default function SearchDataTable(props) {
                   setIsOpen(true);
                 }}
               />
+              <div>
+                <Box sx={{ p: 1 }} >
+                    <Badge badgeContent={0} color={"primary"}>
+                        <VerticalGenericTableDialog
+                            selectedRecord={record}
+                            title={`Data Integrity Attributes`}
+                            iconType={'InfoOutlinedIcon'}
+                            approvedFields={
+                                ['url', 'domain', 'hash', 'hashAlgorithm', 'createdBy', 'createdOn', 'updatedBy', 'updatedOn', 'size']}
+                        />
+                    </Badge>
+                    <Badge>
+                      <Tooltip title={'Download the mhtml file, if available.'}>
+                      <IntegrationInstructionsIcon onClick={() => {
+                        if(record.artifacts.length > 0){
+                          Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0].id}.mhtml`);
+                        }
+                        else{
+                          alert('Mhtml file not available for download when auto scroll capture is run.');
+                        }
+                      }}/>
+                      </Tooltip>
+                    </Badge>
+                    <Badge>
+                      <TagIcon onClick={() => { setOpenAddTagDialog(true); }}/>
+                    </Badge>
+                    <Badge>
+                        <JsonAttributeViewerDialog
+                            record={record}
+                        />
+                    </Badge>
+                </Box>
+              </div>
               <PreviewImageDialog
                 record={record}
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
+              />
+              <AddTagsFormDialog
+                isOpen={openAddTagDialog}
+                setIsOpen={setOpenAddTagDialog}
+                record={record}
+                rows={rows}
+                setRows={setRows}
               />
             </>
           );

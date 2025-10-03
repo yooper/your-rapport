@@ -21,7 +21,7 @@ const db = new Dexie('YourRapport') as Dexie & {
       selectorType: '&name',
     });
   db.version(2).stores({
-      artifact: 'id, rapportUuid, domain'
+      artifact: 'id, rapportUuid'
   })
 
 export { db };

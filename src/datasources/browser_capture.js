@@ -39,9 +39,9 @@ export async function capture(tab, message = {}, deepCapture = false) {
     // save the mhtml artifact.
     if(deepCapture){
       const blob = await chrome.pageCapture.saveAsMHTML({tabId: tab.id});
-      const artifact = await Artifact.create(blob, record.uuid, tab.url, tab.title);
+      const artifact = await Artifact.create(blob, record.uuid, record.url, 'multipart/related');
       db.artifact.add(artifact)
-      record.artifacts.push(artifact.id)
+      record.artifacts.push(Artifact.getAttachment(artifact))
     }
 
     await addRecord(RAPPORT, UUID, record);

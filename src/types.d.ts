@@ -54,25 +54,6 @@ export type Spatial = {
 }
 
 
-export type FileMetadata = ICreatedBy & IUpdatedBy & {
-  id: string;
-  rapportUuid: string;
-  size: number;
-  hash: string;
-  hashAlgorithm: string;
-  mimeType: string;
-  data: Blob;
-  createdBy: string;
-  createdOn: Date;
-  updatedBy: string;
-  updatedOn: Date;
-  url: string;
-  domain: string;
-  title?: string;
-  note?: string
-}
-
-
 // Combine everything into a single data shape
 export interface IRapport
   extends IUpdatedBy,
@@ -80,7 +61,6 @@ export interface IRapport
     IDeletedBy,
     Temporal,
     Spatial,
-    NestedSet,
     Address,
     Participants,
     SourcedFrom {
@@ -95,7 +75,7 @@ export interface IRapport
   text?: string;
   selectors: Array<Selector>;
   tags: Array<string>;
-  nodes: Array<string>;
+  artifacts: Array<Attachment>;
   extractedUrls: Array<string>;
   extractedDomains: Array<string>;
 }
@@ -141,7 +121,7 @@ export type Tag = INameOnly & {
   name: string
 }
 
-export interface IArtifact extends ICreatedBy, IUpdatedBy {
+export interface IArtifact {
   id?: string; // UUID string, primary key
   rapportUuid: string; // pointer to rapport record this attachment originated from
   size: number;
@@ -150,8 +130,14 @@ export interface IArtifact extends ICreatedBy, IUpdatedBy {
   mimeType: string;
   data: Blob;
   url: string;
-  domain: string;
-  title?: string;
-  note?: string;
 }
 
+/**
+ * Lightweight version of Artifact
+ */
+export type Attachment = {
+  id: string;
+  mimeType: string;
+  size: number;
+  url: string;
+}
