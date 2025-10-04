@@ -116,7 +116,7 @@ export default function SearchDataTable(props) {
                           if (record.artifacts.length > 0) {
                             Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0].id}.mhtml`);
                           } else {
-                            createTab('https://bakerstreet.llc/oops-thats-not-implemented/');
+                            createTab('https://github.com/yooper/your-rapport/issues/16');
                             debug('Mhtml file not available for download when auto scroll capture is run.');
                           }
                         }} />

@@ -11,10 +11,10 @@ import { Artifact } from '../models/schemas/Artifact';
  * Capture the tab and persist it into local storage
  * @param tab
  * @param message
- * @param deepCapture
+ * @param deepSave
  * @returns {Promise<void>}
  */
-export async function capture(tab, message = {}, deepCapture = false) {
+export async function capture(tab, message = {}, deepSave = false) {
 
   ExtensionPin.setDefaultNotSaved(tab);
   let configuration = await Configuration.getConfiguration();
@@ -23,21 +23,18 @@ export async function capture(tab, message = {}, deepCapture = false) {
     configuration?.screenShotCount ?? 0;
 
   // normalize text
-  const text =
-    tab.title.toLowerCase() +
-    ' ' +
-    splitCamelCase(message?.visibleText ?? '').toLowerCase();
+  const text = tab.title.toLowerCase() + ' ' + getText(message, deepSave)
 
   try{
     // search the saved record for keywords
     const selectors = await db.selector.toArray()
     const screenShot = await chrome.tabs.captureVisibleTab();
-    const record = await Rapport.createFromTab(tab, text, screenShot, selectors);
+    const record = await Rapport.createFromTab(tab, text , screenShot, selectors);
     record.sequenceId = ('sequence' in message) ? message.sequence : 0;
     record.bulkAutomationUuid = ('automation' in message && message.automation) ? message.automation.uuid : null;
 
     // save the mhtml artifact.
-    if(deepCapture){
+    if(deepSave){
       const blob = await chrome.pageCapture.saveAsMHTML({tabId: tab.id});
       const artifact = await Artifact.create(blob, record.uuid, record.url, 'multipart/related');
       db.artifact.add(artifact)
@@ -48,8 +45,6 @@ export async function capture(tab, message = {}, deepCapture = false) {
     // update the configuration last saved on metadata
     configuration[UPDATED_ON] = Date.now();
     configuration.screenShotCount++;
-
-
 
     await Configuration.setConfiguration(configuration)
     ExtensionPin.setDefaultSaved(tab);
@@ -83,4 +78,20 @@ async function calculateSha256(blob){
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Return the text to be used in the search
+ * @param message
+ * @param deepSave
+ * @returns {string}
+ */
+function getText(message, deepSave){
+  if(deepSave){
+    return message.text.toLowerCase()
+  }
+  else
+  {
+     return splitCamelCase(message?.visibleText ?? '').toLowerCase();
+  }
 }

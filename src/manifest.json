@@ -52,12 +52,6 @@
       },
       "description": "Starts and stops auto scroll collection process."
     },
-    "initScanPage": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+F"
-      },
-      "description": "Scan the current web page for known selectors."
-    },
     "reload": {
       "suggested_key": {
         "default": "Ctrl+Shift+D"
