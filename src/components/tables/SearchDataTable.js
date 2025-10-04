@@ -2,7 +2,7 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import MUIDataTable from 'mui-datatables';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
-import { hideLoader, showLoader } from '../../utilities/loaders';
+import { createTab, hideLoader, showLoader } from '../../utilities/loaders';
 import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
 import SearchTableOptionMenu from '../menus/SearchTableOptionMenu';
@@ -116,7 +116,8 @@ export default function SearchDataTable(props) {
                           if (record.artifacts.length > 0) {
                             Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0].id}.mhtml`);
                           } else {
-                            alert('Mhtml file not available for download when auto scroll capture is run.');
+                            createTab('https://bakerstreet.llc/oops-thats-not-implemented/');
+                            debug('Mhtml file not available for download when auto scroll capture is run.');
                           }
                         }} />
                       </Tooltip>
@@ -398,7 +399,7 @@ export default function SearchDataTable(props) {
     const deleteArtifacts = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
       deleteRecords.push(rows[idx])
-      deleteArtifacts.push(...rows[idx].artifacts);
+      deleteArtifacts.push(...rows[idx].artifacts.map(a => a.id));
     }
 
     await db.artifact.bulkDelete(deleteArtifacts);

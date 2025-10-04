@@ -7,6 +7,7 @@ import { db } from '../models/db/dexieDb';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
 import { addRecord } from '../models/db/local';
+import { selectCorrectLink } from '../utilities/transformers';
 
 /**
  * Add the selectors as menu items
@@ -68,9 +69,14 @@ export async function initializeContextMenus() {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
           const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
           const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
+          const urlLink = selectCorrectLink({
+            linkUrl: info.linkUrl,
+            frameUrl: info.frameUrl,
+            pageUrl: info.pageUrl,
+          });
           await addRecord(BULK_AUTOMATION, UUID, {
             uuid: crypto.randomUUID(),
-            url: info.linkUrl,
+            url: urlLink,
             createdOn: Date.now(),
             completedOn: null,
             ranOn: null,
