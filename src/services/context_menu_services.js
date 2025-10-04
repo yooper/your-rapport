@@ -6,6 +6,7 @@ import { captureSingleScreenShot } from './collection_services';
 import { db } from '../models/db/dexieDb';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
+import { addRecord } from '../models/db/local';
 
 /**
  * Add the selectors as menu items
@@ -67,7 +68,8 @@ export async function initializeContextMenus() {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
           const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
           const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
-          await db.bulkAutomation.add(new BulkAutomationUrl({
+          await addRecord(BULK_AUTOMATION, UUID, {
+            uuid: crypto.randomUUID(),
             url: info.linkUrl,
             createdOn: Date.now(),
             completedOn: null,
@@ -76,8 +78,7 @@ export async function initializeContextMenus() {
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
             screenShotsCollected: 0
-          })
-          )
+          });
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;

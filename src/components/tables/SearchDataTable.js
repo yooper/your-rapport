@@ -19,11 +19,11 @@ import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
 import { db } from '../../models/db/dexieDb';
 import VerticalGenericTableDialog from '../dialogs/VerticalGenericTableDialog';
-import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
-import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 import { Artifact } from '../../models/schemas/Artifact';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
 import TagIcon from '@mui/icons-material/Tag';
+import LanguageIcon from '@mui/icons-material/Language';
+
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -80,6 +80,8 @@ export default function SearchDataTable(props) {
           const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
           const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
+          const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(record.artifacts?.length > 0)
+
           return (
             <>
               <img
@@ -92,7 +94,7 @@ export default function SearchDataTable(props) {
                 }}
               />
               <div>
-                <Box sx={{ p: 1 }} >
+                <Box>
                     <Badge badgeContent={0} color={"primary"}>
                         <VerticalGenericTableDialog
                             selectedRecord={record}
@@ -103,25 +105,23 @@ export default function SearchDataTable(props) {
                         />
                     </Badge>
                     <Badge>
-                      <Tooltip title={'Download the mhtml file, if available.'}>
-                      <IntegrationInstructionsIcon onClick={() => {
-                        if(record.artifacts.length > 0){
-                          Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0].id}.mhtml`);
-                        }
-                        else{
-                          alert('Mhtml file not available for download when auto scroll capture is run.');
-                        }
-                      }}/>
+                      <Tooltip title={'Add or modify tags'}>
+                        <TagIcon onClick={() => { setOpenAddTagDialog(true); }}/>
                       </Tooltip>
                     </Badge>
+                  { hasMhtmlArtifact ?
                     <Badge>
-                      <TagIcon onClick={() => { setOpenAddTagDialog(true); }}/>
-                    </Badge>
-                    <Badge>
-                        <JsonAttributeViewerDialog
-                            record={record}
-                        />
-                    </Badge>
+                      <Tooltip title={'Download the mhtml file for this Rapport.'}>
+                        <LanguageIcon onClick={() => {
+                          if (record.artifacts.length > 0) {
+                            Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0].id}.mhtml`);
+                          } else {
+                            alert('Mhtml file not available for download when auto scroll capture is run.');
+                          }
+                        }} />
+                      </Tooltip>
+                    </Badge> : <span></span>
+                  }
                 </Box>
               </div>
               <PreviewImageDialog

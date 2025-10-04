@@ -48,12 +48,6 @@ export default function VerticalGenericTableDialog({
     const result = anyProperty(selectedRecord, approvedFields);
   }, [selectedRecord, approvedFields]);
 
-  async function fetchData(): Promise<void> {
-    setIsLoading(true);
-    // showLoader(); // You'd need to define or import this
-    // hideLoader();
-    setIsLoading(false);
-  }
 
   const handleClose = (): void => {
     setOpen(false);
@@ -123,7 +117,7 @@ export default function VerticalGenericTableDialog({
   return (
     <>
       <Tooltip title={title}>
-        <Icon onClick={handleClick} sx={{ pr: 1.0, color }} />
+        <Icon onClick={handleClick} sx={{ color }} />
       </Tooltip>
       <Dialog
         open={open}
