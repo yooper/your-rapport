@@ -1,10 +1,10 @@
-import React, { useState, Fragment, useEffect } from 'react';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import React, { useState, useEffect } from 'react';
 import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
   Table,
   TableBody,
@@ -13,7 +13,10 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  SvgIconTypeMap
 } from '@mui/material';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
+
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -22,74 +25,68 @@ import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import RoomIcon from '@mui/icons-material/Room';
 import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import { anyProperty } from '../../utilities/transformers';
 
-import { anyProperty, hideLoader, showLoader } from '../../common/utilities';
+interface VerticalGenericTableDialogProps {
+  selectedRecord: Record<string, any>;
+  title: string;
+  iconType?: string;
+  approvedFields: string[];
+}
 
-export default function VerticalGenericTableDialog(props) {
-  const { selectedRecord, title, iconType, approvedFields } = props;
-  const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [color, setColor] = useState('black');
+export default function VerticalGenericTableDialog({
+  selectedRecord,
+  title,
+  iconType,
+  approvedFields,
+}: VerticalGenericTableDialogProps) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [color, setColor] = useState<string>('primary');
 
   useEffect(() => {
     const result = anyProperty(selectedRecord, approvedFields);
-  }, [selectedRecord, approvedFields]); // Dependencies: React will re-run this when obj or keys change.
+  }, [selectedRecord, approvedFields]);
 
-  /**
-   * Only fetch data if a URL is specified
-   * @returns {Promise<void>}
-   */
-  async function fetchData() {
-    setIsLoading(true);
-    showLoader();
 
-    hideLoader();
-    setIsLoading(false);
-  }
-
-  const handleClose = () => {
+  const handleClose = (): void => {
     setOpen(false);
   };
 
-  const handleClick = async () => {
+  const handleClick = async (): Promise<void> => {
     setOpen(true);
+    // You could fetch here if needed
+    // await fetchData();
   };
 
-  /**
-   * Only display the approved fields
-   * @param obj
-   * @param approvedFields
-   * @returns {{}|*}
-   */
-  function removeArrayAndObjectProperties(obj, approvedFields = []) {
+  function removeArrayAndObjectProperties(
+    obj: Record<string, any>,
+    approvedFields: string[] = []
+  ): Record<string, any> {
     if (approvedFields.length > 0) {
-      const orderedObj = {};
-      // Iterate through each property in the approved properties array
+      const orderedObj: Record<string, any> = {};
       approvedFields.forEach((fieldName) => {
         if (fieldName in obj) {
-          // Add the property to the ordered object if it exists in the original object
           orderedObj[fieldName] = obj[fieldName];
         }
       });
       return orderedObj;
     }
-    // else
-    Object.keys(obj).forEach((key) => {
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        // Check if the property is an array or an object
-        if (Array.isArray(obj[key]) || !(obj[key] instanceof Date)) {
-          delete obj[key];
-        }
+
+    const cloned = { ...obj };
+    Object.keys(cloned).forEach((key) => {
+      if (
+        typeof cloned[key] === 'object' &&
+        cloned[key] !== null &&
+        (Array.isArray(cloned[key]) || !(cloned[key] instanceof Date))
+      ) {
+        delete cloned[key];
       }
     });
-    return obj;
+    return cloned;
   }
 
-  /**
-   * Function to determine which icon to use based on iconType or other props
-   * TODO move into a separate function
-   */
-  const getIcon = () => {
+  const getIcon = (): OverridableComponent<SvgIconTypeMap<{}, "svg">> => {
     switch (iconType) {
       case 'HelpOutlineIcon':
         return HelpOutlineIcon;
@@ -100,7 +97,7 @@ export default function VerticalGenericTableDialog(props) {
       case 'RoomIcon':
         return RoomIcon;
       case 'RoomOutlinedIcon':
-        return 'RoomOutlinedIcon';
+        return RoomOutlinedIcon;
       case 'CalendarMonthOutlinedIcon':
         return CalendarMonthOutlinedIcon;
       case 'InfoOutlinedIcon':
@@ -111,27 +108,23 @@ export default function VerticalGenericTableDialog(props) {
     }
   };
 
-  /**
-   * Adds spaces between the pascal case field name's
-   * @param input
-   * @returns {*}
-   */
-  const pascalCaseToSpaces = (input) => {
+  const pascalCaseToSpaces = (input: string): string => {
     return input.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^([A-Z])/, '$1');
   };
 
-  let Icon = getIcon(); // Determine the icon component
+  const Icon = getIcon();
+
   return (
     <>
       <Tooltip title={title}>
-        <Icon onClick={handleClick} sx={{ pr: 1.0, color: color }} />
+        <Icon onClick={handleClick} sx={{ color }} />
       </Tooltip>
       <Dialog
         open={open}
         onClose={handleClose}
         aria-labelledby="form-dialog-title"
         fullWidth={false}
-        maxWidth={'lg'}
+        maxWidth="lg"
       >
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
@@ -158,7 +151,7 @@ export default function VerticalGenericTableDialog(props) {
                         <TableCell component="th" scope="row">
                           {pascalCaseToSpaces(key)}
                         </TableCell>
-                        <TableCell>{value}</TableCell>
+                        <TableCell>{String(value)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -176,3 +169,5 @@ export default function VerticalGenericTableDialog(props) {
     </>
   );
 }
+
+

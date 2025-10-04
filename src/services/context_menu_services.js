@@ -6,6 +6,8 @@ import { captureSingleScreenShot } from './collection_services';
 import { db } from '../models/db/dexieDb';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
+import { addRecord } from '../models/db/local';
+import { selectCorrectLink } from '../utilities/transformers';
 
 /**
  * Add the selectors as menu items
@@ -54,7 +56,7 @@ export async function initializeContextMenus() {
     switch (info.menuItemId) {
       case 'singleCollect':
         ExtensionPin.setTemporaryPin('SAVG')
-        captureSingleScreenShot().then()
+        captureSingleScreenShot(true).then()
         break;
       case 'autocollectPage':
         captureSingleScreenShot().then(() => {
@@ -67,8 +69,14 @@ export async function initializeContextMenus() {
           const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
           const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
           const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
-          await db.bulkAutomation.add(new BulkAutomationUrl({
-            url: info.linkUrl,
+          const urlLink = selectCorrectLink({
+            linkUrl: info.linkUrl,
+            frameUrl: info.frameUrl,
+            pageUrl: info.pageUrl,
+          });
+          await addRecord(BULK_AUTOMATION, UUID, {
+            uuid: crypto.randomUUID(),
+            url: urlLink,
             createdOn: Date.now(),
             completedOn: null,
             ranOn: null,
@@ -76,8 +84,7 @@ export async function initializeContextMenus() {
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
             screenShotsCollected: 0
-          })
-          )
+          });
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;

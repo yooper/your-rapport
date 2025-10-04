@@ -175,3 +175,99 @@ export function findAllMatches(text: string, selectors: Array<Selector>, limit: 
   }
   return matches;
 }
+
+export function anyProperty<T extends Record<string, any>>(obj: T, keys: string[]): boolean {
+  return keys.some(key => Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && obj[key] !== "");
+}
+
+
+interface LinkContext {
+  linkUrl?: string;
+  frameUrl?: string;
+  pageUrl?: string;
+}
+
+/**
+ * Returns the most correct, usable link for a given click context.
+ * Handles subdomains, redirects, and marketing/tracking URLs.
+ */
+export function selectCorrectLink({
+  linkUrl,
+  frameUrl,
+  pageUrl,
+}: LinkContext): string | null {
+  const link = linkUrl?.trim() || "";
+  const frame = frameUrl?.trim() || "";
+  const page = pageUrl?.trim() || "";
+
+  if (!link && !frame) return null;
+
+  const BLOCKLIST = [
+    "taboola.com",
+    "doubleclick.net",
+    "facebook.com",
+    "t.co",
+    "outbrain.com",
+    "googlesyndication.com",
+    "googleadservices.com",
+    "clickserve",
+    "bit.ly",
+    "lnkd.in",
+  ];
+
+  /** Extracts a normalized root domain (handles subdomains) */
+  const getDomain = (url: string): string | null => {
+    try {
+      const { hostname } = new URL(url);
+      const parts = hostname.split(".");
+      return parts.slice(-2).join("."); // simple heuristic: example.com, not subdomain.example.com
+    } catch {
+      return null;
+    }
+  };
+
+  /** Checks if two URLs belong to the same root domain */
+  const isSameSite = (a: string, b: string): boolean => {
+    const da = getDomain(a);
+    const db = getDomain(b);
+    return da && db && da === db;
+  };
+
+  /** True if a URL points to a homepage/root */
+  const isRoot = (url: string): boolean => {
+    try {
+      const u = new URL(url);
+      return u.pathname === "/" && !u.search && !u.hash;
+    } catch {
+      return false;
+    }
+  };
+
+  const pathDepth = (url: string): number => {
+    try {
+      return new URL(url).pathname.split("/").filter(Boolean).length;
+    } catch {
+      return 0;
+    }
+  };
+
+  const isBlocked = (url: string): boolean => {
+    return BLOCKLIST.some((b) => url.includes(b));
+  };
+
+  if (link && !isRoot(link) && !isBlocked(link)) {
+    if (frame && isSameSite(link, frame)) {
+      // If both are on the same site, prefer the deeper one
+      return pathDepth(link) >= pathDepth(frame) ? link : frame;
+    }
+    return link;
+  }
+
+  if (isBlocked(link) && frame && !isRoot(frame)) {
+    return frame;
+  }
+
+  if (frame && !isRoot(frame)) return frame;
+
+  return link || frame;
+}

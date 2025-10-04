@@ -96,7 +96,7 @@ chrome.commands.onCommand.addListener( (command) => {
   switch (command) {
     case 'initStartCapture':
         (async () => {
-          await captureSingleScreenShot();
+          await captureSingleScreenShot(true);
         })();
         return true;
     case 'initScanPage':
@@ -130,7 +130,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if(message.cmd === 'initStartCapture'){
     (async () => {
-      await captureSingleScreenShot();
+      await captureSingleScreenShot(true);
     })();
     return false;
   }
@@ -164,7 +164,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ completed: true });
         break;
       case 'popupSingleCollect':
-        await captureSingleScreenShot();
+        await captureSingleScreenShot(true);
         sendResponse({ completed: true });
         break;
       case AUTO_COLLECT_STARTING:
@@ -204,7 +204,7 @@ chrome.runtime.onMessageExternal.addListener(function (
         (async () => {
           await createTab(message.url);
           await sleep(3000);
-          await captureSingleScreenShot();
+          await captureSingleScreenShot(true);
         })();
         return false;
       case 'autoscrollCollect':

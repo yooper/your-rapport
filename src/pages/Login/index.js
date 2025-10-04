@@ -33,7 +33,7 @@ function Copyright(props) {
       {...props}
     >
       {'Copyright Bakerstreet Enterprises © '}
-      <Link color="inherit" href="https://osintliar.com/">
+      <Link color="inherit" href="https://bakerstreet.llc/">
         Your Rapport
       </Link>{' '}
       {new Date().getFullYear()}
