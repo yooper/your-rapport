@@ -31,12 +31,21 @@ export function objectToJsonFile(obj: object, fileName: string): File {
 }
 
 // Utility: SHA-256 hashing
+
 export async function sha256(message: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(message);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function sha256FromBlob(blob: Blob): Promise<string> {
+  const arrayBuffer = await blob.arrayBuffer(); // Convert Blob to ArrayBuffer
+  const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer); // Hash the ArrayBuffer
+  const hashArray = Array.from(new Uint8Array(hashBuffer)); // Convert buffer to byte array
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); // Convert bytes to hex string
+  return hashHex;
 }
 
 // Utility: Download JSON data as file
@@ -270,4 +279,28 @@ export function selectCorrectLink({
   if (frame && !isRoot(frame)) return frame;
 
   return link || frame;
+}
+
+
+/**
+ * Converts a Blob (e.g., image file) into a Base64-encoded data URL.
+ * @param blob - The Blob object to convert
+ * @returns A Promise that resolves to a Base64-encoded image string (data URL)
+ */
+export function blobToBase64Image(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        resolve(result); // This will be the base64 image data URL
+      } else {
+        reject(new Error('Failed to convert blob to base64 string.'));
+      }
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }

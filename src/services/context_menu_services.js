@@ -1,13 +1,15 @@
 import { getSelectorTypeMap } from '../utilities/loaders';
 import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
-import { ACTIVATE_CAPTURE, BULK_AUTOMATION, UUID } from './constants';
+import { ACTIVATE_CAPTURE, BULK_AUTOMATION, RAPPORT, UPDATED_ON, UUID } from './constants';
 import { captureSingleScreenShot } from './collection_services';
 import { db } from '../models/db/dexieDb';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
 import { addRecord } from '../models/db/local';
 import { selectCorrectLink } from '../utilities/transformers';
+import { Rapport } from '../models/schemas/Rapport';
+import { fetchBlob } from './image_loading_services';
 
 /**
  * Add the selectors as menu items
@@ -15,6 +17,15 @@ import { selectCorrectLink } from '../utilities/transformers';
  */
 export async function initializeContextMenus() {
   await chrome.contextMenus.removeAll();
+
+  // add download image, video, audio support
+  chrome.contextMenus.create({
+    id: 'collectImage',
+    title: 'Collect Image',
+    contexts: ['image'],
+  });
+
+  // TODO: support audio and video collection
 
   // add capture context menu to the UI
   chrome.contextMenus.create({
@@ -33,8 +44,8 @@ export async function initializeContextMenus() {
   // Add right click for capturing these other types of contexts
   chrome.contextMenus.create({
     id: 'singleCollect',
-    title: 'Single Collect',
-    contexts: ['image','video','audio'],
+    title: 'Deep Save',
+    contexts: ['page','image','video','audio'],
   });
 
   // add a seperator
@@ -43,6 +54,7 @@ export async function initializeContextMenus() {
     id: 'separator_1',
     contexts: ['selection'],
   });
+
   for (const [key, label] of Object.entries(getSelectorTypeMap())) {
     chrome.contextMenus.create({
       title: `Capture text as a ${label}`,
@@ -54,6 +66,24 @@ export async function initializeContextMenus() {
   // add event listeners
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     switch (info.menuItemId) {
+      case 'collectImage':
+        (async() => {
+          ExtensionPin.setTemporaryPin('SAVG')
+          const downloadedBlob = await fetchBlob(info.srcUrl)
+          const rapport = await Rapport.createFromBlob(downloadedBlob, tab.url, tab.title, [])
+          rapport.sequenceId = 0;
+          rapport.bulkAutomationUuid = null;
+          await addRecord(RAPPORT, UUID, rapport);
+          // update the configuration last saved on metadata
+          let configuration = await Configuration.getConfiguration();
+          // get/set the record count
+          configuration.screenShotCount = configuration?.screenShotCount ?? 0;
+          configuration[UPDATED_ON] = Date.now();
+          configuration.screenShotCount++;
+          await Configuration.setConfiguration(configuration)
+          ExtensionPin.setDefaultSaved(tab);
+        })()
+        break;
       case 'singleCollect':
         ExtensionPin.setTemporaryPin('SAVG')
         captureSingleScreenShot(true).then()

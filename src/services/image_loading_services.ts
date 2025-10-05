@@ -1,6 +1,8 @@
 /**
  * Function that loads all images in the browser to avoid lazy loading.
  */
+import { debug } from './logger_services';
+
 export async function waitForAllImagesToLoad(): Promise<void> {
   const location = window.location;
 
@@ -51,4 +53,30 @@ function fetchCraigsListImages(): void {
       testImage.src = largeImageSrc;
     }
   });
+}
+
+export async function fetchBlob( url: string) : Promise<Blob|null> {
+    if(url.startsWith('blob:http')){
+      debug(`Bad media URL ${url}`);
+      //Badge.setBgColorAndText('red', 'X')
+      //setTimeout(() => { Badge.setDefault() }, 1500)
+      return null;
+    }
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        debug(`Error when getting data ${await response.text()}`)
+        //Badge.setBgColorAndText('red', 'X')
+        return null;
+      }
+
+      //collect the blob
+      const blob = await response.blob()
+      return blob;
+    }
+    catch(e){
+      debug(String(e), {url})
+    }
+    return null;
 }
