@@ -70,7 +70,7 @@ export async function initializeContextMenus() {
         (async() => {
           ExtensionPin.setTemporaryPin('SAVG')
           const downloadedBlob = await fetchBlob(info.srcUrl)
-          const rapport = await Rapport.createFromBlob(downloadedBlob, tab.url, tab.title, [])
+          const rapport = await Rapport.createFromBlob(downloadedBlob, info.srcUrl, tab.title, [])
           rapport.sequenceId = 0;
           rapport.bulkAutomationUuid = null;
           await addRecord(RAPPORT, UUID, rapport);
