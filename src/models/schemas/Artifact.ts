@@ -5,6 +5,7 @@
 import { Attachment, IArtifact } from '../../types';
 import { db } from '../db/dexieDb';
 import { debug } from '../../services/logger_services';
+import { sha256FromBlob } from '../../utilities/transformers';
 
 export class Artifact implements IArtifact {
   createdOn: Date = new Date();
@@ -31,16 +32,9 @@ export class Artifact implements IArtifact {
   }
 
 
-  static async calculateSha256(blob: Blob): Promise<string> {
-    const buffer = await blob.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
   static async create(blob: Blob, rapportUuid: string, url: string, mimeType: string = ''): Promise<IArtifact> {
     // Compute a hash of the content for deduplication / integrity
-    const hash = await Artifact.calculateSha256(blob);
+    const hash = await sha256FromBlob(blob);
     const record: IArtifact = {
       id: crypto.randomUUID(),
       rapportUuid,

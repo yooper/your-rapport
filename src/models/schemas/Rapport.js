@@ -1,4 +1,4 @@
-import { findAllMatches, sha256 } from '../../utilities/transformers';
+import { blobToBase64Image, findAllMatches, sha256, sha256FromBlob } from '../../utilities/transformers';
 
 export class Rapport {
   constructor({
@@ -72,4 +72,44 @@ export class Rapport {
       note: null,
     });
   }
+
+  /**
+   * A factory method for adding content
+   * TODO: support more than images
+   * TODO: support text extraction
+   * @param blob
+   * @param url
+   * @param title
+   * @param selectors
+   * @returns {Promise<Rapport>}
+   */
+  static async createFromBlob(blob, url, title, selectors) {
+    const uuid = crypto.randomUUID();
+    const createdOn = Date.now();
+    const hash = await sha256FromBlob(blob);
+    const domain = new URL(url).hostname;
+    const text = '';
+    const base64 = await blobToBase64Image(blob);
+    return new Rapport({
+      uuid,
+      title: title,
+      url: url,
+      domain,
+      text,
+      screenshot: base64,
+      createdOn,
+      updatedOn: createdOn,
+      createdOnLocalTime: new Date().toLocaleString(),
+      hash,
+      createdBy: 'TODO-CREATE', // Requires auth system
+      updatedBy: 'TODO-UPDATE', // Requires auth system
+      length: base64.length,
+      attributes: {},
+      selectors: [],
+      tags: [], // Placeholder for future tagging
+      caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387',
+      note: null,
+    });
+  }
+
 }

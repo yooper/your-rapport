@@ -64,14 +64,14 @@ function LargeButtonGrid() {
       },
     },
     {
-      title: 'Single Collect',
-      toolTipTitle: `Collect a single screenshot. Press Crtl+Shift+S to take a single screenshot.`,
+      title: 'Deep Save',
+      toolTipTitle: `Collect a single screen shot and all the content of the web page. Press Crtl+Shift+S to take a deep save..`,
       onClick: () => {
         (async () => {
           await chrome.runtime.sendMessage({cmd: 'popupSingleCollect' });
           processNotification({
-            title: 'Single Collected',
-            message: `A single screenshot has been collected. You can press Crtl+Shift+S to take a single screenshot.`,
+            title: 'Deep Save Collected',
+            message: `A deep save has been collected. You can press Crtl+Shift+S to take a deep save.`,
             type: 'success',
           });
         })();
