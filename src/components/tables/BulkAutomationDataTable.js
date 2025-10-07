@@ -31,7 +31,9 @@ export default function BulkAutomationTable(props) {
         setIsLoading(true);
         const start = performance.now()
         const data = await getLocalItem(BULK_AUTOMATION)
-        setRows(data)
+        if(data.length !== rows.length){
+          setRows(data)
+        }
         const elapsed = performance.now() - start;
         debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
         hideLoader();
@@ -44,14 +46,7 @@ export default function BulkAutomationTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-
-      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
-      const pageCachedOn = localStorage.getItem(UPDATED_ON) ?? null;
-
-      if(updatedOn != pageCachedOn){
-        await fetchData(); // check for new data every 3 seconds.
-        localStorage.setItem(UPDATED_ON, updatedOn);
-      }
+        //await fetchData(); // check for new data every 3 seconds.
     }, 3000); // wait 3 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);  
@@ -85,7 +80,9 @@ export default function BulkAutomationTable(props) {
       showLoader();
       setIsLoading(true);
       const records = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      setRows(records);
+      if(records.length !== rows.length){
+        setRows(records);
+      }
       setIsLoading(false);
       hideLoader();
     }
@@ -226,7 +223,6 @@ export default function BulkAutomationTable(props) {
             }
           >
             <IconButton onClick={async () => {
-              await Configuration.setConfigurationValue('automationBulkCollectionModel', false);
               record.ranOn = null;
               record.completedOn = null;
               const automationQueue = await updateRecord(BULK_AUTOMATION, UUID, record) ?? [];
@@ -235,9 +231,11 @@ export default function BulkAutomationTable(props) {
               automation.active = true;
               automation.ranOn = Date.now();
               automation.description = 'User Restarted Automation'
-              await setLocalItem(BULK_AUTOMATION, automationQueue);
               processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
-              await createTab(automation.url);
+              // only the active automation is run, bulk automation must be off
+              await Configuration.setConfigurationValue('automationBulkCollectionModel', false);
+              await setLocalItem(BULK_AUTOMATION, automationQueue);
+              port.postMessage({cmd: PROCESS_QUEUE_AUTOMATION_URLS})
             }}>
               <DirectionsRunIcon />
             </IconButton>

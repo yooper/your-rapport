@@ -215,7 +215,6 @@ export function selectCorrectLink({
     "taboola.com",
     "doubleclick.net",
     "facebook.com",
-    "t.co",
     "outbrain.com",
     "googlesyndication.com",
     "googleadservices.com",
@@ -265,19 +264,14 @@ export function selectCorrectLink({
   };
 
   if (link && !isRoot(link) && !isBlocked(link)) {
-    if (frame && isSameSite(link, frame)) {
-      // If both are on the same site, prefer the deeper one
-      return pathDepth(link) >= pathDepth(frame) ? link : frame;
-    }
     return link;
   }
-
-  if (isBlocked(link) && frame && !isRoot(frame)) {
+  else if (isBlocked(link) && frame && !isRoot(frame)) {
     return frame;
   }
-
-  if (frame && !isRoot(frame)) return frame;
-
+  else if (frame && !isRoot(frame)){
+    return frame
+  }
   return link || frame;
 }
 

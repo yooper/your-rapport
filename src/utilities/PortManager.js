@@ -11,6 +11,7 @@ import { createTab } from './loaders';
 import { debug } from '../services/logger_services';
 import { captureSingleScreenShot } from '../services/collection_services';
 import { getActiveAutomation, setActiveAutomation } from '../pages/Background';
+import { Configuration } from '../models/schemas/Configuration';
 
 export class PortManager {
   constructor() {
