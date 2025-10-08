@@ -141,3 +141,22 @@ export type Attachment = {
   size: number;
   url: string;
 }
+
+/**
+ * Api Response from the api.html endpoint page
+ */
+interface APIResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+
+type Props = {
+  /** auto-run on mount */
+  autoRun?: boolean;
+  /** spaces for JSON.stringify formatting */
+  pretty?: number;
+  /** pass-through className for styling */
+  className?: string;
+};
+

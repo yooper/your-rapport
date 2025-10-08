@@ -13,7 +13,6 @@ import { debug } from '../../../services/logger_services';
 const STATE_STOPPED = 'stopped';
 const STATE_INITIALIZED = 'initialized';
 const STATE_ACTIVE = 'active';
-const STATE_ERROR = 'error';
 const MAX_SCREENSHOTS = 100;
 
 let capturedHeight = 0;
