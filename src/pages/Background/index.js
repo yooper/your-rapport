@@ -19,14 +19,12 @@ import {
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB, ENQUEUE_BULK_AUTOMATION_URL, PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
-  START_CAPTURE,
   UUID,
 } from '../../services/constants';
 import { BulkAutomationUrl } from '../../models/schemas/BulkAutomationUrl';
-import { getTabInfo, initializePortConnection, portManager, processReceivedMessage } from '../../utilities/PortManager';
+import { initializePortConnection, processReceivedMessage } from '../../utilities/PortManager';
 import { debug } from '../../services/logger_services';
 import { captureSingleScreenShot } from '../../services/collection_services';
-import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
 
 /**
@@ -77,6 +75,7 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
   updateRecord(BULK_AUTOMATION, UUID, activeAutomation).then(async() => {
     // Determines if it was a single automation request or multiple
     const bulkCollect = await Configuration.getConfigurationValue('automationBulkCollectionModel', true);
+    debug(`bulk collect is ${bulkCollect}`)
     if(!bulkCollect){
       debug(`Single automation request failed. See record for details.`)
       return; // single automation request

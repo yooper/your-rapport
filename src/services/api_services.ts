@@ -1,6 +1,10 @@
 import { APIResponse } from '../types';
 import { db } from '../models/db/dexieDb';
 
+/**
+ * This is a proof of concept for interacting with the extensions data and
+ * allowing for automated test cases to be built more readily
+ */
 export async function processApiRequest(): Promise<APIResponse> {
   const params = new URLSearchParams(window.location.search);
   const tableName = params.get('table');

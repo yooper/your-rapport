@@ -229,7 +229,7 @@ export default function BulkAutomationTable(props) {
               automationQueue.forEach(a => a.active = false);
               const automation = automationQueue.find(a => a.uuid === record.uuid);
               automation.active = true;
-              automation.ranOn = Date.now();
+              automation.ranOn = null
               automation.description = 'User Restarted Automation'
               processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
               // only the active automation is run, bulk automation must be off
