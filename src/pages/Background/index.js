@@ -162,7 +162,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         //findAllMatches([message.record], await db.selector.toArray());
         sendResponse({ completed: true });
         break;
-      case 'popupSingleCollect':
+      case 'deepSave':
         await captureSingleScreenShot(true);
         sendResponse({ completed: true });
         break;
@@ -200,6 +200,7 @@ chrome.runtime.onMessageExternal.addListener(function (
   try{
     switch (message.cmd) {
       case 'singleCollect':
+      case 'deepSave':
         (async () => {
           await createTab(message.url);
           await sleep(3000);

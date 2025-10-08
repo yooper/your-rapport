@@ -11,7 +11,7 @@ import {
   ACTIVATE_AUTOMATION, ACTIVATE_CAPTURE,
   AUTOMATION_RUNNING,
   BULK_AUTOMATION, PAGE_INITIALIZED,
-  RAPPORT, START_CAPTURE, STOP_SCRIPT,
+  RAPPORT
 } from '../../services/constants';
 import { getVisibleText } from './modules/visibleElements';
 import { debug } from '../../services/logger_services';

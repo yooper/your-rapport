@@ -43,7 +43,7 @@ export async function initializeContextMenus() {
 
   // Add right click for capturing these other types of contexts
   chrome.contextMenus.create({
-    id: 'singleCollect',
+    id: 'deepSave',
     title: 'Deep Save',
     contexts: ['page','image','video','audio'],
   });
@@ -84,7 +84,7 @@ export async function initializeContextMenus() {
           ExtensionPin.setDefaultSaved(tab);
         })()
         break;
-      case 'singleCollect':
+      case 'deepSave':
         ExtensionPin.setTemporaryPin('SAVG')
         captureSingleScreenShot(true).then()
         break;
