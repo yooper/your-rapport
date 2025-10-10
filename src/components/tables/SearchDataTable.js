@@ -467,6 +467,7 @@ export default function SearchDataTable(props) {
               displayData={displayData}
               columns={columns}
               setSelectedRows={setSelectedRows}
+              rows={rows}
               onRowsDelete={rowsDelete}
           />
       ),

@@ -2,6 +2,8 @@
  * Function that loads all images in the browser to avoid lazy loading.
  */
 import { debug } from './logger_services';
+import { IRapport } from '../types';
+import { DOMElement } from 'react';
 
 export async function waitForAllImagesToLoad(): Promise<void> {
   const location = window.location;
@@ -79,4 +81,46 @@ export async function fetchBlob( url: string) : Promise<Blob|null> {
       debug(String(e), {url})
     }
     return null;
+}
+
+
+/**
+ * Concatenate several images together
+ * @param rapports
+ */
+export async function mergeImagesVertically(rapports: Array<IRapport>) : Promise<string>
+{
+  const images = []
+  let totalHeight = 0;
+  let maxWidth = 0;
+
+  // Load all images and gather dimensions, that have a screenshot
+  for (const rapport of rapports.filter(r => r.screenshot)) {
+    const img = new Image();
+    img.src = rapport.screenshot;
+    await new Promise(resolve => {
+      img.onload = resolve;
+    });
+    images.push(img);
+    totalHeight += img.height;
+    maxWidth = Math.max(maxWidth, img.width);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = maxWidth;
+  canvas.height = totalHeight;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Failed to get 2D context from canvas.');
+  }
+
+  let currentY = 0;
+  for (const img of images) {
+    ctx.drawImage(img, 0, currentY);
+    currentY += img.height;
+  }
+
+  // Return the merged image as a data URL
+  return canvas.toDataURL('image/png');
 }
