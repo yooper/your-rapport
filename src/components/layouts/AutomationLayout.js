@@ -23,7 +23,7 @@ export default function AutomationLayout() {
 
   const componentMap = [
     {
-      label: 'Bulk Automation',
+      label: 'Bulk Collect Automation',
       key: BULK_AUTOMATION,
       message:
         'Insert a list of urls that will be opened in a tab and collected',

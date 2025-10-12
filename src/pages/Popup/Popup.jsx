@@ -48,6 +48,27 @@ export default function Popup() {
 function LargeButtonGrid() {
   const buttons = [
     {
+      title: 'Deep Save',
+      toolTipTitle: `Collect a single screen shot and all the content of the web page. Press Crtl+Shift+S to take a deep save..`,
+      onClick: () => {
+        (async () => {
+          await chrome.runtime.sendMessage({cmd: 'deepSave' });
+          processNotification({
+            title: 'Deep Save Collected',
+            message: `A deep save has been collected. You can press Crtl+Shift+S to take a deep save.`,
+            type: 'success',
+          });
+        })();
+        return true;
+      },
+    },
+    {
+      title: 'Dashboard',
+      toolTipTitle: `Search by free text and filters, export, and import your data from Your Rapport. Ctrl+Shift+X to open the dashboard.`,
+      onClick: async () =>
+        await chrome.tabs.create({ url: chrome.runtime.getURL('search.html') }),
+    },
+    {
       title: 'Autoscroll Collect',
       toolTipTitle: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
       onClick: () => {
@@ -64,28 +85,7 @@ function LargeButtonGrid() {
       },
     },
     {
-      title: 'Deep Save',
-      toolTipTitle: `Collect a single screen shot and all the content of the web page. Press Crtl+Shift+S to take a deep save..`,
-      onClick: () => {
-        (async () => {
-          await chrome.runtime.sendMessage({cmd: 'deepSave' });
-          processNotification({
-            title: 'Deep Save Collected',
-            message: `A deep save has been collected. You can press Crtl+Shift+S to take a deep save.`,
-            type: 'success',
-          });
-        })();
-        return true;
-      },
-    },
-    {
-      title: 'Search Dashboard',
-      toolTipTitle: `Search by free text and filters, export, and import your data from Your Rapport. Ctrl+Shift+X to open the dashboard.`,
-      onClick: async () =>
-        await chrome.tabs.create({ url: chrome.runtime.getURL('search.html') }),
-    },
-    {
-      title: 'Automation',
+      title: 'Automations',
       toolTipTitle: `Tired of doing it the hard way? Try out the automation features; like bulk collect.`,
       onClick: async () =>
         await chrome.tabs.create({
@@ -94,7 +94,7 @@ function LargeButtonGrid() {
     },
     {
       title: 'Quick Scan',
-      toolTipTitle: `Scans the open page for your pre-existing selectors. The Extension pin will show the counts. Ctrl+Shift+F will run this command.`,
+      toolTipTitle: `Scans the open page for your pre-existing selectors. The Extension pin will show the counts.`,
       onClick: async () => {
         await scanPage(await getActiveTab());
       },
@@ -108,12 +108,12 @@ function LargeButtonGrid() {
     {
       title: 'Wiki Docs',
       toolTipTitle: `The wiki docs for this product and its source code.`,
-      onClick: () => window.open('https://github.com/yooper/your-rapport/wiki/Your-Rapport-Docs'),
+      onClick: () => window.open('https://github.com/yooper/your-rapport/wiki'),
     },
     {
-      title: 'Help / Issues',
-      toolTipTitle: `File a github issue.`,
-      onClick: () => window.open('https://github.com/yooper/your-rapport/issues'),
+      title: 'Discovery Plugins',
+      toolTipTitle: `Learn about discovery plugins and how they can save your time through pre-existing automations.`,
+      onClick: () => window.open('https://github.com/yooper/your-rapport/wiki/discovery-plugins-tutorial'),
     },
   ];
 

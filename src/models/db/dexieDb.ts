@@ -23,5 +23,8 @@ const db = new Dexie('YourRapport') as Dexie & {
   db.version(2).stores({
       artifact: 'id, rapportUuid'
   })
+  db.version(3).stores({
+      apiKey: '&key'
+  })
 
 export { db };

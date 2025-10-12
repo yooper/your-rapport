@@ -298,3 +298,37 @@ export function blobToBase64Image(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
+
+// Sorts in place by the given key. Returns the same (now sorted) array.
+export function sort_by_key<T, K extends keyof T>(
+  array: T[] | null | undefined,
+  key: K
+): T[] {
+  if (!array || array.length === 0) return [];
+  if (array.length === 1) return array;
+
+  return array.sort((a, b) => {
+    const x = a[key];
+    const y = b[key];
+
+    // Handle undefined / null consistently: place them after defined values
+    const xUndef = x === undefined || x === null;
+    const yUndef = y === undefined || y === null;
+    if (xUndef && !yUndef) return 1;
+    if (!xUndef && yUndef) return -1;
+    if (xUndef && yUndef) return 0;
+
+    // Compare numbers, strings, booleans, Dates; fallback to string compare
+    const xv =
+      x instanceof Date ? x.getTime() :
+      (typeof x === 'boolean' ? Number(x) : (x as unknown as string | number));
+    const yv =
+      y instanceof Date ? y.getTime() :
+      (typeof y === 'boolean' ? Number(y) : (y as unknown as string | number));
+
+    if (xv < yv) return -1;
+    if (xv > yv) return 1;
+    return 0;
+  });
+}
+

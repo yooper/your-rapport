@@ -1,0 +1,176 @@
+import React, { useState, useEffect, Fragment } from 'react';
+import FormControl from '@mui/material/FormControl';
+import { StyledTextField } from '../../inputs/StyledTextField';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import { DeleteForever } from '@mui/icons-material';
+import Autocomplete from '@mui/material/Autocomplete';
+import InputAdornment from '@mui/material/InputAdornment';
+import HelperPopover from '../../HelperPopover';
+
+type FieldRow = {
+  keyName?: string;
+  mappedFieldName?: string;
+};
+
+interface APIKey {
+  Key: string;
+}
+
+interface RecordWithFieldMapping {
+  fieldMapping?: Record<string, string>;
+  [key: string]: any;
+}
+
+interface FieldMappingFormProps {
+  record: RecordWithFieldMapping;
+  setRecord: (updater: (prev: RecordWithFieldMapping) => RecordWithFieldMapping) => void;
+  apiKeys?: APIKey[]; // Not used here directly but left in case future implementation
+}
+
+const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ record, setRecord }) => {
+  const [rows, setRows] = useState<FieldRow[]>([]);
+  const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        // Placeholder for actual API fetch
+        setApiKeys([]); // Could be replaced with real logic later
+      } catch (err) {
+        console.error('Fetch failed for api keys endpoint');
+        setApiKeys([]);
+      } finally {
+        setIsLoading(false);
+      }
+      setRows(toRows());
+    }
+
+    fetchData();
+  }, []);
+
+  const staticFieldMappings = [
+    '{{ContentData}}',
+    '{{ContentHash}}',
+    '{{ContentHashAlgorithm}}',
+    '{{ContentNote}}',
+    '{{ContentReferrer}}',
+    '{{ContentRelevance}}',
+    '{{ContentScreenShot}}',
+    '{{ContentUrl}}',
+    '{{ContentDomain}}',
+    '{{PluginValue}}',
+  ];
+
+  const getFieldMappings = (): string[] => {
+    const apiKeyNames = apiKeys.map((apiKey) => `{${apiKey.Key}}`);
+    const mappings = [...staticFieldMappings, ...apiKeyNames];
+    return mappings.sort();
+  };
+
+  const addRow = () => {
+    setRows([...rows, {}]);
+  };
+
+  const deleteRow = (index: number) => {
+    const updatedRows = [...rows];
+    updatedRows.splice(index, 1);
+    setRows(updatedRows);
+
+    if (updatedRows.length === 0) {
+      setRecord((prev) => ({ ...prev, fieldMapping: {} }));
+    } else {
+      setRecord((prev) => ({ ...prev, fieldMapping: toObj(updatedRows) }));
+    }
+  };
+
+  const handleFieldNameChange = (index: number, value: string) => {
+    const updated = [...rows];
+    updated[index].keyName = value;
+    setRows(updated);
+    setRecord((prev) => ({ ...prev, fieldMapping: toObj(updated) }));
+  };
+
+  const handleFieldValueChange = (index: number, value: string) => {
+    const updated = [...rows];
+    updated[index].mappedFieldName = value;
+    setRows(updated);
+    setRecord((prev) => ({ ...prev, fieldMapping: toObj(updated) }));
+  };
+
+  const toObj = (rows: FieldRow[]): Record<string, string> => {
+    return Object.assign(
+      {},
+      ...rows.map((row) => ({
+        [row.keyName ?? '']: row.mappedFieldName ?? '',
+      }))
+    );
+  };
+
+  const toRows = (): FieldRow[] => {
+    const mapping = record.fieldMapping ?? {};
+    return Object.entries(mapping).map(([key, value]) => ({
+      keyName: key,
+      mappedFieldName: value,
+    }));
+  };
+
+  if (isLoading) {
+    return <div></div>;
+  }
+
+  return (
+    <Fragment>
+      <IconButton onClick={addRow}>
+        <AddBoxIcon />
+        Add Field Mapping(s)
+      </IconButton>
+        {rows.map((row, index) => (
+          <div>
+            <FormControl>
+              <StyledTextField
+                sx={{ m: 0.75 }}
+                variant="outlined"
+                name="keyName"
+                id="keyName"
+                label="Field Name"
+                value={row.keyName ?? ''}
+                inputProps={{ 'aria-label': 'controlled' }}
+                onChange={(event) =>
+                  handleFieldNameChange(index, event.target.value)
+                }
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end" sx={{ mr: 1 }}>
+                      <HelperPopover message="The key name is static, it is the field name of the value you want to map to." />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </FormControl>
+            <FormControl>
+              <Autocomplete
+                sx={{ m: 0.75 }}
+                freeSolo
+                options={getFieldMappings()}
+                value={row.mappedFieldName ?? ''}
+                onInputChange={(_, value) => handleFieldValueChange(index, value)}
+                renderInput={(params) => (
+                  <StyledTextField {...params} label="Field Value" />
+                )}
+              />
+            </FormControl>
+            <IconButton onClick={() => deleteRow(index)}>
+              <DeleteForever />
+            </IconButton>
+          </div>
+        ))}
+    </Fragment>
+  );
+};
+
+export default FieldMappingForm;

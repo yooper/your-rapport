@@ -17,6 +17,7 @@ import {
 import HelperPopover from '../HelperPopover';
 import IconButton from '@mui/material/IconButton';
 import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';
+import DiscoveryPluginFormDialog from '../dialogs/DiscoveryPluginDialog';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -266,7 +267,17 @@ export default function DiscoveryPluginDataTable() {
       hideLoader();
     },
     customToolbar: () => {
-      return <Fragment></Fragment>;
+      return <Fragment>
+        <DiscoveryPluginFormDialog
+            record={{}}
+            mode={'Add'}
+            rows={rows}
+            setRows={setRows}
+            apiKeys={[]}
+            pluginTypes={pluginTypes}
+            setPluginTypes={setPluginTypes}
+        />
+      </Fragment>;
     },
 
     rowsPerPage: 25,
