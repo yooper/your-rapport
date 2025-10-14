@@ -17,7 +17,7 @@ import {
 import HelperPopover from '../HelperPopover';
 import IconButton from '@mui/material/IconButton';
 import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';
-import DiscoveryPluginFormDialog from '../dialogs/DiscoveryPluginDialog';
+import DiscoveryPluginFormDialog from '../dialogs/DiscoveryPluginFormDialog';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);

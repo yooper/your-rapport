@@ -12,7 +12,7 @@ export interface DiscoveryPlugin {
   label?: string;
   fieldMapping?: Record<string, string>;
   // runtime-assigned
-  pluginValue?: string | number | null;
+  selectorValue?: string | number | null;
   // legacy compatibility
   PluginValue?: string | number | null;
 }
@@ -27,14 +27,14 @@ export type NotificationPayload = {
 };
 
 /**
- * Receives the discovery plugin and record. The selectedValue is the value of the selector that was selected by the end user.
+ * Receives the discovery plugin and record. The selectorValue is the value of the selector that was selected by the end user.
  * Throws an error if the user lacks access to discovery plugins.
  * TODO: Add support for API / Configuration variables
  */
 export default async function discoveryPluginRunner(
   discoveryPlugin: DiscoveryPlugin,
   rapport: RapportRecord = {},
-  pluginValue: string | number | null = null
+  selectorValue: string | number | null = null
 ): Promise<void> {
   const user: any = await getUser();
   if (!user?.isAccessible?.('discoveryPlugin', rapport, discoveryPlugin)) {
@@ -43,9 +43,7 @@ export default async function discoveryPluginRunner(
   }
 
   // assign the plugin value
-  discoveryPlugin.pluginValue = pluginValue;
-  // To support the legacy Mustache markup add this property to the discovery plugin
-  discoveryPlugin.PluginValue = pluginValue;
+  discoveryPlugin.selectorValue = selectorValue;
 
   Mustache.escape = (text: string) => text;
 

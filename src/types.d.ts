@@ -65,6 +65,7 @@ export interface IRapport
     Participants,
     SourcedFrom {
   id: string;
+  screenshot?: string|null;
   accessed: number;
   caseManagementUuid: string;
   isImportant: boolean;

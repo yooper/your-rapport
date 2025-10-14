@@ -1,0 +1,142 @@
+import React, { useState, Fragment, useEffect } from 'react';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import EditIcon from '@mui/icons-material/Edit';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import IconButton from '@mui/material/IconButton';
+import { sort_by_key } from '../../utilities/transformers';
+import DiscoveryPluginLayout from '../layouts/DiscoveryPLuginLayout';
+import { processNotification } from '../../utilities/loaders'
+import Box from '@mui/material/Box';
+import { db } from '../../models/db/dexieDb';
+
+
+type Mode = 'Add' | 'Edit';
+
+export interface DiscoveryPluginRow {
+  Uuid?: string;
+  Label?: string;
+  [key: string]: unknown; // allow extra backend fields
+}
+
+interface ApiSuccess<T> {
+  Type?: 'success' | 'danger' | string;
+  Record?: T;
+  Records?: T[];
+  Title?: string;
+  Message?: string;
+  [key: string]: unknown;
+}
+
+interface DiscoveryPluginFormDialogProps {
+  mode: Mode;
+  record: DiscoveryPluginRow;
+  rows: DiscoveryPluginRow[];
+  setRows: (rows: DiscoveryPluginRow[]) => void;
+
+  // passed through to DiscoveryPluginLayout
+  apiKeys?: unknown;
+  pluginTypes: string[];
+  setPluginTypes: (types: string[]) => void;
+}
+
+const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (props) => {
+  const { mode } = props;
+  const [open, setOpen] = useState<boolean>(false);
+  const [record, setRecord] = useState<DiscoveryPluginRow>(props.record);
+
+  useEffect(() => {
+    setRecord(props.record);
+  }, [props.record]);
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  // TODO: save to local db
+  const handleSave = async () => {
+    if (mode === 'Add') {
+      await db.discoveryPlugin.add(record);
+
+
+      const newRows = props.rows.map((row) => row);
+      if (data.Record) newRows.push(data.Record);
+      sort_by_key(newRows, 'Label');
+      props.setRows(newRows);
+      processNotification(data);
+      setOpen(false);
+    } else if (mode === 'Edit') {
+      // TODO: use local db
+      const data = (await fetch_wrapper(
+        `{{WebHost}}v1/discovery-plugin?Uuid=${record.Uuid}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(record),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )) as ApiSuccess<DiscoveryPluginRow>;
+
+      if (data.Type === 'danger') {
+        processNotification(data);
+        return data;
+      }
+
+      const newRows = props.rows.map((row) =>
+        row.Uuid === data.Record?.Uuid ? (data.Record as DiscoveryPluginRow) : row
+      );
+
+      sort_by_key(newRows, 'Label');
+      props.setRows(newRows);
+      processNotification(data);
+      setOpen(false);
+    }
+  };
+
+  return (
+    <Fragment>
+      <IconButton onClick={() => setOpen(true)}>
+        {mode === 'Add' ? <AddBoxIcon /> : <EditIcon />}
+      </IconButton>
+      <Box>
+      <Dialog
+        fullWidth={true}
+        maxWidth={false}
+        open={open}
+        onClose={handleClose}
+        sx={{height:'90%'}}
+        aria-labelledby="form-dialog-title"
+      >
+        <DialogTitle>{mode} Discovery Plugin</DialogTitle>
+        <DialogContent>
+          <DialogContentText></DialogContentText>
+          <form noValidate>
+            <DiscoveryPluginLayout
+              record={record}
+              setRecord={setRecord}
+              apiKeys={props.apiKeys as any}
+              pluginTypes={props.pluginTypes}
+              setPluginTypes={props.setPluginTypes}
+            />
+          </form>
+        </DialogContent>
+        <DialogActions>
+          {/* MUI's Button color prop doesn't include 'cancel' by default; cast to avoid TS error */}
+          <Button onClick={handleClose} variant="contained" color={'cancel' as any}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} color="primary" variant="contained">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+      </Box>
+    </Fragment>
+  );
+};
+
+export default DiscoveryPluginFormDialog;
+

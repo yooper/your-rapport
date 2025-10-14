@@ -225,7 +225,7 @@ export default function SearchDataTable(props) {
                   title={'tag'}
                   record={record}
                   uxType={'chip'}
-                  pluginValue={tag.name}
+                  selectorValue={tag.name}
               />
           ))
         },
@@ -260,7 +260,7 @@ export default function SearchDataTable(props) {
               title={selector.selectorTypeName}
               record={record}
               uxType={'chip'}
-              pluginValue={selector.name}
+              selectorValue={selector.name}
             />
           ));
         },
@@ -284,7 +284,7 @@ export default function SearchDataTable(props) {
                 title={'domain'}
                 record={record}
                 uxType={'chip'}
-                pluginValue={value}
+                selectorValue={value}
             />
           }
         },
@@ -467,6 +467,7 @@ export default function SearchDataTable(props) {
               displayData={displayData}
               columns={columns}
               setSelectedRows={setSelectedRows}
+              rows={rows}
               onRowsDelete={rowsDelete}
           />
       ),

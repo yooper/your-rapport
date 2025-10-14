@@ -113,7 +113,7 @@ function LargeButtonGrid() {
     {
       title: 'Discovery Plugins',
       toolTipTitle: `Learn about discovery plugins and how they can save your time through pre-existing automations.`,
-      onClick: () => window.open('https://github.com/yooper/your-rapport/wiki/discovery-plugins-tutorial'),
+      onClick: () => chrome.tabs.create({ url: chrome.runtime.getURL('options.html?view=discovery_plugin') }),
     },
   ];
 
