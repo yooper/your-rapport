@@ -18,6 +18,12 @@ import HelperPopover from '../HelperPopover';
 import IconButton from '@mui/material/IconButton';
 import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';
 import DiscoveryPluginFormDialog from '../dialogs/DiscoveryPluginFormDialog';
+import { db } from '../../models/db/dexieDb';
+import RunCircleIcon from '@mui/icons-material/RunCircle';
+import Mustache from "mustache";
+import {CloudDownload} from "@mui/icons-material";
+import FileCopyIcon from '@mui/icons-material/FileCopy';
+
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -122,6 +128,7 @@ export default function DiscoveryPluginDataTable() {
       name: 'url',
       label: 'Url ',
       options: {
+        display: false,
         filter: false,
         sort: false,
         customBodyRender: (value, tableMeta, updateValue) => {
@@ -250,6 +257,60 @@ export default function DiscoveryPluginDataTable() {
         sort: false,
       },
     },
+    {
+      label: 'OPTIONS',
+      name: 'Options',
+      options: {
+        display: true,
+        filter: false,
+        sort: false,
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData);
+          return (
+            <Fragment>
+              <DiscoveryPluginFormDialog
+                record={record}
+                mode={'Edit'}
+                rows={rows}
+                setRows={setRows}
+                apiKeys={[]}
+                pluginTypes={pluginTypes}
+                setPluginTypes={setPluginTypes}
+              />
+              <Fragment>
+                <IconButton
+                  aria-controls="download-menu"
+                  aria-haspopup="true"
+                  onClick={() => {
+                    //clonePlugin(record)
+                  }}
+                  size="large">
+                  <FileCopyIcon />
+                </IconButton>
+                <IconButton
+                  aria-controls="download-menu"
+                  aria-haspopup="true"
+                  onClick={() => {
+                    // TODO download plugin
+                  }}
+                  size="large">
+                  <CloudDownload />
+                </IconButton>
+                <IconButton
+                  aria-controls="script-engine-menu"
+                  aria-haspopup="true"
+                  onClick={() => {
+                    alert('Not Available, yet');
+                  }}
+                  size="large">
+                  <RunCircleIcon />
+                </IconButton>
+              </Fragment>
+            </Fragment>
+          );
+        }
+      }
+    }
   ];
 
   const options = {

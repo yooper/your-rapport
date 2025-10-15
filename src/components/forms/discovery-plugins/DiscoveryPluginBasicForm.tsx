@@ -6,6 +6,9 @@ import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from '@mui/material/Autocomplete';
 import Grid from '@mui/material/Grid';
+import { Tooltip } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import { InfoOutlined } from '@mui/icons-material';
 
 type PluginAction = 'CreateTab' | 'SubmitForm' | 'ForegroundRunner' | 'BackgroundRunner';
 type EventType =
@@ -79,7 +82,14 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
 
   return (
     <Fragment>
-      <Typography variant="h6">Required Plugin Fields</Typography>
+      <Typography variant="h6">
+        <Tooltip title={'To learn more about Required Plugin Fields your data click to be sent to our wiki docs.'}>
+          <IconButton onClick={()=>{}}>
+            <InfoOutlined />
+          </IconButton>
+        </Tooltip>
+        Required Plugin Fields
+      </Typography>
       <FormGroup>
         <FormControl>
           <StyledTextFieldNoWidth

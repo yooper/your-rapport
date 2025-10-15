@@ -9,6 +9,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import DiscoveryPluginAuthenticationForm from '../forms/discovery-plugins/DiscoveryPluginAuthenticationForm';
 
 interface DiscoveryPluginRecord {
   [key: string]: any;
@@ -52,12 +53,13 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         value={value}
         onChange={handleChange}
         aria-label="Vertical tabs example"
-        sx={{ borderRight: 1, borderColor: 'divider', height: '100%' }}
+        sx={{ borderRight: 1, borderColor: 'divider', height: '100%', minHeight: 500 }}
       >
         <Tab label="Basic" {...a11yProps(0)} />
-        <Tab label="Advanced" {...a11yProps(1)} />
-        <Tab label="Field Mappings" {...a11yProps(2)} />
-        <Tab label="Header Mappings" {...a11yProps(3)} />
+        <Tab label="Content Types" {...a11yProps(1)} />
+        <Tab label="Authentication" {...a11yProps(2)} />
+        <Tab label="Field Mappings" {...a11yProps(3)} />
+        <Tab label="Header Mappings" {...a11yProps(4)} />
       </Tabs>
       <TabPanel value={value} index={0}>
         <DiscoveryPluginBasicForm
@@ -74,20 +76,26 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         />
       </TabPanel>
       <TabPanel value={value} index={2}>
+        <DiscoveryPluginAuthenticationForm
+            record={record}
+            setRecord={setRecord}
+        />
+      </TabPanel>
+      <TabPanel value={value} index={3}>
         <FieldMappingForm
             apiKeys={[]}
             record={record}
             setRecord={setRecord}
         />
       </TabPanel>
-      <TabPanel value={value} index={3}>
+      <TabPanel value={value} index={4}>
         <HeaderMappingForm
             record={record}
             setRecord={setRecord}
         />
       </TabPanel>
 
-      <TabPanel value={value} index={4}>
+      <TabPanel value={value} index={5}>
         <GroupHomeSupportForm
             record={record}
             setRecord={setRecord}

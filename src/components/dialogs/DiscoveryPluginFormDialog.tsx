@@ -9,7 +9,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import IconButton from '@mui/material/IconButton';
 import { sort_by_key } from '../../utilities/transformers';
-import DiscoveryPluginLayout from '../layouts/DiscoveryPLuginLayout';
+import DiscoveryPluginLayout from '../layouts/DiscoveryPluginLayout';
 import { processNotification } from '../../utilities/loaders'
 import Box from '@mui/material/Box';
 import { db } from '../../models/db/dexieDb';
@@ -101,7 +101,6 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (pro
       <IconButton onClick={() => setOpen(true)}>
         {mode === 'Add' ? <AddBoxIcon /> : <EditIcon />}
       </IconButton>
-      <Box>
       <Dialog
         fullWidth={true}
         maxWidth={false}
@@ -133,7 +132,6 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (pro
           </Button>
         </DialogActions>
       </Dialog>
-      </Box>
     </Fragment>
   );
 };

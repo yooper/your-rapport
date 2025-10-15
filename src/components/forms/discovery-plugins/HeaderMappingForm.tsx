@@ -4,9 +4,10 @@ import { StyledTextField } from '../../inputs/StyledTextField';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
-import { DeleteForever } from '@mui/icons-material';
+import { DeleteForever, InfoOutlined } from '@mui/icons-material';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
+import { Tooltip } from '@mui/material';
 
 type HeaderRow = {
   keyName?: string;
@@ -83,10 +84,17 @@ const HeaderMappingForm: React.FC<HeaderMappingFormProps> = ({ record, setRecord
 
   return (
     <Fragment>
-      <IconButton onClick={addRow}>
-        <AddBoxIcon />
-        Add Http Header(s)
-      </IconButton>
+      <Tooltip title={'To learn more about HTTP Headers and how click here to be open our wiki docs.'}>
+        <IconButton onClick={addRow}>
+          <InfoOutlined />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title={'HTTP Headers let you configure advanced directives and authentications in the http request headers.'}>
+        <IconButton onClick={addRow}>
+          <AddBoxIcon />
+          Add Http Header(s)
+        </IconButton>
+      </Tooltip>
         {rows.map((row, index) => (
           <div>
             <FormControl>

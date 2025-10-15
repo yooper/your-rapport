@@ -1,14 +1,15 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import FormControl from '@mui/material/FormControl';
 import { StyledTextField } from '../../inputs/StyledTextField';
-import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Grid';
+
 import IconButton from '@mui/material/IconButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
-import { DeleteForever } from '@mui/icons-material';
+import { DeleteForever, InfoOutlined } from '@mui/icons-material';
 import Autocomplete from '@mui/material/Autocomplete';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
+import { Tooltip } from '@mui/material';
+
 
 type FieldRow = {
   keyName?: string;
@@ -54,20 +55,20 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ record, setRecord }
   }, []);
 
   const staticFieldMappings = [
-    '{{ContentData}}',
-    '{{ContentHash}}',
-    '{{ContentHashAlgorithm}}',
-    '{{ContentNote}}',
-    '{{ContentReferrer}}',
-    '{{ContentRelevance}}',
-    '{{ContentScreenShot}}',
-    '{{ContentUrl}}',
-    '{{ContentDomain}}',
-    '{{PluginValue}}',
+    '{{data}}',
+    '{{hash}}',
+    '{{hashAlgorithm}}',
+    '{{note}}',
+    '{{referrer}}',
+    '{{relevance}}',
+    '{{screenShot}}',
+    '{{url}}',
+    '{{domain}}',
+    '{{selectorValue}}',
   ];
 
   const getFieldMappings = (): string[] => {
-    const apiKeyNames = apiKeys.map((apiKey) => `{${apiKey.Key}}`);
+    const apiKeyNames = apiKeys.map((apiKey) => `{${apiKey.key}}`);
     const mappings = [...staticFieldMappings, ...apiKeyNames];
     return mappings.sort();
   };
@@ -125,10 +126,18 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ record, setRecord }
 
   return (
     <Fragment>
-      <IconButton onClick={addRow}>
-        <AddBoxIcon />
-        Add Field Mapping(s)
-      </IconButton>
+      <Tooltip title={'To learn more about field mapping your data click to be sent to our wiki docs.'}>
+        <IconButton onClick={addRow}>
+          <InfoOutlined />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title={'Field mappings provide the ability to map outgoing data fields.'}>
+        <IconButton onClick={addRow}>
+          <AddBoxIcon />
+          Add Field Mapping(s)
+        </IconButton>
+      </Tooltip>
+
         {rows.map((row, index) => (
           <div>
             <FormControl>
