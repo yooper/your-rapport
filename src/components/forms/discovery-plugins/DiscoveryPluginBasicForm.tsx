@@ -1,6 +1,9 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import FormControl from '@mui/material/FormControl';
-import { StyledTextField, StyledTextFieldNoWidth } from '../../inputs/StyledTextField';
+import {
+  StyledTextField,
+  StyledTextFieldNoWidth,
+} from '../../inputs/StyledTextField';
 import FormGroup from '@mui/material/FormGroup';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
@@ -17,7 +20,11 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
   setRecord,
   pluginTypes,
 }) => {
-  const actions: { label: string; action: PluginAction; description: string }[] = [
+  const actions: {
+    label: string;
+    action: PluginAction;
+    description: string;
+  }[] = [
     {
       label: 'Open Browser Tab',
       action: 'CreateTab',
@@ -26,17 +33,20 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
     {
       label: 'Submit Form',
       action: 'SubmitForm',
-      description: 'Submit a form and process the results and it opens a web page.',
+      description:
+        'Submit a form and process the results and it opens a web page.',
     },
     {
       label: 'Foreground Runner',
       action: 'ForegroundRunner',
-      description: 'Run a data processing task in the foreground of the browser.',
+      description:
+        'Run a data processing task in the foreground of the browser.',
     },
     {
       label: 'Background Runner',
       action: 'BackgroundRunner',
-      description: 'Run a data processing task in the background service worker of the browser.',
+      description:
+        'Run a data processing task in the background service worker of the browser.',
     },
   ];
 
@@ -60,8 +70,12 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
   return (
     <Fragment>
       <Typography variant="h6">
-        <Tooltip title={'To learn more about Required Plugin Fields your data click to be sent to our wiki docs.'}>
-          <IconButton onClick={()=>{}}>
+        <Tooltip
+          title={
+            'To learn more about Required Plugin Fields your data click to be sent to our wiki docs.'
+          }
+        >
+          <IconButton onClick={() => {}}>
             <InfoOutlined />
           </IconButton>
         </Tooltip>
@@ -78,7 +92,10 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
             label="Label"
             defaultValue={record.label ?? ''}
             onChange={(e) =>
-              setRecord((prevState) => ({ ...prevState, label: e.target.value }))
+              setRecord((prevState) => ({
+                ...prevState,
+                label: e.target.value,
+              }))
             }
             inputProps={{ 'aria-label': 'controlled' }}
           />
@@ -117,10 +134,16 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
                   setRecord((prevState) => ({ ...prevState, action }));
 
                   if (action === 'BackgroundRunner') {
-                    setRecord((prevState) => ({ ...prevState, pluginType: 'event' }));
+                    setRecord((prevState) => ({
+                      ...prevState,
+                      pluginType: 'event',
+                    }));
                     setDisablePluginType(true);
                   } else {
-                    setRecord((prevState) => ({ ...prevState, pluginType: 'content' }));
+                    setRecord((prevState) => ({
+                      ...prevState,
+                      pluginType: 'content',
+                    }));
                     setDisablePluginType(false);
                   }
                 }}

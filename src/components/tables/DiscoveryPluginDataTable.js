@@ -20,10 +20,9 @@ import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';
 import DiscoveryPluginFormDialog from '../dialogs/DiscoveryPluginFormDialog';
 import { db } from '../../models/db/dexieDb';
 import RunCircleIcon from '@mui/icons-material/RunCircle';
-import Mustache from "mustache";
-import {CloudDownload} from "@mui/icons-material";
+import Mustache from 'mustache';
+import { CloudDownload } from '@mui/icons-material';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
-
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -284,7 +283,8 @@ export default function DiscoveryPluginDataTable() {
                   onClick={() => {
                     //clonePlugin(record)
                   }}
-                  size="large">
+                  size="large"
+                >
                   <FileCopyIcon />
                 </IconButton>
                 <IconButton
@@ -293,7 +293,8 @@ export default function DiscoveryPluginDataTable() {
                   onClick={() => {
                     // TODO download plugin
                   }}
-                  size="large">
+                  size="large"
+                >
                   <CloudDownload />
                 </IconButton>
                 <IconButton
@@ -302,15 +303,16 @@ export default function DiscoveryPluginDataTable() {
                   onClick={() => {
                     alert('Not Available, yet');
                   }}
-                  size="large">
+                  size="large"
+                >
                   <RunCircleIcon />
                 </IconButton>
               </Fragment>
             </Fragment>
           );
-        }
-      }
-    }
+        },
+      },
+    },
   ];
 
   const options = {
@@ -328,8 +330,9 @@ export default function DiscoveryPluginDataTable() {
       hideLoader();
     },
     customToolbar: () => {
-      return <Fragment>
-        <DiscoveryPluginFormDialog
+      return (
+        <Fragment>
+          <DiscoveryPluginFormDialog
             record={{}}
             mode={'Add'}
             rows={rows}
@@ -337,8 +340,9 @@ export default function DiscoveryPluginDataTable() {
             apiKeys={[]}
             pluginTypes={pluginTypes}
             setPluginTypes={setPluginTypes}
-        />
-      </Fragment>;
+          />
+        </Fragment>
+      );
     },
 
     rowsPerPage: 25,

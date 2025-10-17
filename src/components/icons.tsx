@@ -12,12 +12,7 @@ export default function MHTMLIcon(props: SvgIconProps) {
         stroke="currentColor"
         strokeWidth="2"
       />
-      <path
-        d="M14 2v6h6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
+      <path d="M14 2v6h6" fill="none" stroke="currentColor" strokeWidth="2" />
 
       {/* The "MHTML" label inside the file */}
       <text

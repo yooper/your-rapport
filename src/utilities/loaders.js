@@ -38,7 +38,7 @@ export function processNotification(data, duration = 3000) {
     animationIn: ['animate__animated', 'animate__fadeIn'],
     animationOut: ['animate__animated', 'animate__fadeOut'],
     dismiss: {
-      duration: data.type==='danger' ? (duration * 2): duration,
+      duration: data.type === 'danger' ? duration * 2 : duration,
       onScreen: true,
     },
   });
@@ -70,7 +70,7 @@ export function getDarkTheme() {
 export async function createTab(url, onlyOneTabOpen = false) {
   const openUrls = (await getAllTabUrls()) ?? [];
   if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl == url)) {
-    debug('too many urls')
+    debug('too many urls');
     return;
   }
   await chrome.tabs.create({ url: url });
@@ -154,11 +154,10 @@ export async function runWithMinDelay(taskFn) {
   const elapsed = performance.now() - start;
   const remaining = 1500 - elapsed;
   if (remaining > 0) {
-    await new Promise(resolve => setTimeout(resolve, remaining));
+    await new Promise((resolve) => setTimeout(resolve, remaining));
   }
   debug(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
 }
-
 
 /**
  * Installs a set of default packages
@@ -204,19 +203,16 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-archive.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-check.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/domainiq.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/built-with.json'
-
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/built-with.json',
   ];
   for (const pluginUrl of defaultDiscoveryPlugins) {
-    try{
+    try {
       await installPackage({ url: pluginUrl });
-    }
-    catch(e){
-      debug(e)
+    } catch (e) {
+      debug(e);
     }
   }
 }
-
 
 /**
  * Check for the xpath

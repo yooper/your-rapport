@@ -87,13 +87,14 @@ export default function BrowserSettingsForm(props) {
             />
           </Grid>
           <Grid item xs={12}>
-            <Tooltip title={'Iterate through the selectors and rebuild the index for text searches. This takes awhile to run, is only enabled to debug.'}>
-            <Button
-              onClick={()=>{}}
-              variant={'contained'}
+            <Tooltip
+              title={
+                'Iterate through the selectors and rebuild the index for text searches. This takes awhile to run, is only enabled to debug.'
+              }
             >
-              Rebuild Index
-            </Button>
+              <Button onClick={() => {}} variant={'contained'}>
+                Rebuild Index
+              </Button>
             </Tooltip>
           </Grid>
         </Grid>

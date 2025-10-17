@@ -65,8 +65,7 @@ export default class ExtensionPin {
 
     setTimeout(() => {
       ExtensionPin.setDefault(activeTab);
-    }, 3000)
-
+    }, 3000);
   };
   static showNumber = (number, activeTab) => {
     ExtensionPin.setBgColorAndText('#E86E69', '' + number, activeTab);

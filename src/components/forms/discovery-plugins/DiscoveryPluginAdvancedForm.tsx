@@ -4,24 +4,32 @@ import FormGroup from '@mui/material/FormGroup';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from '@mui/material/Autocomplete';
-import {StyledTextField} from '../../inputs/StyledTextField';
+import { StyledTextField } from '../../inputs/StyledTextField';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 import { Tooltip } from '@mui/material';
 import { DiscoveryPluginAdvancedFormProps } from '../../../types';
 
-const DiscoveryPluginAdvancedForm: React.FC<DiscoveryPluginAdvancedFormProps> = ({
-  record,
-  setRecord,
-}) => {
+const DiscoveryPluginAdvancedForm: React.FC<
+  DiscoveryPluginAdvancedFormProps
+> = ({ record, setRecord }) => {
   const methods = ['GET', 'POST', 'PUT', 'DELETE'];
-  const contentTypeHeaders = ['', 'application/json', 'multipart/form-data', 'application/octet-stream'];
+  const contentTypeHeaders = [
+    '',
+    'application/json',
+    'multipart/form-data',
+    'application/octet-stream',
+  ];
 
   return (
     <Fragment>
       <Typography variant="h6">
-        <Tooltip title={'To learn more about HTTP Methods and Content Types your data click to be sent to our wiki docs.'}>
-          <IconButton onClick={()=>{}}>
+        <Tooltip
+          title={
+            'To learn more about HTTP Methods and Content Types your data click to be sent to our wiki docs.'
+          }
+        >
+          <IconButton onClick={() => {}}>
             <InfoOutlined />
           </IconButton>
         </Tooltip>
@@ -65,10 +73,11 @@ const DiscoveryPluginAdvancedForm: React.FC<DiscoveryPluginAdvancedFormProps> = 
                 contentTypeHeader: value,
               }))
             }
-            renderInput={(params) => <StyledTextField {...params} label="Content Type Header" />}
+            renderInput={(params) => (
+              <StyledTextField {...params} label="Content Type Header" />
+            )}
           />
         </FormControl>
-
       </FormGroup>
     </Fragment>
   );

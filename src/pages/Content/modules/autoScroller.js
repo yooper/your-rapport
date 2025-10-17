@@ -1,14 +1,15 @@
 import { getVisibleText } from './visibleElements';
 import { updateRecord } from '../../../models/db/local';
 import {
-  ACTIVATE_AUTOMATION, ACTIVATE_CAPTURE,
-  BULK_AUTOMATION, CAPTURE_VISIBLE_TAB,
+  ACTIVATE_AUTOMATION,
+  ACTIVATE_CAPTURE,
+  BULK_AUTOMATION,
+  CAPTURE_VISIBLE_TAB,
   PROCESS_QUEUE_AUTOMATION_URLS,
   UUID,
 } from '../../../services/constants';
 import { port } from '../index';
 import { debug } from '../../../services/logger_services';
-
 
 const STATE_STOPPED = 'stopped';
 const STATE_INITIALIZED = 'initialized';
@@ -27,19 +28,17 @@ let previousWindowScrollY = -1;
 
 let state = STATE_INITIALIZED;
 
-
-export function getAutoScrollState(){
+export function getAutoScrollState() {
   return state;
 }
 
-export function setAutoScrollState(setState){
-  return state = setState;
+export function setAutoScrollState(setState) {
+  return (state = setState);
 }
 
-export function getAutomation(){
+export function getAutomation() {
   return automation;
 }
-
 
 /**
  * TODO: Utility function for doing scrolling captures dependent on the website.
@@ -55,29 +54,24 @@ function getScrollDetailsByHostName() {
  * @returns {boolean}
  */
 export function autoScroller(message) {
-
   previousWindowScrollY = -1;
 
-  if(state === STATE_ACTIVE){
+  if (state === STATE_ACTIVE) {
     state = STATE_STOPPED;
-  }
-  else if(message.cmd === ACTIVATE_AUTOMATION){
+  } else if (message.cmd === ACTIVATE_AUTOMATION) {
     automation = message.automation;
     state = STATE_ACTIVE;
-  }
-  else if(message.cmd === ACTIVATE_CAPTURE){
+  } else if (message.cmd === ACTIVATE_CAPTURE) {
     state = STATE_ACTIVE;
-  }
-  else
-  {
+  } else {
     // stop the script from running
     state = STATE_STOPPED;
   }
 
-  if(state === STATE_STOPPED){
+  if (state === STATE_STOPPED) {
     processAutomation();
     debug('stop', message);
-    return  false;
+    return false;
   }
 
   const autoScroll = () => {
@@ -90,12 +84,12 @@ export function autoScroller(message) {
     const { scrollHeight, clientHeight } = scrollElement;
     const scrollAmount = clientHeight;
 
-    (async() => {
+    (async () => {
       const visibleText = getVisibleText();
       if (!visibleText) {
         state = STATE_STOPPED; // stops the scrolling capture if the text is not being read in
         debug('could not capture text');
-        processAutomation('Text could not be read in.')
+        processAutomation('Text could not be read in.');
         return;
       }
       // send message to the service worker
@@ -103,42 +97,49 @@ export function autoScroller(message) {
         cmd: CAPTURE_VISIBLE_TAB,
         visibleText: visibleText,
         sequence: screenCollectionCount++,
-        automation: automation // can be null
+        automation: automation, // can be null
       });
 
       // update the bulk automation record
-      if(automation){
+      if (automation) {
         automation.screenShotsCollected = screenCollectionCount;
-        await updateRecord(BULK_AUTOMATION, UUID, automation)
+        await updateRecord(BULK_AUTOMATION, UUID, automation);
       }
 
       // the capture did not persist in the service worker
-      if(!('completed' in response)){
+      if (!('completed' in response)) {
         state = STATE_STOPPED; // stops the scrolling capture if the text is not being read in
         processAutomation('storage failed to save');
         debug('Could not save rapport');
-        return
+        return;
       }
 
       // TODO fix this so auto scroll doesn't fire
       // don't scroll, it's only a single page, no scroll bar
-      if (scrollAmount == 0 || document.documentElement.scrollHeight === document.documentElement.clientHeight) {
+      if (
+        scrollAmount == 0 ||
+        document.documentElement.scrollHeight ===
+          document.documentElement.clientHeight
+      ) {
         state = STATE_STOPPED; // stops the scrolling capture
         processAutomation('scroll stopped by user');
         return;
       }
       //TODO needs some work
-      if(window.innerHeight + window.scrollY >= document.documentElement.scrollHeight){
+      if (
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight
+      ) {
         state = STATE_STOPPED;
         processAutomation();
         return;
       }
 
-      if(previousWindowScrollY !== window.scrollY){
+      if (previousWindowScrollY !== window.scrollY) {
         previousWindowScrollY = window.scrollY;
       }
       // the screen is not scrolling
-      else{
+      else {
         debug('Window not scrolling');
         state = STATE_STOPPED;
         processAutomation('window not scrolling');
@@ -149,13 +150,11 @@ export function autoScroller(message) {
         capturedHeight += scrollAmount;
         if (state !== STATE_ACTIVE) {
           debug('capture stopped');
-        }
-        else if (capturedHeight < scrollHeight) {
+        } else if (capturedHeight < scrollHeight) {
           // Scroll to the next part of the page, after the screenshot has been taken
           scrollElement.scrollTo(0, capturedHeight);
         }
-      }
-      else {
+      } else {
         capturedHeight -= scrollAmount;
         // Check if the new position is less than 0, set to 0 if it is
         if (capturedHeight < 0) {
@@ -165,20 +164,25 @@ export function autoScroller(message) {
         }
       }
 
-      if(automation){
-        if(state !== STATE_ACTIVE || (automation.unit === 'count' && automation.value < screenCollectionCount)){
+      if (automation) {
+        if (
+          state !== STATE_ACTIVE ||
+          (automation.unit === 'count' &&
+            automation.value < screenCollectionCount)
+        ) {
           state = STATE_STOPPED; // max screenshots
-          debug(`Max screenshots captured for automation ${automation.url}`, automation);
+          debug(
+            `Max screenshots captured for automation ${automation.url}`,
+            automation
+          );
           processAutomation('Max screenshots captured');
           return;
         }
-      }
-      else if(screenCollectionCount > MAX_SCREENSHOTS){
+      } else if (screenCollectionCount > MAX_SCREENSHOTS) {
         debug(`Max screenshots captured for autoscroll collect.`, message);
         state = STATE_STOPPED;
-        return
+        return;
       }
-
 
       // do not keep scrolling and capturing if the state is invalid
       if (state === STATE_ACTIVE) {
@@ -192,25 +196,26 @@ export function autoScroller(message) {
   return true;
 }
 
-
 /**
  * End the automation process, if there is one
  * @param automation
  */
-function processAutomation(description = null){
-  if(automation){
+function processAutomation(description = null) {
+  if (automation) {
     automation.completedOn = Date.now();
     automation.screenShotsCollected = screenCollectionCount;
-    automation.description = description
+    automation.description = description;
     automation.active = false;
     updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
       debug('automation task completed', automation);
-      updateRecord(BULK_AUTOMATION, UUID, automation, automation).then(response => {
-        port.postMessage({cmd: PROCESS_QUEUE_AUTOMATION_URLS})
-        debug(`closing automation`, automation);
-        // we no longer need to track this page
-        automation = null;
-      })
-    })
+      updateRecord(BULK_AUTOMATION, UUID, automation, automation).then(
+        (response) => {
+          port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+          debug(`closing automation`, automation);
+          // we no longer need to track this page
+          automation = null;
+        }
+      );
+    });
   }
 }

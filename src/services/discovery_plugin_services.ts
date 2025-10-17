@@ -57,7 +57,12 @@ export default async function discoveryPluginRunner(
     }
     case 'singleTask': {
       const formFields = await _buildObject(discoveryPlugin, rapport);
-      const data = await _fetchRequest(discoveryPlugin, formFields, url, rapport);
+      const data = await _fetchRequest(
+        discoveryPlugin,
+        formFields,
+        url,
+        rapport
+      );
       if (data) processNotification(data);
       break;
     }
@@ -167,7 +172,8 @@ async function _fetchRequest(
     if (response.ok) {
       processNotification({
         title: 'Discovery Plugin Request Received',
-        message: 'Your request was successfully accepted and data processing has begun.',
+        message:
+          'Your request was successfully accepted and data processing has begun.',
         type: 'success',
       });
 

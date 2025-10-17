@@ -9,7 +9,6 @@ export const SELECTOR = 'selector';
 export const DISCOVERY_PLUGIN = 'discovery_plugin';
 export const USER = 'user';
 
-
 /**
  * Common field names used in objects
  */
@@ -38,4 +37,3 @@ export const STOP_SCRIPT = 'stopScript';
 export const PAGE_INITIALIZED = 'pageInitialized';
 export const START_CAPTURE = 'startCapture';
 export const PROCESS_QUEUE_AUTOMATION_URLS = 'processQueueAutomationUrls';
-

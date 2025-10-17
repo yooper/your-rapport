@@ -1,10 +1,10 @@
-import React from "react";
-import Grid from "@mui/material/Grid";
-import FieldMappingForm from "../forms/discovery-plugins/FieldMappingForm";
-import DiscoveryPluginAdvancedForm from "../forms/discovery-plugins/DiscoveryPluginAdvancedForm";
-import DiscoveryPluginBasicForm from "../forms/discovery-plugins/DiscoveryPluginBasicForm";
-import GroupHomeSupportForm from "../forms/discovery-plugins/GroupHomeSupportForm";
-import HeaderMappingForm from "../forms/discovery-plugins/HeaderMappingForm";
+import React from 'react';
+import Grid from '@mui/material/Grid';
+import FieldMappingForm from '../forms/discovery-plugins/FieldMappingForm';
+import DiscoveryPluginAdvancedForm from '../forms/discovery-plugins/DiscoveryPluginAdvancedForm';
+import DiscoveryPluginBasicForm from '../forms/discovery-plugins/DiscoveryPluginBasicForm';
+import GroupHomeSupportForm from '../forms/discovery-plugins/GroupHomeSupportForm';
+import HeaderMappingForm from '../forms/discovery-plugins/HeaderMappingForm';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
@@ -17,7 +17,9 @@ interface DiscoveryPluginRecord {
 
 interface DiscoveryPluginLayoutProps {
   record: DiscoveryPluginRecord;
-  setRecord: (updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord) => void;
+  setRecord: (
+    updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord
+  ) => void;
   apiKeys: Record<string, unknown>;
   pluginTypes: string[];
   setPluginTypes: (types: string[]) => void;
@@ -28,7 +30,6 @@ interface TabPanelProps {
   index: number;
   value: number;
 }
-
 
 const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
   record,
@@ -45,7 +46,12 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
 
   return (
     <Box
-      sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex', height: '100%' }}
+      sx={{
+        flexGrow: 1,
+        bgcolor: 'background.paper',
+        display: 'flex',
+        height: '100%',
+      }}
     >
       <Tabs
         orientation="vertical"
@@ -53,7 +59,12 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         value={value}
         onChange={handleChange}
         aria-label="Vertical tabs example"
-        sx={{ borderRight: 1, borderColor: 'divider', height: '100%', minHeight: 500 }}
+        sx={{
+          borderRight: 1,
+          borderColor: 'divider',
+          height: '100%',
+          minHeight: 500,
+        }}
       >
         <Tab label="Basic" {...a11yProps(0)} />
         <Tab label="Content Types" {...a11yProps(1)} />
@@ -61,7 +72,6 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         <Tab label="Field Mappings" {...a11yProps(3)} />
         <Tab label="Header Mappings" {...a11yProps(4)} />
         <Tab label="Support" {...a11yProps(5)} />
-
       </Tabs>
       <TabPanel value={value} index={0}>
         <DiscoveryPluginBasicForm
@@ -72,43 +82,28 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         />
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <DiscoveryPluginAdvancedForm
-            record={record}
-            setRecord={setRecord}
-        />
+        <DiscoveryPluginAdvancedForm record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={2}>
         <DiscoveryPluginAuthenticationForm
-            record={record}
-            setRecord={setRecord}
+          record={record}
+          setRecord={setRecord}
         />
       </TabPanel>
       <TabPanel value={value} index={3}>
-        <FieldMappingForm
-            apiKeys={[]}
-            record={record}
-            setRecord={setRecord}
-        />
+        <FieldMappingForm apiKeys={[]} record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={4}>
-        <HeaderMappingForm
-            record={record}
-            setRecord={setRecord}
-        />
+        <HeaderMappingForm record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={5}>
-        <GroupHomeSupportForm
-            record={record}
-            setRecord={setRecord}
-        />
+        <GroupHomeSupportForm record={record} setRecord={setRecord} />
       </TabPanel>
     </Box>
   );
-
 };
 
 export default DiscoveryPluginLayout;
-
 
 interface TabPanelProps {
   children?: React.ReactNode;

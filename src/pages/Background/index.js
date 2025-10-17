@@ -5,10 +5,7 @@ import {
   initializeDiscoveryPlugins,
   sleep,
 } from '../../utilities/loaders';
-import {
-  addRecord,
-  updateRecord,
-} from '../../models/db/local';
+import { addRecord, updateRecord } from '../../models/db/local';
 import { initializeContextMenus } from '../../services/context_menu_services';
 import ExtensionPin from '../../utilities/ExtensionPin';
 import { scanPage } from '../../utilities/transformers';
@@ -17,12 +14,17 @@ import {
   ACTIVATE_CAPTURE,
   AUTO_COLLECT_STARTING,
   BULK_AUTOMATION,
-  CAPTURE_VISIBLE_TAB, ENQUEUE_BULK_AUTOMATION_URL, PROCESS_QUEUE_AUTOMATION_URLS,
+  CAPTURE_VISIBLE_TAB,
+  ENQUEUE_BULK_AUTOMATION_URL,
+  PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
   UUID,
 } from '../../services/constants';
 import { BulkAutomationUrl } from '../../models/schemas/BulkAutomationUrl';
-import { initializePortConnection, processReceivedMessage } from '../../utilities/PortManager';
+import {
+  initializePortConnection,
+  processReceivedMessage,
+} from '../../utilities/PortManager';
 import { debug } from '../../services/logger_services';
 import { captureSingleScreenShot } from '../../services/collection_services';
 import { Selector } from '../../models/schemas/Selector';
@@ -39,16 +41,15 @@ await initializeDiscoveryPlugins();
  */
 let _activeAutomationUrl = null;
 
-export function getActiveAutomation(){
+export function getActiveAutomation() {
   return _activeAutomationUrl;
 }
 
-export function setActiveAutomation(bulkAutomationUrl){
+export function setActiveAutomation(bulkAutomationUrl) {
   _activeAutomationUrl = bulkAutomationUrl;
 }
 
 initializePortConnection();
-
 
 /**
  * The web page failed to load
@@ -56,15 +57,18 @@ initializePortConnection();
 chrome.webNavigation.onErrorOccurred.addListener((details) => {
   const activeAutomation = getActiveAutomation();
   debug('web navigation error detected', details);
-  if(!activeAutomation){
+  if (!activeAutomation) {
     return; // no global active automation running, don't monitor errors
-  }
-  else if(new URL(details.url).hostname === new URL(activeAutomation.url).hostname){
+  } else if (
+    new URL(details.url).hostname === new URL(activeAutomation.url).hostname
+  ) {
     debug('Active automation detected', activeAutomation);
-  }
-  else{
+  } else {
     // host names did not match
-    debug(`Details url ${details.url} did not match active automation ${activeAutomation.url}`, {details, activeAutomation });
+    debug(
+      `Details url ${details.url} did not match active automation ${activeAutomation.url}`,
+      { details, activeAutomation }
+    );
     return;
   }
 
@@ -72,45 +76,45 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
   activeAutomation.description = details.error;
   activeAutomation.completedOn = Date.now();
   activeAutomation.active = false;
-  updateRecord(BULK_AUTOMATION, UUID, activeAutomation).then(async() => {
+  updateRecord(BULK_AUTOMATION, UUID, activeAutomation).then(async () => {
     // Determines if it was a single automation request or multiple
-    const bulkCollect = await Configuration.getConfigurationValue('automationBulkCollectionModel', true);
-    debug(`bulk collect is ${bulkCollect}`)
-    if(!bulkCollect){
-      debug(`Single automation request failed. See record for details.`)
+    const bulkCollect = await Configuration.getConfigurationValue(
+      'automationBulkCollectionModel',
+      true
+    );
+    debug(`bulk collect is ${bulkCollect}`);
+    if (!bulkCollect) {
+      debug(`Single automation request failed. See record for details.`);
       return; // single automation request
     }
     // process the next automation request
-    processReceivedMessage(null, {cmd: PROCESS_QUEUE_AUTOMATION_URLS})
-  })
-
+    processReceivedMessage(null, { cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+  });
 });
-
 
 /**
  * Add in support for short-cut keys
  */
-chrome.commands.onCommand.addListener( (command) => {
-
+chrome.commands.onCommand.addListener((command) => {
   switch (command) {
     case 'initStartCapture':
-        (async () => {
-          await captureSingleScreenShot(true);
-        })();
-        return true;
+      (async () => {
+        await captureSingleScreenShot(true);
+      })();
+      return true;
     case 'initScanPage':
-        (async () => {
-          const activeTab = await getActiveTab();
-          await scanPage(activeTab);
-        })();
-        return false;
+      (async () => {
+        const activeTab = await getActiveTab();
+        await scanPage(activeTab);
+      })();
+      return false;
       break;
     case 'initAutoScroll':
-        (async () => {
-          const activeTab = await getActiveTab();
-          processReceivedMessage(activeTab, {cmd: AUTO_COLLECT_STARTING});
-        })();
-        return false;
+      (async () => {
+        const activeTab = await getActiveTab();
+        processReceivedMessage(activeTab, { cmd: AUTO_COLLECT_STARTING });
+      })();
+      return false;
     default:
       debug('Unknown command');
       //response = await chrome.tabs.sendMessage(activeTab.id, { cmd: command });
@@ -120,14 +124,12 @@ chrome.commands.onCommand.addListener( (command) => {
   return false;
 });
 
-
 /**
  * Receives messages from the content script or the extension page. Some of the incoming
  * requests will need to be mapped to the portManager
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-
-  if(message.cmd === 'initStartCapture'){
+  if (message.cmd === 'initStartCapture') {
     (async () => {
       await captureSingleScreenShot(true);
     })();
@@ -137,22 +139,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   /**
    * Received from the content script
    */
-  if(message.cmd === CAPTURE_VISIBLE_TAB){
+  if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
-        await capture(sender.tab, message);
-        sendResponse({ completed: true })
+      await capture(sender.tab, message);
+      sendResponse({ completed: true });
     })();
     return true;
-  }
-
-  else if(message.cmd === 'setActiveAutomation'){
+  } else if (message.cmd === 'setActiveAutomation') {
     (async () => {
       setActiveAutomation(message.automation);
       sendResponse({ completed: true });
     })();
     return true;
   }
-
 
   (async () => {
     switch (message.cmd) {
@@ -168,13 +167,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         break;
       case AUTO_COLLECT_STARTING:
         const tab = await getActiveTab();
-        await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
+        await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE });
         break;
       case 'indexSelector':
-        try{
+        try {
           await Selector.add(message.selector);
-        }
-        catch(e){
+        } catch (e) {
           // ignore
           debug(e);
         }
@@ -197,7 +195,7 @@ chrome.runtime.onMessageExternal.addListener(function (
     return; // deny access to all extensions, except the Who Am I
   }
 
-  try{
+  try {
     switch (message.cmd) {
       case 'singleCollect':
       case 'deepSave':
@@ -214,18 +212,29 @@ chrome.runtime.onMessageExternal.addListener(function (
             await createTab(message.url);
             await sleep(3000);
             const activeTab = await getActiveTab();
-            await chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE })
+            await chrome.tabs.sendMessage(activeTab.id, {
+              cmd: ACTIVATE_CAPTURE,
+            });
           } catch (err) {
-            debug(err)
+            debug(err);
           }
         })();
         return false;
       case 'enqueueBulkAutomation': // legacy call, deprecated
       case ENQUEUE_BULK_AUTOMATION_URL:
         (async () => {
-          const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
-          const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
-          const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
+          const unitDefault = await Configuration.getConfigurationValue(
+            'automationUnitDefault',
+            'count'
+          );
+          const valueDefault = await Configuration.getConfigurationValue(
+            'automationValueDefault',
+            100
+          );
+          const keepTabOpenDefault = await Configuration.getConfigurationValue(
+            'automationKeepTabOpenDefault',
+            true
+          );
           await addRecord(BULK_AUTOMATION, UUID, {
             uuid: crypto.randomUUID(),
             url: message.url,
@@ -236,7 +245,7 @@ chrome.runtime.onMessageExternal.addListener(function (
             unit: unitDefault,
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
-            screenShotsCollected: 0
+            screenShotsCollected: 0,
           });
         })();
         return false;
@@ -244,9 +253,8 @@ chrome.runtime.onMessageExternal.addListener(function (
         debug(`Unknown external command cmd ${message.cmd}`);
         return true;
     }
-  }
-  catch(e){
-    ExtensionPin.setTemporaryPin('ERR')
+  } catch (e) {
+    ExtensionPin.setTemporaryPin('ERR');
   }
 });
 
@@ -281,10 +289,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-
-chrome.tabs.onCreated.addListener(tab => {
+chrome.tabs.onCreated.addListener((tab) => {
   const activeAutomation = getActiveAutomation();
-  if(tab.url && activeAutomation && tab.url === activeAutomation.url){
-    debug(`automation tab created ${activeAutomation.url}`, {tab, activeAutomation})
+  if (tab.url && activeAutomation && tab.url === activeAutomation.url) {
+    debug(`automation tab created ${activeAutomation.url}`, {
+      tab,
+      activeAutomation,
+    });
   }
-})
+});

@@ -1,4 +1,9 @@
-import { blobToBase64Image, findAllMatches, sha256, sha256FromBlob } from '../../utilities/transformers';
+import {
+  blobToBase64Image,
+  findAllMatches,
+  sha256,
+  sha256FromBlob,
+} from '../../utilities/transformers';
 
 export class Rapport {
   constructor({
@@ -20,7 +25,7 @@ export class Rapport {
     tags,
     caseManagementUuid,
     note,
-    bulkAutomationUuid
+    bulkAutomationUuid,
   }) {
     this.uuid = uuid;
     this.title = title;
@@ -111,5 +116,4 @@ export class Rapport {
       note: null,
     });
   }
-
 }

@@ -25,15 +25,14 @@ export default function TagFormDialog(props) {
   const [open, setOpen] = useState(false);
   const [record, setRecord] = useState({});
   const [tags, setTags] = useState([]);
-  const [userAddedTags, setUserAddedTags] = useState([])
+  const [userAddedTags, setUserAddedTags] = useState([]);
 
   useEffect(() => {
-    async function fetchData(){
+    async function fetchData() {
       setTags(await db.tag.toArray());
     }
     fetchData();
   }, []);
-
 
   const handleClose = () => {
     setOpen(false);
@@ -42,28 +41,25 @@ export default function TagFormDialog(props) {
   const handleSave = async () => {
     props.setIsLoading(true);
     showLoader();
-    const allTagNames = [...tags?.map(tag => tag.name), ...userAddedTags];
-    const allTags = [...new Set(allTagNames)].map(t => new Tag(t));
+    const allTagNames = [...tags?.map((tag) => tag.name), ...userAddedTags];
+    const allTags = [...new Set(allTagNames)].map((t) => new Tag(t));
 
-    try{
-      await db.tag.bulkPut(allTags)
+    try {
+      await db.tag.bulkPut(allTags);
       props.setRows(allTags);
       processNotification({
         title: 'Tag Added',
         message: `Tag ${userAddedTags.join()} has been added.`,
         type: 'success',
       });
-
-    }
-    catch(e){
+    } catch (e) {
       debug(e.toString());
       processNotification({
         title: 'Tag Add Error',
         message: e.toString(),
         type: 'danger',
       });
-    }
-    finally {
+    } finally {
       setOpen(false);
       props.setIsLoading(false);
       hideLoader();
@@ -93,28 +89,37 @@ export default function TagFormDialog(props) {
           <form noValidate>
             <FormGroup>
               <FormControl>
-              <Autocomplete
-                sx={{pt:1}}
-                multiple
-                id="tags"
-                name="tags"
-                options={tags?.map((tag) => tag.name.toLowerCase())}
-                defaultValue={[]}
-                freeSolo
-                renderTags={(value, getTagProps) => {
-                  return value.map((option, index) => (
-                    <Chip
-                      label={option} size="small" sx={{margin: '3px'}} key={`${option}_${index}`}
+                <Autocomplete
+                  sx={{ pt: 1 }}
+                  multiple
+                  id="tags"
+                  name="tags"
+                  options={tags?.map((tag) => tag.name.toLowerCase())}
+                  defaultValue={[]}
+                  freeSolo
+                  renderTags={(value, getTagProps) => {
+                    return value.map((option, index) => (
+                      <Chip
+                        label={option}
+                        size="small"
+                        sx={{ margin: '3px' }}
+                        key={`${option}_${index}`}
+                      />
+                    ));
+                  }}
+                  renderInput={(params) => (
+                    <StyledTextField
+                      {...params}
+                      label="Add Tags.."
+                      helperText={
+                        'Press Enter after each tag phrase to add a tag. Multiple tags can be set before saving.'
+                      }
                     />
-                  ));
-                }}
-                renderInput={(params) => (
-                  <StyledTextField {...params} label="Add Tags.." helperText={'Press Enter after each tag phrase to add a tag. Multiple tags can be set before saving.'} />
-                )}
-                onChange={(event, newValue) => {
-                  setUserAddedTags(newValue)
-                }}
-              />
+                  )}
+                  onChange={(event, newValue) => {
+                    setUserAddedTags(newValue);
+                  }}
+                />
               </FormControl>
             </FormGroup>
           </form>

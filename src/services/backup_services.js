@@ -13,12 +13,10 @@ export async function zipImport(zipBlob) {
 
   const results = [];
 
-  if(YR_META_FILE_NAME in unzipped){
-
-  }
-  else {
+  if (YR_META_FILE_NAME in unzipped) {
+  } else {
     // the meta file does not exist, do nothing
-    throw Error('missing metadata file')
+    throw Error('missing metadata file');
   }
 
   for (const [filename, content] of Object.entries(unzipped)) {
@@ -44,7 +42,12 @@ export async function zipImport(zipBlob) {
  * @param {int} compressionLevel - The desired compress level
  * @returns {string} - A blob URL you can use to download the zip
  */
-export async function zipExport(records, modelName, metadata = {}, compressionLevel = 6) {
+export async function zipExport(
+  records,
+  modelName,
+  metadata = {},
+  compressionLevel = 6
+) {
   const zipEntries = {};
 
   for (const record of records) {
@@ -54,11 +57,17 @@ export async function zipExport(records, modelName, metadata = {}, compressionLe
   }
 
   // Add metadata file
-  zipEntries[YR_META_FILE_NAME] = new TextEncoder().encode(JSON.stringify({
-    ...metadata,
-    version: chrome.runtime.getManifest().version, // assign the version
-    modelName: modelName // assign a model to the output type
-  }, null, 2));
+  zipEntries[YR_META_FILE_NAME] = new TextEncoder().encode(
+    JSON.stringify(
+      {
+        ...metadata,
+        version: chrome.runtime.getManifest().version, // assign the version
+        modelName: modelName, // assign a model to the output type
+      },
+      null,
+      2
+    )
+  );
 
   // Create zip
   const zipUint8 = fflate.zipSync(zipEntries, { level: compressionLevel });

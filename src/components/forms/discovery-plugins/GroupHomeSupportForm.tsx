@@ -1,6 +1,9 @@
 import React, { Fragment, useEffect, useState, MouseEvent } from 'react';
 import FormControl from '@mui/material/FormControl';
-import { StyledTextField, StyledTextFieldNoWidth } from '../../inputs/StyledTextField';
+import {
+  StyledTextField,
+  StyledTextFieldNoWidth,
+} from '../../inputs/StyledTextField';
 import FormGroup from '@mui/material/FormGroup';
 import Typography from '@mui/material/Typography';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -24,7 +27,10 @@ interface GroupHomeSupportFormProps {
   setRecord: (updater: (prev: RecordType) => RecordType) => void;
 }
 
-const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, setRecord }) => {
+const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({
+  record,
+  setRecord,
+}) => {
   const [groupNames, setGroupNames] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
@@ -57,7 +63,7 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
         {/* Group Name */}
         <FormControl>
           <Autocomplete
-            sx={{ m: 0.75, width:500 }}
+            sx={{ m: 0.75, width: 500 }}
             id="groupName"
             freeSolo
             options={groupNames}
@@ -89,7 +95,7 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
         <FormControl>
           <StyledTextFieldNoWidth
             required
-            sx={{ m: 0.75, width:500 }}
+            sx={{ m: 0.75, width: 500 }}
             name="homePage"
             id="homePage"
             label="Home Page"
@@ -135,7 +141,7 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
         <FormControl>
           <StyledTextFieldNoWidth
             required
-            sx={{ m: 0.75, width:500 }}
+            sx={{ m: 0.75, width: 500 }}
             name="supportPage"
             id="supportPage"
             label="Support Page"

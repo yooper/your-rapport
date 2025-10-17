@@ -15,30 +15,41 @@ import { Artifact } from '../models/schemas/Artifact';
  * @returns {Promise<void>}
  */
 export async function capture(tab, message = {}, deepSave = false) {
-
   ExtensionPin.setDefaultNotSaved(tab);
   let configuration = await Configuration.getConfiguration();
   // get/set the record count
-  configuration.screenShotCount =
-    configuration?.screenShotCount ?? 0;
+  configuration.screenShotCount = configuration?.screenShotCount ?? 0;
 
   // normalize text
-  const text = tab.title.toLowerCase() + ' ' + getText(message, deepSave)
+  const text = tab.title.toLowerCase() + ' ' + getText(message, deepSave);
 
-  try{
+  try {
     // search the saved record for keywords
-    const selectors = await db.selector.toArray()
+    const selectors = await db.selector.toArray();
     const screenShot = await chrome.tabs.captureVisibleTab();
-    const record = await Rapport.createFromTab(tab, text , screenShot, selectors);
-    record.sequenceId = ('sequence' in message) ? message.sequence : 0;
-    record.bulkAutomationUuid = ('automation' in message && message.automation) ? message.automation.uuid : null;
+    const record = await Rapport.createFromTab(
+      tab,
+      text,
+      screenShot,
+      selectors
+    );
+    record.sequenceId = 'sequence' in message ? message.sequence : 0;
+    record.bulkAutomationUuid =
+      'automation' in message && message.automation
+        ? message.automation.uuid
+        : null;
 
     // save the mhtml artifact.
-    if(deepSave){
-      const blob = await chrome.pageCapture.saveAsMHTML({tabId: tab.id});
-      const artifact = await Artifact.create(blob, record.uuid, record.url, 'multipart/related');
-      db.artifact.add(artifact)
-      record.artifacts.push(Artifact.getAttachment(artifact))
+    if (deepSave) {
+      const blob = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
+      const artifact = await Artifact.create(
+        blob,
+        record.uuid,
+        record.url,
+        'multipart/related'
+      );
+      db.artifact.add(artifact);
+      record.artifacts.push(Artifact.getAttachment(artifact));
     }
 
     await addRecord(RAPPORT, UUID, record);
@@ -46,22 +57,20 @@ export async function capture(tab, message = {}, deepSave = false) {
     configuration[UPDATED_ON] = Date.now();
     configuration.screenShotCount++;
 
-    await Configuration.setConfiguration(configuration)
+    await Configuration.setConfiguration(configuration);
     ExtensionPin.setDefaultSaved(tab);
-  }
-  catch(error){
+  } catch (error) {
     // TODO: ERROR handling for too many captures
-    if(error){
+    if (error) {
       debug(error);
     }
     ExtensionPin.setBgColorAndText('red', 'ERR', tab);
     // stop scrolling when an error occurs
     chrome.tabs.sendMessage(tab.id, { cmd: 'stopCapture' });
-  }
-  finally {
+  } finally {
     setTimeout(() => {
       ExtensionPin.setDefault(tab);
-    }, 3000)
+    }, 3000);
   }
 }
 
@@ -73,7 +82,7 @@ function splitCamelCase(input) {
 }
 
 // Compute SHA-256 hash of a blob
-async function calculateSha256(blob){
+async function calculateSha256(blob) {
   const buffer = await blob.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -86,12 +95,10 @@ async function calculateSha256(blob){
  * @param deepSave
  * @returns {string}
  */
-function getText(message, deepSave){
-  if(deepSave){
-    return message.text.toLowerCase()
-  }
-  else
-  {
-     return splitCamelCase(message?.visibleText ?? '').toLowerCase();
+function getText(message, deepSave) {
+  if (deepSave) {
+    return message.text.toLowerCase();
+  } else {
+    return splitCamelCase(message?.visibleText ?? '').toLowerCase();
   }
 }

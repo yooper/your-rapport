@@ -58,10 +58,16 @@ export default function BulkAutomationAddDialog(props) {
 
   const handleSave = async () => {
     if (text.length > 0 && text.trim().length > 0) {
-      const urls = text.split('\n').filter(t => t && _isValidUrl(t));
+      const urls = text.split('\n').filter((t) => t && _isValidUrl(t));
       const existingUrls = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
-      const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
+      const unitDefault = await Configuration.getConfigurationValue(
+        'automationUnitDefault',
+        'count'
+      );
+      const valueDefault = await Configuration.getConfigurationValue(
+        'automationValueDefault',
+        100
+      );
       let automateUrls = urls.map((url) => {
         return {
           uuid: crypto.randomUUID(),
@@ -72,8 +78,8 @@ export default function BulkAutomationAddDialog(props) {
           unit: unitDefault,
           value: valueDefault,
           keepTabOpen: true,
-          screenShotsCollected: 0
-        }
+          screenShotsCollected: 0,
+        };
       });
 
       const rows = existingUrls.concat(automateUrls);

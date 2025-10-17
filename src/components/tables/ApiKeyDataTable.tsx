@@ -26,12 +26,11 @@ const ApiKeyDataTable: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
 
-
   useEffect(() => {
     (async () => {
       setIsLoading(true);
       setConfig(await ConfigurationOptionRepo.getConfigObject());
-      setRows(await db.apiKey.toArray())
+      setRows(await db.apiKey.toArray());
       setIsLoading(false);
     })();
   }, []);
@@ -82,9 +81,10 @@ const ApiKeyDataTable: React.FC = () => {
 
   const options: MUIDataTableOptions = {
     searchAlwaysOpen: true,
-    onRowsDelete: async (
-      rowsDeleted: { data: MUIDataTableIsRowCheck[]; lookup: Record<number, boolean> }
-    ) => {
+    onRowsDelete: async (rowsDeleted: {
+      data: MUIDataTableIsRowCheck[];
+      lookup: Record<number, boolean>;
+    }) => {
       // Collect selected primary keys
       const keysToDelete = Object.keys(rowsDeleted.lookup)
         .map((idxStr) => rows[Number(idxStr)]?.Key)

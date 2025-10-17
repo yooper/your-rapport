@@ -5,7 +5,11 @@ import './index.css';
 import { APIResponse, Props } from '../../types';
 import { processApiRequest } from '../../services/api_services';
 
-const ApiRequestViewer: React.FC<Props> = ({ autoRun = true, pretty = 2, className }) => {
+const ApiRequestViewer: React.FC<Props> = ({
+  autoRun = true,
+  pretty = 2,
+  className,
+}) => {
   const [result, setResult] = useState<APIResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +39,6 @@ const ApiRequestViewer: React.FC<Props> = ({ autoRun = true, pretty = 2, classNa
     </pre>
   );
 };
-
 
 const container = document.getElementById('app-container');
 if (!container) {

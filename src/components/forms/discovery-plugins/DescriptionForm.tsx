@@ -6,10 +6,9 @@ const DescriptionForm: React.FC<DiscoveryPluginBasicFormProps> = ({
   record,
   setRecord,
   pluginTypes,
-}) =>
-{
-  return(
-      <TextareaAutosize
+}) => {
+  return (
+    <TextareaAutosize
       style={{ width: '90%' }}
       minRows={25}
       maxRows={100}
@@ -17,7 +16,9 @@ const DescriptionForm: React.FC<DiscoveryPluginBasicFormProps> = ({
       name="description"
       id="urls"
       defaultValue={record.description}
-      onChange={(e) => setRecord((prev) =>  ({ ...prev, description: e.target.value }))}
+      onChange={(e) =>
+        setRecord((prev) => ({ ...prev, description: e.target.value }))
+      }
     />
-  )
-}
+  );
+};

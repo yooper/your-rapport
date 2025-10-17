@@ -1,7 +1,13 @@
 import { getSelectorTypeMap } from '../utilities/loaders';
 import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
-import { ACTIVATE_CAPTURE, BULK_AUTOMATION, RAPPORT, UPDATED_ON, UUID } from './constants';
+import {
+  ACTIVATE_CAPTURE,
+  BULK_AUTOMATION,
+  RAPPORT,
+  UPDATED_ON,
+  UUID,
+} from './constants';
 import { captureSingleScreenShot } from './collection_services';
 import { db } from '../models/db/dexieDb';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
@@ -31,7 +37,7 @@ export async function initializeContextMenus() {
   chrome.contextMenus.create({
     id: 'autocollectPage',
     title: 'Autoscroll Collect',
-    contexts: ['page', 'image','video','audio'],
+    contexts: ['page', 'image', 'video', 'audio'],
   });
 
   // add link to bulk capture for future research
@@ -45,7 +51,7 @@ export async function initializeContextMenus() {
   chrome.contextMenus.create({
     id: 'deepSave',
     title: 'Deep Save',
-    contexts: ['page','image','video','audio'],
+    contexts: ['page', 'image', 'video', 'audio'],
   });
 
   // add a seperator
@@ -67,10 +73,15 @@ export async function initializeContextMenus() {
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     switch (info.menuItemId) {
       case 'collectImage':
-        (async() => {
-          ExtensionPin.setTemporaryPin('SAVG')
-          const downloadedBlob = await fetchBlob(info.srcUrl)
-          const rapport = await Rapport.createFromBlob(downloadedBlob, info.srcUrl, tab.title, [])
+        (async () => {
+          ExtensionPin.setTemporaryPin('SAVG');
+          const downloadedBlob = await fetchBlob(info.srcUrl);
+          const rapport = await Rapport.createFromBlob(
+            downloadedBlob,
+            info.srcUrl,
+            tab.title,
+            []
+          );
           rapport.sequenceId = 0;
           rapport.bulkAutomationUuid = null;
           await addRecord(RAPPORT, UUID, rapport);
@@ -80,25 +91,34 @@ export async function initializeContextMenus() {
           configuration.screenShotCount = configuration?.screenShotCount ?? 0;
           configuration[UPDATED_ON] = Date.now();
           configuration.screenShotCount++;
-          await Configuration.setConfiguration(configuration)
+          await Configuration.setConfiguration(configuration);
           ExtensionPin.setDefaultSaved(tab);
-        })()
+        })();
         break;
       case 'deepSave':
-        ExtensionPin.setTemporaryPin('SAVG')
-        captureSingleScreenShot(true).then()
+        ExtensionPin.setTemporaryPin('SAVG');
+        captureSingleScreenShot(true).then();
         break;
       case 'autocollectPage':
         captureSingleScreenShot().then(() => {
-          ExtensionPin.setTemporaryPin('SAVG')
-          chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
-        })
+          ExtensionPin.setTemporaryPin('SAVG');
+          chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE });
+        });
         break;
       case 'addBulkAutomationUrl':
         (async () => {
-          const unitDefault = await Configuration.getConfigurationValue('automationUnitDefault', 'count');
-          const valueDefault = await Configuration.getConfigurationValue('automationValueDefault', 100)
-          const keepTabOpenDefault = await Configuration.getConfigurationValue('automationKeepTabOpenDefault', true)
+          const unitDefault = await Configuration.getConfigurationValue(
+            'automationUnitDefault',
+            'count'
+          );
+          const valueDefault = await Configuration.getConfigurationValue(
+            'automationValueDefault',
+            100
+          );
+          const keepTabOpenDefault = await Configuration.getConfigurationValue(
+            'automationKeepTabOpenDefault',
+            true
+          );
           const urlLink = selectCorrectLink({
             linkUrl: info.linkUrl,
             frameUrl: info.frameUrl,
@@ -113,7 +133,7 @@ export async function initializeContextMenus() {
             unit: unitDefault,
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
-            screenShotsCollected: 0
+            screenShotsCollected: 0,
           });
           ExtensionPin.setTemporaryPin('SAVD');
         })();

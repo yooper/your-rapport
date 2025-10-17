@@ -8,10 +8,12 @@
 import { autoScroller } from './modules/autoScroller';
 import { initMarkJsHandler } from './modules/markText';
 import {
-  ACTIVATE_AUTOMATION, ACTIVATE_CAPTURE,
+  ACTIVATE_AUTOMATION,
+  ACTIVATE_CAPTURE,
   AUTOMATION_RUNNING,
-  BULK_AUTOMATION, PAGE_INITIALIZED,
-  RAPPORT
+  BULK_AUTOMATION,
+  PAGE_INITIALIZED,
+  RAPPORT,
 } from '../../services/constants';
 import { getVisibleText } from './modules/visibleElements';
 import { debug } from '../../services/logger_services';
@@ -19,13 +21,13 @@ import { isAutomationBlockerDetected } from './modules/automationBlockerDetectio
 import { waitForAllImagesToLoad } from '../../services/image_loading_services';
 
 export const pageUuid = crypto.randomUUID();
-export const port = chrome.runtime.connect({name: RAPPORT});
+export const port = chrome.runtime.connect({ name: RAPPORT });
 
 /**
  *
  * @returns {{cmd: string, screenShotCount: number, text: string, title: string, uuid: string, contentType: string, url: string, isAutomationBlockerDetected: boolean}}
  */
-function getPageInfo(){
+function getPageInfo() {
   return {
     cmd: PAGE_INITIALIZED,
     uuid: pageUuid,
@@ -38,10 +40,9 @@ function getPageInfo(){
     visibleText: getVisibleText(),
     text: document.documentElement.innerText,
     createdOn: Date.now(),
-    tab: null
-  }
+    tab: null,
+  };
 }
-
 
 /**
  * Upon connection send details about the page
@@ -57,17 +58,15 @@ port.onMessage.addListener((message) => {
 
 /** route one time messages */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  route(message)
-})
-
-
+  route(message);
+});
 
 /**
  * Process the incoming messages
  * @param message
  */
 const route = (message) => {
-  if(!('cmd' in message)){
+  if (!('cmd' in message)) {
     debug('invalid command', message);
     return false;
   }
@@ -77,13 +76,16 @@ const route = (message) => {
 
   autoScroller(message);
 
-  switch(cmd){
+  switch (cmd) {
     // automated trigger
     case ACTIVATE_AUTOMATION:
-      port.postMessage({cmd: AUTOMATION_RUNNING, automation: message.automation });
+      port.postMessage({
+        cmd: AUTOMATION_RUNNING,
+        automation: message.automation,
+      });
       return;
   }
-}
+};
 
 /**
  * Helper function to wrap outbound messages
@@ -91,12 +93,10 @@ const route = (message) => {
  * @returns {*&{pageInfo: {automation: null, screenShotCount: number, title: string, uuid: string, contentType: string, url: string}}}
  */
 const composeMessage = (message) => {
-  return {...message, ...{ pageInfo : getPageInfo() } }
-}
-
+  return { ...message, ...{ pageInfo: getPageInfo() } };
+};
 
 //initAutoScrollerHandler();
 initMarkJsHandler();
 
-waitForAllImagesToLoad()
-
+waitForAllImagesToLoad();

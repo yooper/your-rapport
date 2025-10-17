@@ -7,13 +7,19 @@ import { Configuration } from '../models/schemas/Configuration';
  * @param data - Optional additional data object to log
  * @param includeTrace : boolean
  */
-export async function debug(message: string, data: any = {}, includeTrace = false): Promise<void> {
+export async function debug(
+  message: string,
+  data: any = {},
+  includeTrace = false
+): Promise<void> {
   try {
-    const value: boolean = await Configuration.getConfigurationValue<boolean>('debug', true);
+    const value: boolean = await Configuration.getConfigurationValue<boolean>(
+      'debug',
+      true
+    );
     if (value && includeTrace) {
       console.trace(message, data);
-    }
-    else if(value){
+    } else if (value) {
       console.log(message, data);
     }
   } catch (err) {

@@ -12,8 +12,12 @@ export async function waitForAllImagesToLoad(): Promise<void> {
     fetchCraigsListImages();
   }
 
-  const images: HTMLImageElement[] = Array.from(document.querySelectorAll('img'));
-  const notLoadedImages = images.filter(img => !img.complete || img.naturalWidth === 0);
+  const images: HTMLImageElement[] = Array.from(
+    document.querySelectorAll('img')
+  );
+  const notLoadedImages = images.filter(
+    (img) => !img.complete || img.naturalWidth === 0
+  );
 
   if (notLoadedImages.length === 0) {
     // All images are already loaded
@@ -22,8 +26,8 @@ export async function waitForAllImagesToLoad(): Promise<void> {
 
   await Promise.all(
     notLoadedImages.map(
-      img =>
-        new Promise<void>(resolve => {
+      (img) =>
+        new Promise<void>((resolve) => {
           img.onload = () => resolve();
           img.onerror = () => resolve(); // Resolve even if an image fails to load
         })
@@ -57,48 +61,47 @@ function fetchCraigsListImages(): void {
   });
 }
 
-export async function fetchBlob( url: string) : Promise<Blob|null> {
-    if(url.startsWith('blob:http')){
-      debug(`Bad media URL ${url}`);
+export async function fetchBlob(url: string): Promise<Blob | null> {
+  if (url.startsWith('blob:http')) {
+    debug(`Bad media URL ${url}`);
+    //Badge.setBgColorAndText('red', 'X')
+    //setTimeout(() => { Badge.setDefault() }, 1500)
+    return null;
+  }
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      debug(`Error when getting data ${await response.text()}`);
       //Badge.setBgColorAndText('red', 'X')
-      //setTimeout(() => { Badge.setDefault() }, 1500)
       return null;
     }
 
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        debug(`Error when getting data ${await response.text()}`)
-        //Badge.setBgColorAndText('red', 'X')
-        return null;
-      }
-
-      //collect the blob
-      const blob = await response.blob()
-      return blob;
-    }
-    catch(e){
-      debug(String(e), {url})
-    }
-    return null;
+    //collect the blob
+    const blob = await response.blob();
+    return blob;
+  } catch (e) {
+    debug(String(e), { url });
+  }
+  return null;
 }
-
 
 /**
  * Concatenate several images together
  * @param rapports
  */
-export async function mergeImagesVertically(rapports: Array<IRapport>) : Promise<string>
-{
-  const images = []
+export async function mergeImagesVertically(
+  rapports: Array<IRapport>
+): Promise<string> {
+  const images = [];
   let totalHeight = 0;
   let maxWidth = 0;
 
   // Load all images and gather dimensions, that have a screenshot
-  for (const rapport of rapports.filter(r => r.screenshot)) {
+  for (const rapport of rapports.filter((r) => r.screenshot)) {
     const img = new Image();
     img.src = rapport.screenshot;
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       img.onload = resolve;
     });
     images.push(img);

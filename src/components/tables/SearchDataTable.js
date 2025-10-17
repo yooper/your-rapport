@@ -13,7 +13,13 @@ import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
 import { Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
-import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
+import {
+  DISCOVERY_PLUGIN,
+  RAPPORT,
+  SELECTOR,
+  UPDATED_ON,
+  UUID,
+} from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
@@ -24,7 +30,6 @@ import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
 import TagIcon from '@mui/icons-material/Tag';
 import LanguageIcon from '@mui/icons-material/Language';
 
-
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,20 +38,20 @@ export default function SearchDataTable(props) {
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
 
   useEffect(() => {
-      async function fetchData() {
-        showLoader();
-        setIsLoading(true);
-        const start = performance.now()
-        setSelectors(await db.selector.toArray());
-        setTags(await db.tag.toArray());
-        setDiscoveryPlugins(await getLocalItem(DISCOVERY_PLUGIN) ?? []);
-        const screenshots = await getLocalItem(RAPPORT) ?? [];
-        const elapsed = performance.now() - start;
-        debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-        setRows(screenshots);
-        setIsLoading(false);
-        hideLoader();
-      }
+    async function fetchData() {
+      showLoader();
+      setIsLoading(true);
+      const start = performance.now();
+      setSelectors(await db.selector.toArray());
+      setTags(await db.tag.toArray());
+      setDiscoveryPlugins((await getLocalItem(DISCOVERY_PLUGIN)) ?? []);
+      const screenshots = (await getLocalItem(RAPPORT)) ?? [];
+      const elapsed = performance.now() - start;
+      debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
+      setRows(screenshots);
+      setIsLoading(false);
+      hideLoader();
+    }
 
     fetchData();
 
@@ -55,18 +60,16 @@ export default function SearchDataTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-
-      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
+      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON);
       const pageCachedOn = localStorage.getItem(UPDATED_ON) ?? null;
 
-      if(updatedOn != pageCachedOn){
+      if (updatedOn != pageCachedOn) {
         await fetchData(); // check for new data every 10 seconds.
         localStorage.setItem(UPDATED_ON, updatedOn);
       }
     }, 3000); // wait 5 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
-
 
   const columns = [
     {
@@ -80,7 +83,9 @@ export default function SearchDataTable(props) {
           const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
           const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
-          const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(record.artifacts?.length > 0)
+          const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(
+            record.artifacts?.length > 0
+          );
 
           return (
             <>
@@ -95,34 +100,60 @@ export default function SearchDataTable(props) {
               />
               <div>
                 <Box>
-                    <Badge badgeContent={0} color={"primary"}>
-                        <VerticalGenericTableDialog
-                            selectedRecord={record}
-                            title={`Data Integrity Attributes`}
-                            iconType={'InfoOutlinedIcon'}
-                            approvedFields={
-                                ['url', 'domain', 'hash', 'hashAlgorithm', 'createdBy', 'createdOn', 'updatedBy', 'updatedOn', 'size']}
+                  <Badge badgeContent={0} color={'primary'}>
+                    <VerticalGenericTableDialog
+                      selectedRecord={record}
+                      title={`Data Integrity Attributes`}
+                      iconType={'InfoOutlinedIcon'}
+                      approvedFields={[
+                        'url',
+                        'domain',
+                        'hash',
+                        'hashAlgorithm',
+                        'createdBy',
+                        'createdOn',
+                        'updatedBy',
+                        'updatedOn',
+                        'size',
+                      ]}
+                    />
+                  </Badge>
+                  <Badge>
+                    <Tooltip title={'Add or modify tags'}>
+                      <TagIcon
+                        onClick={() => {
+                          setOpenAddTagDialog(true);
+                        }}
+                      />
+                    </Tooltip>
+                  </Badge>
+                  {hasMhtmlArtifact ? (
+                    <Badge>
+                      <Tooltip
+                        title={'Download the mhtml file for this Rapport.'}
+                      >
+                        <LanguageIcon
+                          onClick={() => {
+                            if (record.artifacts.length > 0) {
+                              Artifact.downloadArtifact(
+                                record.artifacts[0],
+                                `your.rapport.${record.artifacts[0].id}.mhtml`
+                              );
+                            } else {
+                              createTab(
+                                'https://github.com/yooper/your-rapport/issues/16'
+                              );
+                              debug(
+                                'Mhtml file not available for download when auto scroll capture is run.'
+                              );
+                            }
+                          }}
                         />
-                    </Badge>
-                    <Badge>
-                      <Tooltip title={'Add or modify tags'}>
-                        <TagIcon onClick={() => { setOpenAddTagDialog(true); }}/>
                       </Tooltip>
                     </Badge>
-                  { hasMhtmlArtifact ?
-                    <Badge>
-                      <Tooltip title={'Download the mhtml file for this Rapport.'}>
-                        <LanguageIcon onClick={() => {
-                          if (record.artifacts.length > 0) {
-                            Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0].id}.mhtml`);
-                          } else {
-                            createTab('https://github.com/yooper/your-rapport/issues/16');
-                            debug('Mhtml file not available for download when auto scroll capture is run.');
-                          }
-                        }} />
-                      </Tooltip>
-                    </Badge> : <span></span>
-                  }
+                  ) : (
+                    <span></span>
+                  )}
                 </Box>
               </div>
               <PreviewImageDialog
@@ -188,11 +219,7 @@ export default function SearchDataTable(props) {
               </div>
               <div>
                 <span>
-                  <NotesDialog
-                    record={record}
-                    rows={rows}
-                    setRows={setRows}
-                  />
+                  <NotesDialog record={record} rows={rows} setRows={setRows} />
                 </span>
                 <span className={'page_title'}>Notes:</span>
                 <span> {record.note ?? ''}</span>
@@ -217,17 +244,17 @@ export default function SearchDataTable(props) {
           },
         },
         customBodyRender: (value, tableMeta, updateValue) => {
-          const record = getRecord(tableMeta.rowData)
+          const record = getRecord(tableMeta.rowData);
           return value?.map((tag, index) => (
-              <DiscoveryPluginDialog
-                  key={`tag-${tag.name}-${record.uuid}`}
-                  plugins={[]}
-                  title={'tag'}
-                  record={record}
-                  uxType={'chip'}
-                  selectorValue={tag.name}
-              />
-          ))
+            <DiscoveryPluginDialog
+              key={`tag-${tag.name}-${record.uuid}`}
+              plugins={[]}
+              title={'tag'}
+              record={record}
+              uxType={'chip'}
+              selectorValue={tag.name}
+            />
+          ));
         },
       },
     },
@@ -266,29 +293,31 @@ export default function SearchDataTable(props) {
         },
       },
     },
-      {
-        name: 'domain',
-        label: 'DOMAINS',
-        options: {
-          filterType: 'multiselect',
-          filter: true,
-          sort: true,
-          customBodyRender: (value, tableMeta, updateValue) => {
-            const record = getRecord(tableMeta.rowData)
+    {
+      name: 'domain',
+      label: 'DOMAINS',
+      options: {
+        filterType: 'multiselect',
+        filter: true,
+        sort: true,
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData);
 
-            return <DiscoveryPluginDialog
-                key={`domain-${value}-${record.uuid}`}
-                plugins={discoveryPlugins.filter((plugin) => {
-                  return plugin.pluginType === 'domain';
-                })}
-                title={'domain'}
-                record={record}
-                uxType={'chip'}
-                selectorValue={value}
+          return (
+            <DiscoveryPluginDialog
+              key={`domain-${value}-${record.uuid}`}
+              plugins={discoveryPlugins.filter((plugin) => {
+                return plugin.pluginType === 'domain';
+              })}
+              title={'domain'}
+              record={record}
+              uxType={'chip'}
+              selectorValue={value}
             />
-          }
+          );
         },
       },
+    },
     {
       name: 'createdOn',
       label: 'COLLECTED ON',
@@ -312,7 +341,13 @@ export default function SearchDataTable(props) {
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
-          return <SearchTableOptionMenu record={record} rows={rows} setRows={setRows}/>;
+          return (
+            <SearchTableOptionMenu
+              record={record}
+              rows={rows}
+              setRows={setRows}
+            />
+          );
         },
       },
     },
@@ -398,8 +433,8 @@ export default function SearchDataTable(props) {
     const deleteRecords = [];
     const deleteArtifacts = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
-      deleteRecords.push(rows[idx])
-      deleteArtifacts.push(...rows[idx].artifacts.map(a => a.id));
+      deleteRecords.push(rows[idx]);
+      deleteArtifacts.push(...rows[idx].artifacts.map((a) => a.id));
     }
 
     await db.artifact.bulkDelete(deleteArtifacts);
@@ -421,11 +456,11 @@ export default function SearchDataTable(props) {
       },
     },
     onDownload: (buildHead, buildBody, columns, data) => {
-        showLoader();
-        getLocalItem(RAPPORT).then((rapports) => {
-          downloadJsonData(rapports, 'your-rapport.json');
-          hideLoader();
-        });
+      showLoader();
+      getLocalItem(RAPPORT).then((rapports) => {
+        downloadJsonData(rapports, 'your-rapport.json');
+        hideLoader();
+      });
       return false;
     },
     searchOpen: true,
@@ -457,20 +492,20 @@ export default function SearchDataTable(props) {
     customToolbar: () => {
       return (
         <>
-          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading}/>
+          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading} />
         </>
       );
     },
     customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
-          <SearchDataTableToolbarSelect
-              selectedRows={selectedRows}
-              displayData={displayData}
-              columns={columns}
-              setSelectedRows={setSelectedRows}
-              rows={rows}
-              onRowsDelete={rowsDelete}
-          />
-      ),
+      <SearchDataTableToolbarSelect
+        selectedRows={selectedRows}
+        displayData={displayData}
+        columns={columns}
+        setSelectedRows={setSelectedRows}
+        rows={rows}
+        onRowsDelete={rowsDelete}
+      />
+    ),
   };
 
   if (isLoading) {

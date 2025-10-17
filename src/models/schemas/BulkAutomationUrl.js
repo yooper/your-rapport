@@ -5,14 +5,13 @@ import { getLocalItem, updateRecord } from '../db/local';
 import { BULK_AUTOMATION, UUID } from '../../services/constants';
 
 export class BulkAutomationUrl {
-  constructor(
-  ) {
+  constructor() {
     this.uuid = crypto.randomUUID();
     this.url = null;
     this.unit = null;
     this.value = null;
     this.screenShotsCollected = 0;
-    this.keepTabOpen = false
+    this.keepTabOpen = false;
     this.createdOn = Date.now();
     this.ranOn = null;
     this.completedOn = null;
@@ -26,10 +25,12 @@ export class BulkAutomationUrl {
    *
    * @returns {Promise<BulkAutomationUrl|null>}
    */
-  static async getActiveAutomation(){
+  static async getActiveAutomation() {
     const automationQueue = await getLocalItem(BULK_AUTOMATION);
-    const activeAutomation = automationQueue.find(a => a.active);
-    return activeAutomation ? BulkAutomationUrl._getInstance(activeAutomation) : null;
+    const activeAutomation = automationQueue.find((a) => a.active);
+    return activeAutomation
+      ? BulkAutomationUrl._getInstance(activeAutomation)
+      : null;
   }
 
   /**
@@ -38,25 +39,24 @@ export class BulkAutomationUrl {
    * @returns {BulkAutomationUrl}
    * @private
    */
-  static _getInstance(obj){
+  static _getInstance(obj) {
     const instance = new BulkAutomationUrl();
     Object.assign(instance, obj);
-    return instance
+    return instance;
   }
 
-  static async getAndSetNextAutomation(){
+  static async getAndSetNextAutomation() {
     const automationQueue = await getLocalItem(BULK_AUTOMATION);
-    const activeAutomation = automationQueue.find(a => !a.ranOn);
-    if(!activeAutomation){
+    const activeAutomation = automationQueue.find((a) => !a.ranOn);
+    if (!activeAutomation) {
       return null;
     }
 
     activeAutomation.ranOn = Date.now();
     activeAutomation.active = true;
     await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-    return activeAutomation ? BulkAutomationUrl._getInstance(activeAutomation) : null;
+    return activeAutomation
+      ? BulkAutomationUrl._getInstance(activeAutomation)
+      : null;
   }
-
-
-
 }

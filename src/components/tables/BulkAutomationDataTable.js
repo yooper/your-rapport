@@ -2,8 +2,18 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
-import { deleteRecord, getLocalItem, setLocalItem, updateRecord } from '../../models/db/local';
-import { createTab, hideLoader, processNotification, showLoader } from '../../utilities/loaders';
+import {
+  deleteRecord,
+  getLocalItem,
+  setLocalItem,
+  updateRecord,
+} from '../../models/db/local';
+import {
+  createTab,
+  hideLoader,
+  processNotification,
+  showLoader,
+} from '../../utilities/loaders';
 import BulkAutomationAddDialog from '../dialogs/automations/BulkAutomationAddDialog';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import IconButton from '@mui/material/IconButton';
@@ -14,7 +24,8 @@ import {
   DISCOVERY_PLUGIN,
   PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
-  SELECTOR, UPDATED_ON,
+  SELECTOR,
+  UPDATED_ON,
   UUID,
 } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
@@ -23,21 +34,21 @@ import { debug } from '../../services/logger_services';
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const port = chrome.runtime.connect({name: RAPPORT});
+  const port = chrome.runtime.connect({ name: RAPPORT });
 
-    useEffect(() => {
-      async function fetchData() {
-        showLoader();
-        setIsLoading(true);
-        const start = performance.now()
-        const data = await getLocalItem(BULK_AUTOMATION)
-        if(data.length !== rows.length){
-          setRows(data)
-        }
-        const elapsed = performance.now() - start;
-        debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-        hideLoader();
+  useEffect(() => {
+    async function fetchData() {
+      showLoader();
+      setIsLoading(true);
+      const start = performance.now();
+      const data = await getLocalItem(BULK_AUTOMATION);
+      if (data.length !== rows.length) {
+        setRows(data);
       }
+      const elapsed = performance.now() - start;
+      debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
+      hideLoader();
+    }
 
     fetchData();
 
@@ -46,25 +57,27 @@ export default function BulkAutomationTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-        //await fetchData(); // check for new data every 3 seconds.
+      //await fetchData(); // check for new data every 3 seconds.
     }, 3000); // wait 3 seconds before re-renders
     return () => clearInterval(intervalId);
-  }, []);  
-  
+  }, []);
 
   /**
    * Initiate the process of bulk downloading the list of urls
    * @param records
    */
   async function startAutomationProcess() {
-    if(rows.length === 0){
+    if (rows.length === 0) {
       return;
     }
-    await Configuration.setConfigurationValue('automationBulkCollectionModel', true);
-    const automationQueue = await getLocalItem(BULK_AUTOMATION) ?? []
-    automationQueue.forEach(a => a.active = false);
+    await Configuration.setConfigurationValue(
+      'automationBulkCollectionModel',
+      true
+    );
+    const automationQueue = (await getLocalItem(BULK_AUTOMATION)) ?? [];
+    automationQueue.forEach((a) => (a.active = false));
     await setLocalItem(BULK_AUTOMATION, automationQueue);
-    port.postMessage({cmd: PROCESS_QUEUE_AUTOMATION_URLS})
+    port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
   }
 
   const getRecord = (rowData) => {
@@ -80,7 +93,7 @@ export default function BulkAutomationTable(props) {
       showLoader();
       setIsLoading(true);
       const records = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      if(records.length !== rows.length){
+      if (records.length !== rows.length) {
         setRows(records);
       }
       setIsLoading(false);
@@ -88,7 +101,6 @@ export default function BulkAutomationTable(props) {
     }
     fetchData();
   }, []);
-
 
   const columns = [
     {
@@ -150,7 +162,11 @@ export default function BulkAutomationTable(props) {
               label={
                 <div>
                   <IconButton>
-                    <HelperPopover message={'After the collection process has completed do you want the tab to stay open?'} />
+                    <HelperPopover
+                      message={
+                        'After the collection process has completed do you want the tab to stay open?'
+                      }
+                    />
                   </IconButton>
                 </div>
               }
@@ -171,8 +187,8 @@ export default function BulkAutomationTable(props) {
         sort: true,
         searchable: false,
         customBodyRenderLite: (dataIndex) => {
-          if(!rows[dataIndex].ranOn){
-            return <div></div>
+          if (!rows[dataIndex].ranOn) {
+            return <div></div>;
           }
           const date = new Date(parseInt(rows[dataIndex].ranOn));
           return <div>{date.toLocaleString()}</div>;
@@ -187,8 +203,8 @@ export default function BulkAutomationTable(props) {
         sort: true,
         searchable: false,
         customBodyRenderLite: (dataIndex) => {
-          if(!rows[dataIndex].completedOn){
-            return <div></div>
+          if (!rows[dataIndex].completedOn) {
+            return <div></div>;
           }
           const date = new Date(parseInt(rows[dataIndex].completedOn));
           return <div>{date.toLocaleString()}</div>;
@@ -217,29 +233,38 @@ export default function BulkAutomationTable(props) {
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
           return (
-          <Tooltip
-            title={
-              'Re run the automation on this url'
-            }
-          >
-            <IconButton onClick={async () => {
-              record.ranOn = null;
-              record.completedOn = null;
-              const automationQueue = await updateRecord(BULK_AUTOMATION, UUID, record) ?? [];
-              automationQueue.forEach(a => a.active = false);
-              const automation = automationQueue.find(a => a.uuid === record.uuid);
-              automation.active = true;
-              automation.ranOn = null
-              automation.description = 'User Restarted Automation'
-              processNotification({title: 'Restarting Automation', message: 'Automation job is restarting. Don\'t Spam the button.' , type: 'success'});
-              // only the active automation is run, bulk automation must be off
-              await Configuration.setConfigurationValue('automationBulkCollectionModel', false);
-              await setLocalItem(BULK_AUTOMATION, automationQueue);
-              port.postMessage({cmd: PROCESS_QUEUE_AUTOMATION_URLS})
-            }}>
-              <DirectionsRunIcon />
-            </IconButton>
-          </Tooltip>
+            <Tooltip title={'Re run the automation on this url'}>
+              <IconButton
+                onClick={async () => {
+                  record.ranOn = null;
+                  record.completedOn = null;
+                  const automationQueue =
+                    (await updateRecord(BULK_AUTOMATION, UUID, record)) ?? [];
+                  automationQueue.forEach((a) => (a.active = false));
+                  const automation = automationQueue.find(
+                    (a) => a.uuid === record.uuid
+                  );
+                  automation.active = true;
+                  automation.ranOn = null;
+                  automation.description = 'User Restarted Automation';
+                  processNotification({
+                    title: 'Restarting Automation',
+                    message:
+                      "Automation job is restarting. Don't Spam the button.",
+                    type: 'success',
+                  });
+                  // only the active automation is run, bulk automation must be off
+                  await Configuration.setConfigurationValue(
+                    'automationBulkCollectionModel',
+                    false
+                  );
+                  await setLocalItem(BULK_AUTOMATION, automationQueue);
+                  port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+                }}
+              >
+                <DirectionsRunIcon />
+              </IconButton>
+            </Tooltip>
           );
         },
       },

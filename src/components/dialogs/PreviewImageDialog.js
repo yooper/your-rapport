@@ -42,14 +42,14 @@ export default function PreviewImageDialog(props) {
         <DialogTitle>
           <IconButton>
             <Tooltip title={'Click to download the screenshot'}>
-            <CloudDownload
-              onClick={() =>
-                downloadBase64Image(
-                  props.record.screenshot,
-                  `${props.record.uuid}.png`
-                )
-              }
-            />
+              <CloudDownload
+                onClick={() =>
+                  downloadBase64Image(
+                    props.record.screenshot,
+                    `${props.record.uuid}.png`
+                  )
+                }
+              />
             </Tooltip>
           </IconButton>
           {`Collected On: ${props.record.createdOnLocalTime} - ${props.record.url}`}

@@ -8,7 +8,6 @@ import TopAppBar from '../../components/TopAppBar';
 import './index.css';
 import 'react-notifications-component/dist/theme.css';
 
-
 function App() {
   return (
     <Fragment>

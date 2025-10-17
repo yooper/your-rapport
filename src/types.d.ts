@@ -6,7 +6,6 @@ export type Selector = {
   active: boolean;
 };
 
-
 export type Address = {
   address?: string;
   address2?: string;
@@ -14,27 +13,27 @@ export type Address = {
   country?: string;
   postalCode?: string;
   region?: string;
-}
+};
 
 export type Participants = {
-  to?: string
+  to?: string;
   bcc?: string;
   cc?: string;
-  from?: string
-}
+  from?: string;
+};
 
 export interface ICreatedBy {
-  createdBy: string
+  createdBy: string;
   createdOn: Date;
 }
 
 export interface IUpdatedBy {
-  updatedBy: string
+  updatedBy: string;
   updatedOn: Date;
 }
 
 export interface IDeletedBy {
-  deletedBy?: string
+  deletedBy?: string;
   deletedOn?: Date;
 }
 
@@ -42,8 +41,7 @@ export type Temporal = {
   startedOn?: Date;
   endedOn?: Date;
   timeZone?: string;
-}
-
+};
 
 export type Spatial = {
   distanceUnit?: string;
@@ -51,8 +49,7 @@ export type Spatial = {
   latitude?: number;
   longitude?: number;
   radius?: number;
-}
-
+};
 
 // Combine everything into a single data shape
 export interface IRapport
@@ -65,7 +62,7 @@ export interface IRapport
     Participants,
     SourcedFrom {
   id: string;
-  screenshot?: string|null;
+  screenshot?: string | null;
   accessed: number;
   caseManagementUuid: string;
   isImportant: boolean;
@@ -81,46 +78,47 @@ export interface IRapport
   extractedDomains: Array<string>;
 }
 
-export type CaseManagement = ICreatedBy & IUpdatedBy & {
-  id: string;
-  name: string;
-  note?: string;
-  caseWorkerName?: string;
-  caseNumber?: string;
-  createdBy: string;
-  createdOn: Date;
-  updatedBy?: string;
-  updatedOn?: Date;
-  profileName?: string;
-  profileImage?: string;
-  attributes?: Record<string, any>;
-}
+export type CaseManagement = ICreatedBy &
+  IUpdatedBy & {
+    id: string;
+    name: string;
+    note?: string;
+    caseWorkerName?: string;
+    caseNumber?: string;
+    createdBy: string;
+    createdOn: Date;
+    updatedBy?: string;
+    updatedOn?: Date;
+    profileName?: string;
+    profileImage?: string;
+    attributes?: Record<string, any>;
+  };
 
 export type SourcedFrom = {
   url: string;
-  domain: string
-  title?: string
-}
+  domain: string;
+  title?: string;
+};
 
-export interface INameOnly{
-  name: string
+export interface INameOnly {
+  name: string;
 }
 
 export type SelectorType = INameOnly & {
-  name: string
-}
+  name: string;
+};
 
 export type Domain = INameOnly & {
-  name: string
-}
+  name: string;
+};
 
 export type Url = INameOnly & {
-  name: string
-}
+  name: string;
+};
 
 export type Tag = INameOnly & {
-  name: string
-}
+  name: string;
+};
 
 export interface IArtifact {
   id?: string; // UUID string, primary key
@@ -141,7 +139,7 @@ export type Attachment = {
   mimeType: string;
   size: number;
   url: string;
-}
+};
 
 /**
  * Api Response from the api.html endpoint page
@@ -161,7 +159,6 @@ type Props = {
   className?: string;
 };
 
-
 interface DiscoveryPluginRecord {
   label?: string;
   url?: string;
@@ -173,11 +170,12 @@ interface DiscoveryPluginRecord {
 
 interface DiscoveryPluginBasicFormProps {
   record: DiscoveryPluginRecord;
-  setRecord: (updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord) => void;
+  setRecord: (
+    updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord
+  ) => void;
   pluginTypes: string[];
   setPluginTypes: (types: string[]) => void;
 }
-
 
 type HeaderRow = {
   keyName?: string;
@@ -223,11 +221,17 @@ interface RecordWithFieldMapping {
 
 interface FieldMappingFormProps {
   record: RecordWithFieldMapping;
-  setRecord: (updater: (prev: RecordWithFieldMapping) => RecordWithFieldMapping) => void;
+  setRecord: (
+    updater: (prev: RecordWithFieldMapping) => RecordWithFieldMapping
+  ) => void;
   apiKeys?: APIKey[]; // Not used here directly but left in case future implementation
 }
 
-type PluginAction = 'CreateTab' | 'SubmitForm' | 'ForegroundRunner' | 'BackgroundRunner';
+type PluginAction =
+  | 'CreateTab'
+  | 'SubmitForm'
+  | 'ForegroundRunner'
+  | 'BackgroundRunner';
 type EventType =
   | 'preCreate'
   | 'postCreate'
@@ -247,7 +251,9 @@ interface DiscoveryPluginRecord {
 
 interface DiscoveryPluginBasicFormProps {
   record: DiscoveryPluginRecord;
-  setRecord: (updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord) => void;
+  setRecord: (
+    updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord
+  ) => void;
   pluginTypes: string[];
   setPluginTypes: (types: string[]) => void;
 }

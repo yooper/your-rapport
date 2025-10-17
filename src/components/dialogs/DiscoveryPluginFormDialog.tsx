@@ -10,10 +10,9 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import IconButton from '@mui/material/IconButton';
 import { sort_by_key } from '../../utilities/transformers';
 import DiscoveryPluginLayout from '../layouts/DiscoveryPluginLayout';
-import { processNotification } from '../../utilities/loaders'
+import { processNotification } from '../../utilities/loaders';
 import Box from '@mui/material/Box';
 import { db } from '../../models/db/dexieDb';
-
 
 type Mode = 'Add' | 'Edit';
 
@@ -44,7 +43,9 @@ interface DiscoveryPluginFormDialogProps {
   setPluginTypes: (types: string[]) => void;
 }
 
-const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (props) => {
+const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
+  props
+) => {
   const { mode } = props;
   const [open, setOpen] = useState<boolean>(false);
   const [record, setRecord] = useState<DiscoveryPluginRow>(props.record);
@@ -61,7 +62,6 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (pro
   const handleSave = async () => {
     if (mode === 'Add') {
       await db.discoveryPlugin.add(record);
-
 
       const newRows = props.rows.map((row) => row);
       if (data.Record) newRows.push(data.Record);
@@ -86,7 +86,9 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (pro
       }
 
       const newRows = props.rows.map((row) =>
-        row.Uuid === data.Record?.Uuid ? (data.Record as DiscoveryPluginRow) : row
+        row.Uuid === data.Record?.Uuid
+          ? (data.Record as DiscoveryPluginRow)
+          : row
       );
 
       sort_by_key(newRows, 'Label');
@@ -106,7 +108,7 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (pro
         maxWidth={false}
         open={open}
         onClose={handleClose}
-        sx={{height:'90%'}}
+        sx={{ height: '90%' }}
         aria-labelledby="form-dialog-title"
       >
         <DialogTitle>{mode} Discovery Plugin</DialogTitle>
@@ -124,7 +126,11 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (pro
         </DialogContent>
         <DialogActions>
           {/* MUI's Button color prop doesn't include 'cancel' by default; cast to avoid TS error */}
-          <Button onClick={handleClose} variant="contained" color={'cancel' as any}>
+          <Button
+            onClick={handleClose}
+            variant="contained"
+            color={'cancel' as any}
+          >
             Cancel
           </Button>
           <Button onClick={handleSave} color="primary" variant="contained">
@@ -137,4 +143,3 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (pro
 };
 
 export default DiscoveryPluginFormDialog;
-

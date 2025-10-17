@@ -24,7 +24,7 @@ import { RAPPORT, UPDATED_ON } from '../../services/constants';
  * @constructor
  */
 export default function UploadDataDialog(props) {
-  const { isLoading, setIsLoading} = props;
+  const { isLoading, setIsLoading } = props;
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,8 +45,7 @@ export default function UploadDataDialog(props) {
       try {
         let configuration = await Configuration.getConfiguration();
         // get/set the record count
-        configuration.recordCount =
-          configuration?.recordCount ?? 0;
+        configuration.recordCount = configuration?.recordCount ?? 0;
         const newRecords = JSON.parse(e.target.result);
         // TODO: fix issue with adding duplicates, the uuid is the unique key
         let rapports = (await getLocalItem(RAPPORT)) ?? [];
@@ -56,12 +55,10 @@ export default function UploadDataDialog(props) {
         // update the configuration last
         configuration[UPDATED_ON] = Date.now();
         await Configuration.setConfiguration(configuration);
-
       } catch (err) {
         setError('Invalid JSON format.');
         hideLoader();
-      }
-      finally {
+      } finally {
         setIsLoading(false);
         hideLoader();
         setOpen(false);

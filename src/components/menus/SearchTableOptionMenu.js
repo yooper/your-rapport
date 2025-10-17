@@ -14,12 +14,14 @@ import { Tooltip } from '@mui/material';
 import { Artifact } from '../../models/schemas/Artifact';
 
 export default function SearchTableOptionMenu(props) {
-  const {record, rows, setRows} = props;
+  const { record, rows, setRows } = props;
   const [anchorEl, setAnchorEl] = useState(null);
-  const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(props.record.artifacts?.length > 0)
+  const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(
+    props.record.artifacts?.length > 0
+  );
   const open = Boolean(anchorEl);
 
-  const [openAddTagDialog, setOpenAddTagDialog] = useState(false)
+  const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
 
   const [isOpen, setIsOpen] = useState(false);
   const handleClick = (event) => {
@@ -48,9 +50,12 @@ export default function SearchTableOptionMenu(props) {
    * TODO: Support more than mhtml downloads
    */
   const handleDownloadMhtml = () => {
-    Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0]}.mhtml`);
+    Artifact.downloadArtifact(
+      record.artifacts[0],
+      `your.rapport.${record.artifacts[0]}.mhtml`
+    );
     handleClose(null);
-  }
+  };
 
   /**
    * Debug the data
@@ -78,8 +83,17 @@ export default function SearchTableOptionMenu(props) {
           'aria-labelledby': 'basic-button',
         }}
       >
-        <Tooltip title={'Add tags to annotate your data and make it easier to find'}>
-          <MenuItem onClick={async() => { setOpenAddTagDialog(true); handleClose(); }}>Modify Tag(s)</MenuItem>
+        <Tooltip
+          title={'Add tags to annotate your data and make it easier to find'}
+        >
+          <MenuItem
+            onClick={async () => {
+              setOpenAddTagDialog(true);
+              handleClose();
+            }}
+          >
+            Modify Tag(s)
+          </MenuItem>
         </Tooltip>
         <Tooltip title={'A simple pdf with the screenshot and some metadata'}>
           <MenuItem onClick={handlePrintPdf}>Print</MenuItem>
@@ -90,14 +104,18 @@ export default function SearchTableOptionMenu(props) {
         <Tooltip title={'Download the screenshot of the web page'}>
           <MenuItem onClick={handleDownloadImage}>Download Image</MenuItem>
         </Tooltip>
-        <Tooltip title={'Download a JSON formatted file that can be readily shared.'}>
+        <Tooltip
+          title={'Download a JSON formatted file that can be readily shared.'}
+        >
           <MenuItem onClick={handleDownloadRecord}>Download Record</MenuItem>
         </Tooltip>
-        { hasMhtmlArtifact ? 
-           <Tooltip title="Download an MHTML file of the web page">
-             <MenuItem onClick={handleDownloadMhtml}>Download MHtml</MenuItem>
-           </Tooltip>
-             : ''}
+        {hasMhtmlArtifact ? (
+          <Tooltip title="Download an MHTML file of the web page">
+            <MenuItem onClick={handleDownloadMhtml}>Download MHtml</MenuItem>
+          </Tooltip>
+        ) : (
+          ''
+        )}
       </Menu>
 
       <JsonAttributeViewerDialog
@@ -106,14 +124,13 @@ export default function SearchTableOptionMenu(props) {
         record={record}
       />
 
-    <AddTagsFormDialog
-      isOpen={openAddTagDialog}
-      setIsOpen={setOpenAddTagDialog}
-      record={record}
-      rows={rows}
-      setRows={setRows}
-    />
-
+      <AddTagsFormDialog
+        isOpen={openAddTagDialog}
+        setIsOpen={setOpenAddTagDialog}
+        record={record}
+        rows={rows}
+        setRows={setRows}
+      />
     </div>
   );
 }

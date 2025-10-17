@@ -40,7 +40,10 @@ export default function TopAppBar() {
       <AppBar position="static">
         <Toolbar>
           <Tooltip title="Help Support - Your Rapport">
-            <a href={'https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00'} target={'_blank'}>
+            <a
+              href={'https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00'}
+              target={'_blank'}
+            >
               <img alt="Your Rapport" src="/icon-48.png" />
             </a>
           </Tooltip>

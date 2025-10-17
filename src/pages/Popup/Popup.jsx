@@ -19,7 +19,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
 } from '@mui/material';
 import { getLocalItem } from '../../models/db/local';
 import { debug } from '../../services/logger_services';
@@ -29,7 +29,7 @@ export default function Popup() {
 
   useEffect(() => {
     async function fetchData() {
-      setIsLoading(true)
+      setIsLoading(true);
       showLoader();
       //await chrome.runtime.sendMessage({cmd: 'ping'});
       setIsLoading(false);
@@ -52,7 +52,7 @@ function LargeButtonGrid() {
       toolTipTitle: `Collect a single screen shot and all the content of the web page. Press Crtl+Shift+S to take a deep save..`,
       onClick: () => {
         (async () => {
-          await chrome.runtime.sendMessage({cmd: 'deepSave' });
+          await chrome.runtime.sendMessage({ cmd: 'deepSave' });
           processNotification({
             title: 'Deep Save Collected',
             message: `A deep save has been collected. You can press Crtl+Shift+S to collect a deep save.`,
@@ -74,7 +74,7 @@ function LargeButtonGrid() {
       onClick: () => {
         (async () => {
           const tab = await getActiveTab();
-          await chrome.runtime.sendMessage({cmd: AUTO_COLLECT_STARTING });
+          await chrome.runtime.sendMessage({ cmd: AUTO_COLLECT_STARTING });
           processNotification({
             title: 'Autoscroll Collect Started',
             message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
@@ -103,7 +103,9 @@ function LargeButtonGrid() {
       title: 'Settings',
       toolTipTitle: `Adjust a variety of configurations, settings, and options.`,
       onClick: async () =>
-        await chrome.tabs.create({ url: chrome.runtime.getURL('options.html') }),
+        await chrome.tabs.create({
+          url: chrome.runtime.getURL('options.html'),
+        }),
     },
     {
       title: 'Wiki Docs',
@@ -113,10 +115,12 @@ function LargeButtonGrid() {
     {
       title: 'Discovery Plugins',
       toolTipTitle: `Learn about discovery plugins and how they can save your time through pre-existing automations.`,
-      onClick: () => chrome.tabs.create({ url: chrome.runtime.getURL('options.html?view=discovery_plugin') }),
+      onClick: () =>
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('options.html?view=discovery_plugin'),
+        }),
     },
   ];
-
 
   return (
     <Grid container spacing={2}>
@@ -152,35 +156,32 @@ function LargeButtonGrid() {
   );
 }
 
-
 function BasicTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [capturedOn, setCapturedOn] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
-      showLoader()
+      showLoader();
       setIsLoading(true);
       const currentUrl = new URL((await getActiveTab()).url);
       const baseUrl = currentUrl.origin + currentUrl.pathname;
       debug(`base url is ${baseUrl}`);
       const rapports = await getLocalItem(RAPPORT);
-      const found = rapports.find(r => r.url.startsWith(baseUrl))
-      if(found){
+      const found = rapports.find((r) => r.url.startsWith(baseUrl));
+      if (found) {
         debug(`found last captured on ${found.url}`);
-        setCapturedOn(found.createdOnLocalTime)
-      }
-      else{
-        setCapturedOn('NEVER')
+        setCapturedOn(found.createdOnLocalTime);
+      } else {
+        setCapturedOn('NEVER');
       }
 
       setIsLoading(false);
-      hideLoader()
+      hideLoader();
     }
 
     fetchData();
   }, []);
-
 
   return (
     <TableContainer component={Paper}>
@@ -190,7 +191,7 @@ function BasicTable() {
             <TableCell component="th" scope="row">
               Last Captured On:
             </TableCell>
-            <TableCell>{ isLoading ? '....' : capturedOn}</TableCell>
+            <TableCell>{isLoading ? '....' : capturedOn}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

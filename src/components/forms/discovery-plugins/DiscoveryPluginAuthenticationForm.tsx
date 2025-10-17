@@ -4,26 +4,26 @@ import FormGroup from '@mui/material/FormGroup';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from '@mui/material/Autocomplete';
-import {StyledTextField} from '../../inputs/StyledTextField';
+import { StyledTextField } from '../../inputs/StyledTextField';
 import { Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 
-
-const DiscoveryPluginAdvancedForm: React.FC<DiscoveryPluginAdvancedFormProps> = ({
-  record,
-  setRecord,
-}) => {
-
-
+const DiscoveryPluginAdvancedForm: React.FC<
+  DiscoveryPluginAdvancedFormProps
+> = ({ record, setRecord }) => {
   return (
     <Fragment>
       <Typography variant="h6">
-        <Tooltip title={'To learn more about Authentication your data click to be sent to our wiki docs.'}>
-        <IconButton onClick={()=>{}}>
-          <InfoOutlined />
-        </IconButton>
-      </Tooltip>
+        <Tooltip
+          title={
+            'To learn more about Authentication your data click to be sent to our wiki docs.'
+          }
+        >
+          <IconButton onClick={() => {}}>
+            <InfoOutlined />
+          </IconButton>
+        </Tooltip>
         Authentication
       </Typography>
       <FormGroup>
