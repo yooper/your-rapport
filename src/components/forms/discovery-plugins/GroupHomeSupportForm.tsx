@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useState, MouseEvent } from 'react';
 import FormControl from '@mui/material/FormControl';
-import { StyledTextField } from '../../inputs/StyledTextField';
+import { StyledTextField, StyledTextFieldNoWidth } from '../../inputs/StyledTextField';
 import FormGroup from '@mui/material/FormGroup';
 import Typography from '@mui/material/Typography';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -57,7 +57,7 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
         {/* Group Name */}
         <FormControl>
           <Autocomplete
-            sx={{ m: 0.75 }}
+            sx={{ m: 0.75, width:500 }}
             id="groupName"
             freeSolo
             options={groupNames}
@@ -66,7 +66,7 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
               setRecord((prev) => ({ ...prev, groupName: value }))
             }
             renderInput={(params) => (
-              <StyledTextField
+              <StyledTextFieldNoWidth
                 {...params}
                 label="Group Name"
                 InputProps={{
@@ -87,9 +87,9 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
 
         {/* Home Page */}
         <FormControl>
-          <StyledTextField
+          <StyledTextFieldNoWidth
             required
-            sx={{ m: 0.75 }}
+            sx={{ m: 0.75, width:500 }}
             name="homePage"
             id="homePage"
             label="Home Page"
@@ -133,9 +133,9 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
 
         {/* Support Page */}
         <FormControl>
-          <StyledTextField
+          <StyledTextFieldNoWidth
             required
-            sx={{ m: 0.75 }}
+            sx={{ m: 0.75, width:500 }}
             name="supportPage"
             id="supportPage"
             label="Support Page"
@@ -148,29 +148,6 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({ record, set
               endAdornment: (
                 <InputAdornment position="end" sx={{ mr: 1 }}>
                   <HelperPopover message="The support page an end user should visit for support." />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </FormControl>
-
-        {/* Version */}
-        <FormControl>
-          <StyledTextField
-            required
-            sx={{ m: 0.75 }}
-            name="version"
-            id="version"
-            label="Version"
-            defaultValue={record.version ?? '0.0.1'}
-            onChange={(e) =>
-              setRecord((prev) => ({ ...prev, version: e.target.value }))
-            }
-            inputProps={{ 'aria-label': 'controlled' }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end" sx={{ mr: 1 }}>
-                  <HelperPopover message="Software changes and tracking the version helps identify incompatibility issues." />
                 </InputAdornment>
               ),
             }}

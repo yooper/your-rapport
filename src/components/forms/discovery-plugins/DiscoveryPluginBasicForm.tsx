@@ -9,31 +9,8 @@ import Grid from '@mui/material/Grid';
 import { Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
-
-type PluginAction = 'CreateTab' | 'SubmitForm' | 'ForegroundRunner' | 'BackgroundRunner';
-type EventType =
-  | 'preCreate'
-  | 'postCreate'
-  | 'preUpdate'
-  | 'postUpdate'
-  | 'preDelete'
-  | 'postDelete';
-
-interface DiscoveryPluginRecord {
-  label?: string;
-  url?: string;
-  action?: PluginAction;
-  eventType?: EventType;
-  pluginType?: string;
-  [key: string]: any;
-}
-
-interface DiscoveryPluginBasicFormProps {
-  record: DiscoveryPluginRecord;
-  setRecord: (updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord) => void;
-  pluginTypes: string[];
-  setPluginTypes: (types: string[]) => void;
-}
+import InputAdornment from '@mui/material/InputAdornment';
+import HelperPopover from '../../HelperPopover';
 
 const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
   record,
@@ -210,6 +187,28 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
             </FormControl>
           </Grid>
         </Grid>
+        {/* Version */}
+        <FormControl>
+          <StyledTextField
+            required
+            sx={{ m: 0.75 }}
+            name="version"
+            id="version"
+            label="Version"
+            defaultValue={record.version ?? '0.0.1'}
+            onChange={(e) =>
+              setRecord((prev) => ({ ...prev, version: e.target.value }))
+            }
+            inputProps={{ 'aria-label': 'controlled' }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end" sx={{ mr: 1 }}>
+                  <HelperPopover message="Software changes and tracking the version helps identify incompatibility issues." />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </FormControl>
       </FormGroup>
     </Fragment>
   );

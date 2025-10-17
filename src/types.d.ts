@@ -161,3 +161,114 @@ type Props = {
   className?: string;
 };
 
+
+interface DiscoveryPluginRecord {
+  label?: string;
+  url?: string;
+  action?: PluginAction;
+  eventType?: EventType;
+  pluginType?: string;
+  [key: string]: any;
+}
+
+interface DiscoveryPluginBasicFormProps {
+  record: DiscoveryPluginRecord;
+  setRecord: (updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord) => void;
+  pluginTypes: string[];
+  setPluginTypes: (types: string[]) => void;
+}
+
+
+type HeaderRow = {
+  keyName?: string;
+  mappedFieldName?: string;
+};
+
+interface RecordWithHeaders {
+  headers?: Record<string, string>;
+  [key: string]: any;
+}
+
+interface HeaderMappingFormProps {
+  record: RecordWithHeaders;
+  setRecord: (updater: (prev: RecordWithHeaders) => RecordWithHeaders) => void;
+}
+
+interface RecordType {
+  groupName?: string;
+  homePage?: string;
+  supportPage?: string;
+  version?: string;
+  [key: string]: any;
+}
+
+interface GroupHomeSupportFormProps {
+  record: RecordType;
+  setRecord: (updater: (prev: RecordType) => RecordType) => void;
+}
+
+type FieldRow = {
+  keyName?: string;
+  mappedFieldName?: string;
+};
+
+interface APIKey {
+  Key: string;
+}
+
+interface RecordWithFieldMapping {
+  fieldMapping?: Record<string, string>;
+  [key: string]: any;
+}
+
+interface FieldMappingFormProps {
+  record: RecordWithFieldMapping;
+  setRecord: (updater: (prev: RecordWithFieldMapping) => RecordWithFieldMapping) => void;
+  apiKeys?: APIKey[]; // Not used here directly but left in case future implementation
+}
+
+type PluginAction = 'CreateTab' | 'SubmitForm' | 'ForegroundRunner' | 'BackgroundRunner';
+type EventType =
+  | 'preCreate'
+  | 'postCreate'
+  | 'preUpdate'
+  | 'postUpdate'
+  | 'preDelete'
+  | 'postDelete';
+
+interface DiscoveryPluginRecord {
+  label?: string;
+  url?: string;
+  action?: PluginAction;
+  eventType?: EventType;
+  pluginType?: string;
+  [key: string]: any;
+}
+
+interface DiscoveryPluginBasicFormProps {
+  record: DiscoveryPluginRecord;
+  setRecord: (updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord) => void;
+  pluginTypes: string[];
+  setPluginTypes: (types: string[]) => void;
+}
+
+type DiscoveryPluginAdvancedFormProps = {
+  record: {
+    method?: string;
+    contentTypeHeader?: string;
+    authorizationBearerToken?: string;
+    authorizationUserName?: string;
+    authorizationPassword?: string;
+    [key: string]: any;
+  };
+  setRecord: (updater: (prev: any) => any) => void;
+};
+
+type DiscoveryPluginAdvancedFormProps = {
+  record: {
+    method?: string;
+    contentTypeHeader?: string;
+    [key: string]: any;
+  };
+  setRecord: (updater: (prev: any) => any) => void;
+};

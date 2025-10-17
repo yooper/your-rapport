@@ -8,15 +8,7 @@ import {StyledTextField} from '../../inputs/StyledTextField';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 import { Tooltip } from '@mui/material';
-
-type DiscoveryPluginAdvancedFormProps = {
-  record: {
-    method?: string;
-    contentTypeHeader?: string;
-    [key: string]: any;
-  };
-  setRecord: (updater: (prev: any) => any) => void;
-};
+import { DiscoveryPluginAdvancedFormProps } from '../../../types';
 
 const DiscoveryPluginAdvancedForm: React.FC<DiscoveryPluginAdvancedFormProps> = ({
   record,

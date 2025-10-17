@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState, MouseEvent } from 'react';
 import { Popover } from '@mui/material';
 import HelpIcon from '@mui/icons-material/Help';
 import Typography from '@mui/material/Typography';
 
-export default function HelperPopover(props) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const handlePopoverOpen = (event) => {
+interface HelperPopoverProps {
+  message: string;
+}
+
+export default function HelperPopover({ message }: HelperPopoverProps) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handlePopoverOpen = (event: MouseEvent<SVGSVGElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -25,9 +30,7 @@ export default function HelperPopover(props) {
       />
       <Popover
         id="mouse-over-popover"
-        sx={{
-          pointerEvents: 'none',
-        }}
+        sx={{ pointerEvents: 'none' }}
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
@@ -41,7 +44,7 @@ export default function HelperPopover(props) {
         onClose={handlePopoverClose}
         disableRestoreFocus
       >
-        <Typography sx={{ p: 1 }}>{props.message}</Typography>
+        <Typography sx={{ p: 1 }}>{message}</Typography>
       </Popover>
     </>
   );

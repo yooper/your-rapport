@@ -55,7 +55,7 @@ function LargeButtonGrid() {
           await chrome.runtime.sendMessage({cmd: 'deepSave' });
           processNotification({
             title: 'Deep Save Collected',
-            message: `A deep save has been collected. You can press Crtl+Shift+S to take a deep save.`,
+            message: `A deep save has been collected. You can press Crtl+Shift+S to collect a deep save.`,
             type: 'success',
           });
         })();

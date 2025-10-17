@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import FormControl from '@mui/material/FormControl';
-import { StyledTextField } from '../../inputs/StyledTextField';
+import { StyledTextField, StyledTextFieldNoWidth } from '../../inputs/StyledTextField';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -8,21 +8,8 @@ import { DeleteForever, InfoOutlined } from '@mui/icons-material';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
 import { Tooltip } from '@mui/material';
+import { HeaderMappingFormProps } from '../../../types';
 
-type HeaderRow = {
-  keyName?: string;
-  mappedFieldName?: string;
-};
-
-interface RecordWithHeaders {
-  headers?: Record<string, string>;
-  [key: string]: any;
-}
-
-interface HeaderMappingFormProps {
-  record: RecordWithHeaders;
-  setRecord: (updater: (prev: RecordWithHeaders) => RecordWithHeaders) => void;
-}
 
 const HeaderMappingForm: React.FC<HeaderMappingFormProps> = ({ record, setRecord }) => {
   const [rows, setRows] = useState<HeaderRow[]>([]);
@@ -98,8 +85,8 @@ const HeaderMappingForm: React.FC<HeaderMappingFormProps> = ({ record, setRecord
         {rows.map((row, index) => (
           <div>
             <FormControl>
-              <StyledTextField
-                sx={{ m: 0.75 }}
+              <StyledTextFieldNoWidth
+                sx={{ m: 0.75, width:400 }}
                 variant="outlined"
                 name="keyName"
                 id="keyName"
@@ -117,8 +104,8 @@ const HeaderMappingForm: React.FC<HeaderMappingFormProps> = ({ record, setRecord
               />
             </FormControl>
             <FormControl>
-              <StyledTextField
-                sx={{ m: 0.75 }}
+              <StyledTextFieldNoWidth
+                sx={{ m: 0.75, width: 400 }}
                 variant="outlined"
                 name="mappedFieldName"
                 id="mappedFieldName"

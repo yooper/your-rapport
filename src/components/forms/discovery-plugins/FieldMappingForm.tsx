@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import FormControl from '@mui/material/FormControl';
-import { StyledTextField } from '../../inputs/StyledTextField';
+import { StyledTextField, StyledTextFieldNoWidth } from '../../inputs/StyledTextField';
 
 import IconButton from '@mui/material/IconButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -10,26 +10,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
 import { Tooltip } from '@mui/material';
 
-
-type FieldRow = {
-  keyName?: string;
-  mappedFieldName?: string;
-};
-
-interface APIKey {
-  Key: string;
-}
-
-interface RecordWithFieldMapping {
-  fieldMapping?: Record<string, string>;
-  [key: string]: any;
-}
-
-interface FieldMappingFormProps {
-  record: RecordWithFieldMapping;
-  setRecord: (updater: (prev: RecordWithFieldMapping) => RecordWithFieldMapping) => void;
-  apiKeys?: APIKey[]; // Not used here directly but left in case future implementation
-}
 
 const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ record, setRecord }) => {
   const [rows, setRows] = useState<FieldRow[]>([]);
@@ -141,8 +121,8 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ record, setRecord }
         {rows.map((row, index) => (
           <div>
             <FormControl>
-              <StyledTextField
-                sx={{ m: 0.75 }}
+              <StyledTextFieldNoWidth
+                sx={{ m: 0.75, width:400 }}
                 variant="outlined"
                 name="keyName"
                 id="keyName"
@@ -163,19 +143,21 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({ record, setRecord }
             </FormControl>
             <FormControl>
               <Autocomplete
-                sx={{ m: 0.75 }}
+                sx={{ m: 0.75, width:400 }}
                 freeSolo
                 options={getFieldMappings()}
                 value={row.mappedFieldName ?? ''}
                 onInputChange={(_, value) => handleFieldValueChange(index, value)}
                 renderInput={(params) => (
-                  <StyledTextField {...params} label="Field Value" />
+                  <StyledTextFieldNoWidth {...params} label="Field Value" />
                 )}
               />
             </FormControl>
-            <IconButton onClick={() => deleteRow(index)}>
-              <DeleteForever />
-            </IconButton>
+            <FormControl>
+              <IconButton onClick={() => deleteRow(index)}>
+                <DeleteForever />
+              </IconButton>
+            </FormControl>
           </div>
         ))}
     </Fragment>

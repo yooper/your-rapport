@@ -9,17 +9,6 @@ import { Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 
-type DiscoveryPluginAdvancedFormProps = {
-  record: {
-    method?: string;
-    contentTypeHeader?: string;
-    authorizationBearerToken?: string;
-    authorizationUserName?: string;
-    authorizationPassword?: string;
-    [key: string]: any;
-  };
-  setRecord: (updater: (prev: any) => any) => void;
-};
 
 const DiscoveryPluginAdvancedForm: React.FC<DiscoveryPluginAdvancedFormProps> = ({
   record,

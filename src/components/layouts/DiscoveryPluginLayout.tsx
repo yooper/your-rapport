@@ -60,6 +60,8 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         <Tab label="Authentication" {...a11yProps(2)} />
         <Tab label="Field Mappings" {...a11yProps(3)} />
         <Tab label="Header Mappings" {...a11yProps(4)} />
+        <Tab label="Support" {...a11yProps(5)} />
+
       </Tabs>
       <TabPanel value={value} index={0}>
         <DiscoveryPluginBasicForm
@@ -94,7 +96,6 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
             setRecord={setRecord}
         />
       </TabPanel>
-
       <TabPanel value={value} index={5}>
         <GroupHomeSupportForm
             record={record}
