@@ -8,10 +8,10 @@ import { StyledTextField } from '../../inputs/StyledTextField';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 import { Tooltip } from '@mui/material';
-import { DiscoveryPluginAdvancedFormProps } from '../../../types';
+import { DiscoveryPluginFormProps } from '../../../types';
 
 const DiscoveryPluginAdvancedForm: React.FC<
-  DiscoveryPluginAdvancedFormProps
+  DiscoveryPluginFormProps
 > = ({ record, setRecord }) => {
   const methods = ['GET', 'POST', 'PUT', 'DELETE'];
   const contentTypeHeaders = [

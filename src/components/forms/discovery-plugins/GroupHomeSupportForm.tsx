@@ -13,21 +13,10 @@ import { Popover } from '@mui/material';
 import HelperPopover from '../../HelperPopover';
 import { debug } from '../../../services/logger_services';
 import { DiscoveryPlugin } from '../../../models/schemas/DiscoveryPlugin';
+import { DiscoveryPluginFormProps } from '../../../types';
 
-interface RecordType {
-  groupName?: string;
-  homePage?: string;
-  supportPage?: string;
-  version?: string;
-  [key: string]: any;
-}
 
-interface GroupHomeSupportFormProps {
-  record: RecordType;
-  setRecord: (updater: (prev: RecordType) => RecordType) => void;
-}
-
-const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({
+const GroupHomeSupportForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
   setRecord,
 }) => {
@@ -46,7 +35,8 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({
   useEffect(() => {
     async function fetchData() {
       try {
-        const groups = await DiscoveryPlugin.getGroupNames();
+        // to do get groups...
+        const groups = []
         setGroupNames(groups ?? []);
       } catch (err) {
         debug('Fetch failed for group names endpoint');
@@ -107,30 +97,7 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" sx={{ mr: 1 }}>
-                  <HelpIcon
-                    aria-owns={open ? 'mouse-over-popover' : undefined}
-                    aria-haspopup="true"
-                    onMouseEnter={handlePopoverOpen}
-                    onMouseLeave={handlePopoverClose}
-                  />
-                  <Popover
-                    id="mouse-over-popover"
-                    sx={{ pointerEvents: 'none' }}
-                    open={open}
-                    anchorEl={anchorEl}
-                    anchorOrigin={{
-                      vertical: 'bottom',
-                      horizontal: 'left',
-                    }}
-                    transformOrigin={{
-                      vertical: 'top',
-                      horizontal: 'left',
-                    }}
-                    onClose={handlePopoverClose}
-                    disableRestoreFocus
-                  >
-                    <Typography sx={{ p: 1 }}>I use Popover.</Typography>
-                  </Popover>
+                  <HelperPopover message="The home page of the discovery plugin." />
                 </InputAdornment>
               ),
             }}
@@ -153,7 +120,7 @@ const GroupHomeSupportForm: React.FC<GroupHomeSupportFormProps> = ({
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" sx={{ mr: 1 }}>
-                  <HelperPopover message="The support page an end user should visit for support." />
+                  <HelperPopover message="The support page for the discovery plugin." />
                 </InputAdornment>
               ),
             }}

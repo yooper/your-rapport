@@ -1,0 +1,87 @@
+// DiscoveryPlugin.ts
+import { DiscoveryPluginAction, DiscoveryPluginInit } from '../../types';
+
+
+export class DiscoveryPlugin {
+  readonly uuid: string;
+
+  pluginType: string | null;
+  url: string | null;
+  active: boolean;
+  groupName: string;
+  action: DiscoveryPluginAction | null;
+  homePage: string | null;
+  description: string | null;
+  label: string | null;
+  readOnly: boolean;
+  sortOrder: number;
+  timeOut: number;
+  lastAccessedOn: Date | null;
+  createdOn: Date;
+  timeTakenIn: number;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
+  accessed: number;
+  version: string;
+  mimeTypeRegex: string | null;
+  status: number | null;
+  statusError: string | null;
+  contentTypeHeader: string | null;
+  fieldMapping: Record<string, any>;
+  headers: Record<string, any>;
+  /** selected selector value by the user */
+  selectorValue: string | number | null;
+
+  constructor(init: DiscoveryPluginInit = {}) {
+    this.uuid = crypto.randomUUID();
+    this.pluginType = init.pluginType ?? null;
+    this.url = init.url ?? null;
+    this.active = init.active ?? true;
+    this.groupName = init.groupName ?? 'Default';
+    this.action = init.action ?? null;
+    this.homePage = init.homePage ?? null;
+    this.description = init.description ?? null;
+    this.label = init.label ?? null;
+    this.readOnly = init.readOnly ?? false;
+    this.sortOrder = init.sortOrder ?? 0;
+    this.timeOut = init.timeOut ?? 100;
+    this.lastAccessedOn = init.lastAccessedOn ?? null;
+    this.createdOn = init.createdOn ?? new Date();
+    this.timeTakenIn = init.timeTakenIn ?? 0;
+    this.method = init.method ?? 'GET';
+    this.accessed = init.accessed ?? 0;
+    this.version = init.version ?? '0.0.1';
+    this.mimeTypeRegex = init.mimeTypeRegex ?? null;
+    this.status = init.status ?? null;
+    this.statusError = init.statusError ?? null;
+    this.contentTypeHeader = init.contentTypeHeader ?? null;
+    this.fieldMapping = init.fieldMapping ?? {};
+    this.headers = init.headers ?? {};
+    this.selectorValue = init.selectorValue ?? null;
+  }
+
+  /** Increment access count and mark last accessed time */
+  touch(): void {
+    this.accessed += 1;
+    this.lastAccessedOn = new Date();
+  }
+
+  /** Update status fields from a fetch-like response */
+  setStatus(status: number, error: string | null = null): void {
+    this.status = status;
+    this.statusError = error;
+  }
+
+  /** Serialize to a plain JSON-friendly object */
+  toJSON(): Omit<DiscoveryPlugin, 'toJSON' | 'getActions' | 'touch' | 'setStatus' | 'uuid'> & { uuid: string } {
+    const { uuid, ...rest } = this;
+    return { uuid, ...rest };
+  }
+
+  /** Rehydrate from a plain object (e.g., DB or JSON) */
+  static from(obj: Partial<DiscoveryPlugin> & { uuid?: string }): DiscoveryPlugin {
+    const pl = new DiscoveryPlugin(obj);
+    // If a uuid was provided, keep it (useful when loading from storage)
+    if (obj.uuid) (pl as { uuid: string }).uuid = obj.uuid;
+    return pl;
+  }
+}

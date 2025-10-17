@@ -10,26 +10,9 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import DiscoveryPluginAuthenticationForm from '../forms/discovery-plugins/DiscoveryPluginAuthenticationForm';
+import DescriptionForm from '../forms/discovery-plugins/DescriptionForm';
+import { DiscoveryPluginLayoutProps } from '../../types';
 
-interface DiscoveryPluginRecord {
-  [key: string]: any;
-}
-
-interface DiscoveryPluginLayoutProps {
-  record: DiscoveryPluginRecord;
-  setRecord: (
-    updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord
-  ) => void;
-  apiKeys: Record<string, unknown>;
-  pluginTypes: string[];
-  setPluginTypes: (types: string[]) => void;
-}
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
 
 const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
   record,
@@ -72,6 +55,7 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         <Tab label="Field Mappings" {...a11yProps(3)} />
         <Tab label="Header Mappings" {...a11yProps(4)} />
         <Tab label="Support" {...a11yProps(5)} />
+        <Tab label="Description" {...a11yProps(6)} />
       </Tabs>
       <TabPanel value={value} index={0}>
         <DiscoveryPluginBasicForm
@@ -98,6 +82,9 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
       </TabPanel>
       <TabPanel value={value} index={5}>
         <GroupHomeSupportForm record={record} setRecord={setRecord} />
+      </TabPanel>
+      <TabPanel value={value} index={6}>
+        <DescriptionForm record={record} setRecord={setRecord} />
       </TabPanel>
     </Box>
   );

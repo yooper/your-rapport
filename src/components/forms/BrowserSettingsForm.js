@@ -2,12 +2,8 @@ import * as React from 'react';
 import Grid from '@mui/material/Unstable_Grid2';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import { useEffect, useState } from 'react';
-import FormControl from '@mui/material/FormControl';
-import InputAdornment from '@mui/material/InputAdornment';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import HelperPopover from '../HelperPopover';
-import { stringToBoolean } from '../../utilities/transformers';
-import { StyledTextField } from '../inputs/StyledTextField';
 import Button from '@mui/material/Button';
 
 export default function BrowserSettingsForm(props) {
@@ -28,15 +24,6 @@ export default function BrowserSettingsForm(props) {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      showLoader();
-      setIsLoading(true);
-      hideLoader();
-      setIsLoading(false);
-    }
-    fetchData();
-  }, []);
 
   const handleSwitchChange = (event) => {
     const boolResult = String(event.target.checked);

@@ -8,9 +8,10 @@ import { StyledTextField } from '../../inputs/StyledTextField';
 import { Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
+import { DiscoveryPluginFormProps } from '../../../types';
 
 const DiscoveryPluginAdvancedForm: React.FC<
-  DiscoveryPluginAdvancedFormProps
+  DiscoveryPluginFormProps
 > = ({ record, setRecord }) => {
   return (
     <Fragment>

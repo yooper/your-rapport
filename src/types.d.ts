@@ -1,3 +1,6 @@
+import React from 'react';
+import { DiscoveryPluginAction } from './models/schemas/DiscoveryPlugin';
+
 export type Selector = {
   name: string;
   selectorTypeName: string;
@@ -141,6 +144,33 @@ export type Attachment = {
   url: string;
 };
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+/**
+ * Gets passed around to all the Dicovery plugin forms
+ */
+interface DiscoveryPluginFormProps {
+  record: DiscoveryPlugin;
+  setRecord: (
+    updater: (prev: DiscoveryPlugin) => DiscoveryPlugin
+  ) => void;
+}
+
+interface IApiKey{
+  key: string
+  value: string
+}
+
+interface DiscoveryPluginLayoutProps extends  DiscoveryPluginFormProps{
+  apiKeys: IApiKey[];
+  pluginTypes: string[];
+  setPluginTypes: (types: string[]) => void;
+}
+
 /**
  * Api Response from the api.html endpoint page
  */
@@ -159,74 +189,6 @@ type Props = {
   className?: string;
 };
 
-interface DiscoveryPluginRecord {
-  label?: string;
-  url?: string;
-  action?: PluginAction;
-  eventType?: EventType;
-  pluginType?: string;
-  [key: string]: any;
-}
-
-interface DiscoveryPluginBasicFormProps {
-  record: DiscoveryPluginRecord;
-  setRecord: (
-    updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord
-  ) => void;
-  pluginTypes: string[];
-  setPluginTypes: (types: string[]) => void;
-}
-
-type HeaderRow = {
-  keyName?: string;
-  mappedFieldName?: string;
-};
-
-interface RecordWithHeaders {
-  headers?: Record<string, string>;
-  [key: string]: any;
-}
-
-interface HeaderMappingFormProps {
-  record: RecordWithHeaders;
-  setRecord: (updater: (prev: RecordWithHeaders) => RecordWithHeaders) => void;
-}
-
-interface RecordType {
-  groupName?: string;
-  homePage?: string;
-  supportPage?: string;
-  version?: string;
-  [key: string]: any;
-}
-
-interface GroupHomeSupportFormProps {
-  record: RecordType;
-  setRecord: (updater: (prev: RecordType) => RecordType) => void;
-}
-
-type FieldRow = {
-  keyName?: string;
-  mappedFieldName?: string;
-};
-
-interface APIKey {
-  Key: string;
-}
-
-interface RecordWithFieldMapping {
-  fieldMapping?: Record<string, string>;
-  [key: string]: any;
-}
-
-interface FieldMappingFormProps {
-  record: RecordWithFieldMapping;
-  setRecord: (
-    updater: (prev: RecordWithFieldMapping) => RecordWithFieldMapping
-  ) => void;
-  apiKeys?: APIKey[]; // Not used here directly but left in case future implementation
-}
-
 type PluginAction =
   | 'CreateTab'
   | 'SubmitForm'
@@ -240,41 +202,35 @@ type EventType =
   | 'preDelete'
   | 'postDelete';
 
-interface DiscoveryPluginRecord {
-  label?: string;
-  url?: string;
-  action?: PluginAction;
-  eventType?: EventType;
-  pluginType?: string;
-  [key: string]: any;
+export interface DiscoveryPluginInit {
+  pluginType?: string | null;
+  url?: string | null;
+  active?: boolean;
+  groupName?: string;
+  action?: DiscoveryPluginAction | null;
+  homePage?: string | null;
+  description?: string | null;
+  label?: string | null;
+  readOnly?: boolean;
+  sortOrder?: number;
+  timeOut?: number;
+  lastAccessedOn?: Date | null;
+  createdOn?: Date;
+  timeTakenIn?: number;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
+  accessed?: number;
+  version?: string;
+  mimeTypeRegex?: string | null;
+  status?: number | null;
+  statusError?: string | null;
+  contentTypeHeader?: string | null;
+  fieldMapping?: Record<string, string>;
+  headers?: Record<string, string>;
+  selectorValue?: string | number | null;
 }
 
-interface DiscoveryPluginBasicFormProps {
-  record: DiscoveryPluginRecord;
-  setRecord: (
-    updater: (prev: DiscoveryPluginRecord) => DiscoveryPluginRecord
-  ) => void;
-  pluginTypes: string[];
-  setPluginTypes: (types: string[]) => void;
-}
-
-type DiscoveryPluginAdvancedFormProps = {
-  record: {
-    method?: string;
-    contentTypeHeader?: string;
-    authorizationBearerToken?: string;
-    authorizationUserName?: string;
-    authorizationPassword?: string;
-    [key: string]: any;
-  };
-  setRecord: (updater: (prev: any) => any) => void;
-};
-
-type DiscoveryPluginAdvancedFormProps = {
-  record: {
-    method?: string;
-    contentTypeHeader?: string;
-    [key: string]: any;
-  };
-  setRecord: (updater: (prev: any) => any) => void;
-};
+export type DiscoveryPluginAction =
+  | 'BackgroundRunner'
+  | 'CreateTab'
+  | 'ForegroundRunner'
+  | 'SubmitForm';

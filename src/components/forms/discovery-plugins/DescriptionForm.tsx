@@ -1,20 +1,19 @@
-import { TextareaAutosize } from '@mui/material';
+import { Box, Paper, TextareaAutosize } from '@mui/material';
 import React from 'react';
 import { DiscoveryPluginBasicFormProps } from '../../../types';
 
 const DescriptionForm: React.FC<DiscoveryPluginBasicFormProps> = ({
   record,
-  setRecord,
-  pluginTypes,
+  setRecord
 }) => {
   return (
     <TextareaAutosize
-      style={{ width: '90%' }}
+      style={{ width: 800 }}
       minRows={25}
       maxRows={100}
-      placeholder="Enter your urls to bulk scan, one url per line..."
+      placeholder="Enter an optional description for the discovery plugin"
       name="description"
-      id="urls"
+      id="description"
       defaultValue={record.description}
       onChange={(e) =>
         setRecord((prev) => ({ ...prev, description: e.target.value }))
@@ -22,3 +21,4 @@ const DescriptionForm: React.FC<DiscoveryPluginBasicFormProps> = ({
     />
   );
 };
+export default DescriptionForm

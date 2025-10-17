@@ -11,13 +11,15 @@ import { DeleteForever, InfoOutlined } from '@mui/icons-material';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
 import { Tooltip } from '@mui/material';
-import { HeaderMappingFormProps } from '../../../types';
+import { DiscoveryPlugin } from '../../../models/schemas/DiscoveryPlugin';
+import { DiscoveryPluginFormProps } from '../../../types';
 
-const HeaderMappingForm: React.FC<HeaderMappingFormProps> = ({
+
+const HeaderMappingForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
   setRecord,
 }) => {
-  const [rows, setRows] = useState<HeaderRow[]>([]);
+  const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ const HeaderMappingForm: React.FC<HeaderMappingFormProps> = ({
     setRecord((prev) => ({ ...prev, headers: toObj(updated) }));
   };
 
-  const toObj = (rows: HeaderRow[]): Record<string, string> => {
+  const toObj = (rows: Record<string, any>[]): Record<string, string> => {
     return Object.assign(
       {},
       ...rows.map((x) => ({
@@ -64,7 +66,7 @@ const HeaderMappingForm: React.FC<HeaderMappingFormProps> = ({
     );
   };
 
-  const toRows = (): HeaderRow[] => {
+  const toRows = (): Record<string, any>[] => {
     const mapping = record.headers ?? {};
     return Object.entries(mapping).map(([key, value]) => ({
       keyName: key,

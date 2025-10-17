@@ -12,13 +12,14 @@ import Autocomplete from '@mui/material/Autocomplete';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
 import { Tooltip } from '@mui/material';
+import { DiscoveryPluginFormProps } from '../../../types';
 
-const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
+const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
   setRecord,
 }) => {
-  const [rows, setRows] = useState<FieldRow[]>([]);
-  const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
+  const [rows, setRows] = useState<Record<string, any>[]>([]);
+  const [apiKeys, setApiKeys] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
     setRecord((prev) => ({ ...prev, fieldMapping: toObj(updated) }));
   };
 
-  const toObj = (rows: FieldRow[]): Record<string, string> => {
+  const toObj = (rows: Record<string, any>[]): Record<string, string> => {
     return Object.assign(
       {},
       ...rows.map((row) => ({
@@ -97,7 +98,7 @@ const FieldMappingForm: React.FC<FieldMappingFormProps> = ({
     );
   };
 
-  const toRows = (): FieldRow[] => {
+  const toRows = (): Record<string, any>[] => {
     const mapping = record.fieldMapping ?? {};
     return Object.entries(mapping).map(([key, value]) => ({
       keyName: key,

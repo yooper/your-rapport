@@ -14,8 +14,9 @@ import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
+import { DiscoveryPluginFormProps, EventType, PluginAction } from '../../../types';
 
-const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginBasicFormProps> = ({
+const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
   setRecord,
   pluginTypes,
