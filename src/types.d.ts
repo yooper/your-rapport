@@ -64,7 +64,7 @@ export interface IRapport
     Address,
     Participants,
     SourcedFrom {
-  id: string;
+  uuid: string;
   screenshot?: string | null;
   accessed: number;
   caseManagementUuid: string;
@@ -124,7 +124,7 @@ export type Tag = INameOnly & {
 };
 
 export interface IArtifact {
-  id?: string; // UUID string, primary key
+  uuid: string; // UUID string, primary key
   rapportUuid: string; // pointer to rapport record this attachment originated from
   size: number;
   hash: string;
@@ -138,7 +138,7 @@ export interface IArtifact {
  * Lightweight version of Artifact
  */
 export type Attachment = {
-  id: string;
+  uuid: string;
   mimeType: string;
   size: number;
   url: string;
@@ -227,6 +227,7 @@ export interface DiscoveryPluginInit {
   fieldMapping?: Record<string, string>;
   headers?: Record<string, string>;
   selectorValue?: string | number | null;
+  country?: string | null;
 }
 
 export type DiscoveryPluginAction =
@@ -234,3 +235,4 @@ export type DiscoveryPluginAction =
   | 'CreateTab'
   | 'ForegroundRunner'
   | 'SubmitForm';
+

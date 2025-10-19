@@ -4,15 +4,14 @@ import {
   StyledTextField,
   StyledTextFieldNoWidth,
 } from '../../inputs/StyledTextField';
-import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import { DeleteForever, InfoOutlined } from '@mui/icons-material';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
 import { Tooltip } from '@mui/material';
-import { DiscoveryPlugin } from '../../../models/schemas/DiscoveryPlugin';
 import { DiscoveryPluginFormProps } from '../../../types';
+import { createTab} from '../../../utilities/loaders';
 
 
 const HeaderMappingForm: React.FC<DiscoveryPluginFormProps> = ({
@@ -83,7 +82,7 @@ const HeaderMappingForm: React.FC<DiscoveryPluginFormProps> = ({
           'To learn more about HTTP Headers and how click here to be open our wiki docs.'
         }
       >
-        <IconButton onClick={addRow}>
+        <IconButton onClick={() => { createTab('https://github.com/yooper/your-rapport/wiki/Discovery-Plugins-Tutorial'); }}>
           <InfoOutlined />
         </IconButton>
       </Tooltip>

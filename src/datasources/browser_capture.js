@@ -8,6 +8,7 @@ import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 
 /**
+ * TODO: wake up the service worker 1st
  * Capture the tab and persist it into local storage
  * @param tab
  * @param message
@@ -15,6 +16,7 @@ import { Artifact } from '../models/schemas/Artifact';
  * @returns {Promise<void>}
  */
 export async function capture(tab, message = {}, deepSave = false) {
+
   ExtensionPin.setDefaultNotSaved(tab);
   let configuration = await Configuration.getConfiguration();
   // get/set the record count

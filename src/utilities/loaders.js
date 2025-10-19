@@ -3,6 +3,7 @@ import { convertKeysToCamelCase } from './transformers';
 import { addRecord } from '../models/db/local';
 import { DISCOVERY_PLUGIN, UUID } from '../services/constants';
 import { debug } from '../services/logger_services';
+import Package from '../models/schemas/Package';
 
 /**
  * Show the loader...
@@ -102,11 +103,7 @@ export async function getActiveTab() {
  * @param record {Package}
  * */
 export async function installPackage(record) {
-  const response = await fetch(record.url);
-  const data = await response.json();
-  const dp = convertKeysToCamelCase(data);
-  // doesn't overwrite the existing record if it exists
-  await addRecord(DISCOVERY_PLUGIN, UUID, dp);
+  await Package.install(record);
 }
 
 export function getSelectorTypeMap() {

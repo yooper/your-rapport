@@ -9,7 +9,7 @@ import { sha256FromBlob } from '../../utilities/transformers';
 
 export class Artifact implements IArtifact {
   createdOn: Date = new Date();
-  id!: string;
+  uuid!: string;
   rapportUuid!: string;
   size!: number;
   hash!: string;
@@ -24,7 +24,7 @@ export class Artifact implements IArtifact {
    */
   static getAttachment(artifact: IArtifact): Attachment {
     return {
-      id: artifact.id,
+      uuid: artifact.uuid,
       mimeType: artifact.mimeType,
       size: artifact.size,
       url: artifact.url,
@@ -40,7 +40,7 @@ export class Artifact implements IArtifact {
     // Compute a hash of the content for deduplication / integrity
     const hash = await sha256FromBlob(blob);
     const record: IArtifact = {
-      id: crypto.randomUUID(),
+      uuid: crypto.randomUUID(),
       rapportUuid,
       size: blob.size,
       hash,
@@ -57,9 +57,9 @@ export class Artifact implements IArtifact {
     attachment: Attachment,
     fileName: string
   ): Promise<void> {
-    const artifact = await db.artifact.get(attachment.id);
+    const artifact = await db.artifact.get(attachment.uuid);
     if (artifact === undefined) {
-      debug(`Artifact record does not exist for ${attachment.id}`);
+      debug(`Artifact record does not exist for ${attachment.uuid}`);
       return;
     }
     const url = URL.createObjectURL(artifact.data);

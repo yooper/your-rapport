@@ -54,7 +54,7 @@ export default function DiscoveryPluginDataTable() {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      setRows((await getLocalItem(DISCOVERY_PLUGIN)) ?? []);
+      setRows(await db.discoveryPlugin.toArray());
       let allPluginTypes = [...new Set([...basePluginTypes])];
       allPluginTypes.sort();
       setPluginTypes(allPluginTypes);
@@ -66,9 +66,7 @@ export default function DiscoveryPluginDataTable() {
 
   const handleSwitchChange = async (record, isChecked) => {
     record.active = isChecked;
-    await updateRecord(DISCOVERY_PLUGIN, UUID, record);
-    // TODO: fix layout issue
-    //processNotification({title: 'Discovery Plugin Updated', message: `Discovery Plugin ${record.label} has been updated.`, type: 'success'});
+    await db.discoveryPlugin.put(record);
   };
 
   const getRecord = (rowData) => {
@@ -322,10 +320,10 @@ export default function DiscoveryPluginDataTable() {
       showLoader();
       const deleteRecords = [];
       for (const [idx, value] of Object.entries(records.lookup)) {
-        deleteRecords.push(rows[idx]);
+        deleteRecords.push(rows[idx].uuid);
       }
-      await deleteBulkRecords(DISCOVERY_PLUGIN, UUID, deleteRecords);
-      setRows(await getLocalItem(DISCOVERY_PLUGIN));
+      await db.discoveryPlugin.bulkDelete(deleteRecords);
+      setRows(await db.discoveryPlugin.toArray());
       setIsLoading(false);
       hideLoader();
     },

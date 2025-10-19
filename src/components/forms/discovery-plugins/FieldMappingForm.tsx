@@ -13,6 +13,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
 import { Tooltip } from '@mui/material';
 import { DiscoveryPluginFormProps } from '../../../types';
+import { createTab} from '../../../utilities/loaders';
 
 const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
@@ -117,7 +118,7 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
           'To learn more about field mapping your data click to be sent to our wiki docs.'
         }
       >
-        <IconButton onClick={addRow}>
+        <IconButton onClick={() => { createTab('https://github.com/yooper/your-rapport/wiki/Discovery-Plugins-Tutorial'); }}>
           <InfoOutlined />
         </IconButton>
       </Tooltip>
@@ -126,7 +127,7 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
           'Field mappings provide the ability to map outgoing data fields.'
         }
       >
-        <IconButton onClick={addRow}>
+       <IconButton onClick={addRow}>
           <AddBoxIcon />
           Add Field Mapping(s)
         </IconButton>

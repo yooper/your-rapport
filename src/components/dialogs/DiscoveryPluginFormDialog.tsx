@@ -13,6 +13,7 @@ import DiscoveryPluginLayout from '../layouts/DiscoveryPluginLayout';
 import { processNotification } from '../../utilities/loaders';
 import Box from '@mui/material/Box';
 import { db } from '../../models/db/dexieDb';
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 
 type Mode = 'Add' | 'Edit';
 
@@ -61,41 +62,26 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
   // TODO: save to local db
   const handleSave = async () => {
     if (mode === 'Add') {
-      await db.discoveryPlugin.add(record);
-
-      const newRows = props.rows.map((row) => row);
-      if (data.Record) newRows.push(data.Record);
-      sort_by_key(newRows, 'Label');
-      props.setRows(newRows);
-      processNotification(data);
-      setOpen(false);
-    } else if (mode === 'Edit') {
-      // TODO: use local db
-      const data = (await fetch_wrapper(
-        `{{WebHost}}v1/discovery-plugin?Uuid=${record.Uuid}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(record),
-          headers: { 'Content-Type': 'application/json' },
-        }
-      )) as ApiSuccess<DiscoveryPluginRow>;
-
-      if (data.Type === 'danger') {
-        processNotification(data);
-        return data;
+      const newRecord: Partial<DiscoveryPlugin> = {...record , ...{ uuid: crypto.randomUUID() }}
+      const result = DiscoveryPlugin.validate(newRecord)
+      // invalid discovery plugin
+      if(!result.ok){
+        processNotification({title:'Invalid Discovery Plugin', message:result.errors, type:'danger'})
       }
+      else
+      {
+        await db.discoveryPlugin.add(newRecord);
+        processNotification({title:'Discovery Plugin Added', message:'A new discovery plugin was added.', type:'success'})
 
-      const newRows = props.rows.map((row) =>
-        row.Uuid === data.Record?.Uuid
-          ? (data.Record as DiscoveryPluginRow)
-          : row
-      );
-
-      sort_by_key(newRows, 'Label');
-      props.setRows(newRows);
-      processNotification(data);
-      setOpen(false);
+      }
+    } else if (mode === 'Edit') {
+      await db.discoveryPlugin.put(record);
     }
+
+    const newRows = await db.discoveryPlugin.toArray();
+    sort_by_key(newRows, 'label');
+    props.setRows(newRows);
+    setOpen(false);
   };
 
   return (

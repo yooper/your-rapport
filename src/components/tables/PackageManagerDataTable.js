@@ -13,6 +13,7 @@ import { addRecord, deleteRecord, getLocalItem } from '../../models/db/local';
 import IconButton from '@mui/material/IconButton';
 import HelperPopover from '../HelperPopover';
 import { DISCOVERY_PLUGIN, UUID } from '../../services/constants';
+import { db } from '../../models/db/dexieDb';
 
 export default function PackageManagerDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -36,7 +37,7 @@ export default function PackageManagerDataTable(props) {
       (r) => r.action !== 'Middleware'
     );
 
-    const localPackages = (await getLocalItem(DISCOVERY_PLUGIN)) ?? [];
+    const localPackages = await db.discoveryPlugin.toArray();
     externalPackages.forEach((ep) => (ep.action = 'install'));
 
     // Iterate through the first list

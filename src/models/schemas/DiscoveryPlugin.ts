@@ -1,10 +1,11 @@
 // DiscoveryPlugin.ts
 import { DiscoveryPluginAction, DiscoveryPluginInit } from '../../types';
+import { discoveryPluginSchema, type DiscoveryPluginValidated } from "../validators/discoveryPlugin.validator";
+
 
 
 export class DiscoveryPlugin {
   readonly uuid: string;
-
   pluginType: string | null;
   url: string | null;
   active: boolean;
@@ -17,7 +18,7 @@ export class DiscoveryPlugin {
   sortOrder: number;
   timeOut: number;
   lastAccessedOn: Date | null;
-  createdOn: Date;
+  createdOn: Date = new Date();
   timeTakenIn: number;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
   accessed: number;
@@ -28,8 +29,9 @@ export class DiscoveryPlugin {
   contentTypeHeader: string | null;
   fieldMapping: Record<string, any>;
   headers: Record<string, any>;
-  /** selected selector value by the user */
+  /** selected selector value by the user or automation */
   selectorValue: string | number | null;
+  country: 'us' | string;
 
   constructor(init: DiscoveryPluginInit = {}) {
     this.uuid = crypto.randomUUID();
@@ -43,7 +45,7 @@ export class DiscoveryPlugin {
     this.label = init.label ?? null;
     this.readOnly = init.readOnly ?? false;
     this.sortOrder = init.sortOrder ?? 0;
-    this.timeOut = init.timeOut ?? 100;
+    this.timeOut = init.timeOut ?? 100; // in seconds
     this.lastAccessedOn = init.lastAccessedOn ?? null;
     this.createdOn = init.createdOn ?? new Date();
     this.timeTakenIn = init.timeTakenIn ?? 0;
@@ -57,6 +59,7 @@ export class DiscoveryPlugin {
     this.fieldMapping = init.fieldMapping ?? {};
     this.headers = init.headers ?? {};
     this.selectorValue = init.selectorValue ?? null;
+    this.country = init.country ?? 'us';
   }
 
   /** Increment access count and mark last accessed time */
@@ -84,4 +87,13 @@ export class DiscoveryPlugin {
     if (obj.uuid) (pl as { uuid: string }).uuid = obj.uuid;
     return pl;
   }
+
+  static validate(input: unknown)
+  {
+      const res = discoveryPluginSchema.safeParse(input);
+      if (!res.success) {
+        return { ok: false, errors: res.error.issues.map(i => `${i.path.join("<br/>") || "(root)"}: ${i.message}`) };
+      }
+      return { ok: true, data: res.data };
+    }
 }

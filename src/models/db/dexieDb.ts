@@ -9,17 +9,18 @@ const db = new Dexie('YourRapport') as Dexie & {
   tag: EntityTable<Tag, 'name'>;
   domain: EntityTable<Domain, 'name'>;
   url: EntityTable<Url, 'name'>;
-  artifact: EntityTable<Artifact, 'id'>;
+  artifact: EntityTable<Artifact, 'uuid'>;
+  discoveryPlugin: EntityTable<Artifact, 'uuid'>
 };
 db.version(1).stores({
-  selector: 'name, selectorTypeName',
+  selector: '&name, selectorTypeName',
   tag: '&name',
   domain: '&name',
   url: '&name',
   selectorType: '&name',
 });
 db.version(2).stores({
-  artifact: 'id, rapportUuid',
+  artifact: '&uuid, rapportUuid',
 });
 db.version(3).stores({
   apiKey: '&key',
