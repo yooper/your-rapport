@@ -5,47 +5,47 @@ import { discoveryPluginSchema, type DiscoveryPluginValidated } from "../validat
 
 
 export class DiscoveryPlugin {
-  readonly uuid: string;
-  pluginType: string | null;
+  readonly uuid: string = crypto.randomUUID();
+  pluginType: string | 'content';
   url: string | null;
-  active: boolean;
-  groupName: string;
-  action: DiscoveryPluginAction | null;
+  active: boolean = true;
+  groupName: string = 'Default';
+  action: DiscoveryPluginAction | null = 'CreateTab';
   homePage: string | null;
   description: string | null;
   label: string | null;
-  readOnly: boolean;
-  sortOrder: number;
-  timeOut: number;
+  readOnly: boolean = false;
+  sortOrder: number = 0;
+  timeOut: number = 600;
   lastAccessedOn: Date | null;
   createdOn: Date = new Date();
   timeTakenIn: number;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
-  accessed: number;
-  version: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | string = 'GET';
+  accessed: number = 0;
+  version: string = '0.0.0';
   mimeTypeRegex: string | null;
   status: number | null;
   statusError: string | null;
   contentTypeHeader: string | null;
-  fieldMapping: Record<string, any>;
-  headers: Record<string, any>;
+  fieldMapping: Record<string, any> = {};
+  headers: Record<string, any> = {};
   /** selected selector value by the user or automation */
   selectorValue: string | number | null;
-  country: 'us' | string;
+  country: string = 'us';
 
   constructor(init: DiscoveryPluginInit = {}) {
-    this.uuid = crypto.randomUUID();
-    this.pluginType = init.pluginType ?? null;
+    this.uuid = init.uuid ?? crypto.randomUUID();
+    this.pluginType = init.pluginType ?? 'content';
     this.url = init.url ?? null;
     this.active = init.active ?? true;
     this.groupName = init.groupName ?? 'Default';
-    this.action = init.action ?? null;
+    this.action = init.action ?? 'CreateTab';
     this.homePage = init.homePage ?? null;
     this.description = init.description ?? null;
     this.label = init.label ?? null;
     this.readOnly = init.readOnly ?? false;
     this.sortOrder = init.sortOrder ?? 0;
-    this.timeOut = init.timeOut ?? 100; // in seconds
+    this.timeOut = init.timeOut ?? 600; // in seconds
     this.lastAccessedOn = init.lastAccessedOn ?? null;
     this.createdOn = init.createdOn ?? new Date();
     this.timeTakenIn = init.timeTakenIn ?? 0;
@@ -92,7 +92,7 @@ export class DiscoveryPlugin {
   {
       const res = discoveryPluginSchema.safeParse(input);
       if (!res.success) {
-        return { ok: false, errors: res.error.issues.map(i => `${i.path.join("<br/>") || "(root)"}: ${i.message}`) };
+        return { ok: false, errors: res.error.issues.map(i => `${i.path.join(".") || "(root)"}: ${i.message}`+ "   ") };
       }
       return { ok: true, data: res.data };
     }

@@ -60,22 +60,44 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
   };
 
   // TODO: save to local db
-  const handleSave = async () => {
-    if (mode === 'Add') {
-      const newRecord: Partial<DiscoveryPlugin> = {...record , ...{ uuid: crypto.randomUUID() }}
-      const result = DiscoveryPlugin.validate(newRecord)
+
+  const addRecord = async () => {
+      const newRecord: DiscoveryPlugin = new DiscoveryPlugin({...record , ...{ uuid: crypto.randomUUID() }})
+      const result = DiscoveryPlugin.validate(newRecord);
       // invalid discovery plugin
       if(!result.ok){
         processNotification({title:'Invalid Discovery Plugin', message:result.errors, type:'danger'})
+        return false;
       }
       else
       {
-        await db.discoveryPlugin.add(newRecord);
-        processNotification({title:'Discovery Plugin Added', message:'A new discovery plugin was added.', type:'success'})
-
+        await db.discoveryPlugin.put(newRecord);
+        processNotification({title:'Discovery Plugin Added', message:'A new discovery plugin was added.', type:'success'});
+        return true;
       }
-    } else if (mode === 'Edit') {
-      await db.discoveryPlugin.put(record);
+  }
+
+  const editRecord = async () => {
+      const modifiedRecord: DiscoveryPlugin = new DiscoveryPlugin({...record , ...{ uuid: crypto.randomUUID() }})
+      const result = DiscoveryPlugin.validate(modifiedRecord);
+      // invalid discovery plugin
+      if(!result.ok){
+        processNotification({title:'Invalid Discovery Plugin', message:result.errors, type:'danger'})
+        return false;
+      }
+      else
+      {
+        await db.discoveryPlugin.put(modifiedRecord);
+        processNotification({title:'Discovery Plugin Updated', message:'An existing discovery plugin was added.', type:'success'})
+        return true;
+      }
+  }
+
+  const handleSave = async () => {
+    if (mode === 'Add' && !await addRecord()) {
+      return;
+    } else if (mode === 'Edit' && !await editRecord()) {
+      return;
     }
 
     const newRows = await db.discoveryPlugin.toArray();

@@ -24,7 +24,7 @@ db.version(2).stores({
 });
 db.version(3).stores({
   apiKey: '&key',
-  discoveryPlugin: '&uuid, &label, url, status',
+  discoveryPlugin: '&uuid, &label, pluginType',
 });
 
 export { db };

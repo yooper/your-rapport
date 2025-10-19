@@ -23,6 +23,7 @@ import RunCircleIcon from '@mui/icons-material/RunCircle';
 import Mustache from 'mustache';
 import { CloudDownload } from '@mui/icons-material';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -331,7 +332,7 @@ export default function DiscoveryPluginDataTable() {
       return (
         <Fragment>
           <DiscoveryPluginFormDialog
-            record={{}}
+            record={{...new DiscoveryPlugin()}}
             mode={'Add'}
             rows={rows}
             setRows={setRows}

@@ -203,21 +203,22 @@ type EventType =
   | 'postDelete';
 
 export interface DiscoveryPluginInit {
-  pluginType?: string | null;
-  url?: string | null;
+  uuid?: string;
+  pluginType?: string;
+  url?: string;
   active?: boolean;
   groupName?: string;
-  action?: DiscoveryPluginAction | null;
+  action?: DiscoveryPluginAction;
   homePage?: string | null;
   description?: string | null;
-  label?: string | null;
+  label?: string;
   readOnly?: boolean;
   sortOrder?: number;
   timeOut?: number;
   lastAccessedOn?: Date | null;
   createdOn?: Date;
   timeTakenIn?: number;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   accessed?: number;
   version?: string;
   mimeTypeRegex?: string | null;
