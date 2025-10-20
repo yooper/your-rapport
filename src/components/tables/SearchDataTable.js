@@ -44,7 +44,7 @@ export default function SearchDataTable(props) {
       const start = performance.now();
       setSelectors(await db.selector.toArray());
       setTags(await db.tag.toArray());
-      setDiscoveryPlugins((await getLocalItem(DISCOVERY_PLUGIN)) ?? []);
+      setDiscoveryPlugins((await db.discoveryPlugin.toArray()) ?? []);
       const screenshots = (await getLocalItem(RAPPORT)) ?? [];
       const elapsed = performance.now() - start;
       debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
@@ -342,10 +342,15 @@ export default function SearchDataTable(props) {
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
           return (
-            <SearchTableOptionMenu
+            <DiscoveryPluginDialog
+              key={`content-${value}-${record.uuid}`}
+              plugins={discoveryPlugins.filter((plugin) => {
+                return plugin.pluginType === 'content';
+              })}
+              title={'content'}
               record={record}
-              rows={rows}
-              setRows={setRows}
+              uxType={'appsIcon'}
+              pluginValue={''}
             />
           );
         },

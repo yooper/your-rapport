@@ -74,6 +74,7 @@ export default function SearchTableOptionMenu(props) {
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
       ></MoreVertIcon>
+
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}

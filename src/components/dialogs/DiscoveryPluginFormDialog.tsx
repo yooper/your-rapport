@@ -17,26 +17,13 @@ import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 
 type Mode = 'Add' | 'Edit';
 
-export interface DiscoveryPluginRow {
-  Uuid?: string;
-  Label?: string;
-  [key: string]: unknown; // allow extra backend fields
-}
 
-interface ApiSuccess<T> {
-  Type?: 'success' | 'danger' | string;
-  Record?: T;
-  Records?: T[];
-  Title?: string;
-  Message?: string;
-  [key: string]: unknown;
-}
 
 interface DiscoveryPluginFormDialogProps {
   mode: Mode;
-  record: DiscoveryPluginRow;
-  rows: DiscoveryPluginRow[];
-  setRows: (rows: DiscoveryPluginRow[]) => void;
+  record: DiscoveryPlugin;
+  rows: DiscoveryPlugin[];
+  setRows: (rows: DiscoveryPlugin[]) => void;
 
   // passed through to DiscoveryPluginLayout
   apiKeys?: unknown;
@@ -49,7 +36,7 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
 ) => {
   const { mode } = props;
   const [open, setOpen] = useState<boolean>(false);
-  const [record, setRecord] = useState<DiscoveryPluginRow>(props.record);
+  const [record, setRecord] = useState<DiscoveryPlugin>(props.record);
 
   useEffect(() => {
     setRecord(props.record);
@@ -78,7 +65,7 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
   }
 
   const editRecord = async () => {
-      const modifiedRecord: DiscoveryPlugin = new DiscoveryPlugin({...record , ...{ uuid: crypto.randomUUID() }})
+      const modifiedRecord: DiscoveryPlugin = new DiscoveryPlugin({...record})
       const result = DiscoveryPlugin.validate(modifiedRecord);
       // invalid discovery plugin
       if(!result.ok){
@@ -88,7 +75,7 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
       else
       {
         await db.discoveryPlugin.put(modifiedRecord);
-        processNotification({title:'Discovery Plugin Updated', message:'An existing discovery plugin was added.', type:'success'})
+        processNotification({title:'Discovery Plugin Updated', message:'An existing discovery plugin was modified.', type:'success'})
         return true;
       }
   }
@@ -99,7 +86,6 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
     } else if (mode === 'Edit' && !await editRecord()) {
       return;
     }
-
     const newRows = await db.discoveryPlugin.toArray();
     sort_by_key(newRows, 'label');
     props.setRows(newRows);
