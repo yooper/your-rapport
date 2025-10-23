@@ -8,21 +8,15 @@ import MUIDataTable, {
   MUIDataTableIsRowCheck,
 } from 'mui-datatables';
 import ApiKeyFormDialog from '../dialogs/ApiKeyFormDialog';
-import { processNotification } from '../../common/utilities';
-import CopyToClipboardIcon from '../widgets/CopyToClipboardIcon';
+import { processNotification } from '../../utilities/loaders';
 
 // ⬇️ Import your Dexie instance
 // Adjust this path to wherever you initialize Dexie and export `db`
-import { db } from '../../models/db';
-
-type ApiKeyRow = {
-  Id?: number | string | null;
-  Key: string | null;
-  Value: string | null;
-};
+import { db } from '../../models/db/dexieDb';
+import { ApiKey } from '../../types';
 
 const ApiKeyDataTable: React.FC = () => {
-  const [rows, setRows] = useState<ApiKeyRow[]>([]);
+  const [rows, setRows] = useState<ApiKey[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
 

@@ -1,5 +1,5 @@
 // DiscoveryPlugin.ts
-import { DiscoveryPluginAction, DiscoveryPluginInit } from '../../types';
+import { DiscoveryPluginAction, DiscoveryPluginInit, onClick } from '../../types';
 import { discoveryPluginSchema, type DiscoveryPluginValidated } from "../validators/discoveryPlugin.validator";
 
 
@@ -32,6 +32,7 @@ export class DiscoveryPlugin {
   /** selected selector value by the user or automation */
   selectorValue: string | number | null;
   country: string = 'us';
+  onClick: onClick | null;
 
   constructor(init: DiscoveryPluginInit = {}) {
     this.uuid = init.uuid ?? crypto.randomUUID();
@@ -60,6 +61,7 @@ export class DiscoveryPlugin {
     this.headers = init.headers ?? {};
     this.selectorValue = init.selectorValue ?? null;
     this.country = init.country ?? 'us';
+    this.onClick = init.onClick ?? null;
   }
 
   /** Increment access count and mark last accessed time */

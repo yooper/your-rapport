@@ -24,6 +24,7 @@ import Mustache from 'mustache';
 import { CloudDownload } from '@mui/icons-material';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import { downloadJsonData } from '../../utilities/transformers';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -276,36 +277,36 @@ export default function DiscoveryPluginDataTable() {
                 setPluginTypes={setPluginTypes}
               />
               <Fragment>
-                <IconButton
-                  aria-controls="download-menu"
-                  aria-haspopup="true"
-                  onClick={() => {
-                    //clonePlugin(record)
-                  }}
-                  size="large"
-                >
-                  <FileCopyIcon />
-                </IconButton>
-                <IconButton
-                  aria-controls="download-menu"
-                  aria-haspopup="true"
-                  onClick={() => {
-                    // TODO download plugin
-                  }}
-                  size="large"
-                >
-                  <CloudDownload />
-                </IconButton>
-                <IconButton
-                  aria-controls="script-engine-menu"
-                  aria-haspopup="true"
-                  onClick={() => {
-                    alert('Not Available, yet');
-                  }}
-                  size="large"
-                >
-                  <RunCircleIcon />
-                </IconButton>
+                <Tooltip title={'Clone the discovery plugin so you can try different settings without wrecking the original.'}>
+                  <IconButton
+                    aria-controls="download-menu"
+                    aria-haspopup="true"
+                    onClick={async() => {
+                      showLoader();
+                      let plugin = await db.discoveryPlugin.get(record.uuid);
+                      plugin.uuid = crypto.randomUUID();
+                      plugin.label = plugin.label + ' (clone) ' + plugin.uuid;
+                      await db.discoveryPlugin.add(plugin);
+                      setRows(await db.discoveryPlugin.toArray());
+                      hideLoader();
+                    }}
+                    size="large"
+                  >
+                    <FileCopyIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={'Download the discovery plugin to share..'}>
+                  <IconButton
+                    aria-controls="download-menu"
+                    aria-haspopup="true"
+                    onClick={() => {
+                      downloadJsonData(record, `${record.label}.json`);
+                    }}
+                    size="large"
+                  >
+                    <CloudDownload />
+                  </IconButton>
+                </Tooltip>
               </Fragment>
             </Fragment>
           );

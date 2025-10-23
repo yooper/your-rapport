@@ -60,7 +60,7 @@ export function downloadJsonData(
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = fileName;
+  link.download = sanitizeFileName(fileName);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -357,3 +357,21 @@ export function sort_by_key<T, K extends keyof T>(
     return 0;
   });
 }
+
+/**
+ * Replaces characters not allowed in filenames on common filesystems and trims/normalizes edge cases.
+ * @param fileName Input filename (untrusted user input is okay)
+ * @returns A sanitized filename safe for most filesystems
+ */
+export function sanitizeFileName(fileName: string): string {
+  let sanitized = fileName.trim();
+  // Replace invalid characters:  <>:"/\|?*  and ASCII control chars 0x00–0x1F
+  const invalidCharsRegex = /[<>:"/\\|?*\x00-\x1F]/g;
+  sanitized = sanitized.replace(invalidCharsRegex, "_");
+
+  if (sanitized.endsWith(".")) {
+    sanitized = sanitized.slice(0, -1);
+  }
+  return sanitized;
+}
+

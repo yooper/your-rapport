@@ -1,5 +1,5 @@
 import React from 'react';
-import { DiscoveryPluginAction } from './models/schemas/DiscoveryPlugin';
+import { DiscoveryPlugin, DiscoveryPluginAction } from './models/schemas/DiscoveryPlugin';
 
 export type Selector = {
   name: string;
@@ -160,13 +160,15 @@ interface DiscoveryPluginFormProps {
   ) => void;
 }
 
-interface IApiKey{
+type ApiKey = {
+  id: number
   key: string
-  value: string
+  value: string|number|boolean|null
+  pluginUuid: string|null;
 }
 
-interface DiscoveryPluginLayoutProps extends  DiscoveryPluginFormProps{
-  apiKeys: IApiKey[];
+interface DiscoveryPluginLayoutProps extends DiscoveryPluginFormProps{
+  apiKeys: ApiKey[];
   pluginTypes: string[];
   setPluginTypes: (types: string[]) => void;
 }
@@ -229,7 +231,10 @@ export interface DiscoveryPluginInit {
   headers?: Record<string, string>;
   selectorValue?: string | number | null;
   country?: string | null;
+  onClick?: onClick | null // for use with plugins that require javascript to run/extend the functionality
 }
+
+export type onClick = (record: IRapport) => void;
 
 export type DiscoveryPluginAction =
   | 'BackgroundRunner'
@@ -237,3 +242,15 @@ export type DiscoveryPluginAction =
   | 'ForegroundRunner'
   | 'SubmitForm';
 
+export type NotificationPayload = {
+  title?: string;
+  message?: string;
+  type?: 'success' | 'danger' | 'info' | 'default' | 'warning' | string;
+  [k: string]: unknown;
+};
+
+
+
+interface HelperPopoverProps {
+  message: string;
+}

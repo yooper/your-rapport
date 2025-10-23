@@ -77,6 +77,7 @@ export default function BulkAutomationAddDialog(props) {
           value: valueDefault,
           keepTabOpen: true,
           screenShotsCollected: 0,
+          isDeepSave: false
         };
       });
 

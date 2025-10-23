@@ -2,10 +2,8 @@ import React, { useState, MouseEvent } from 'react';
 import { Popover } from '@mui/material';
 import HelpIcon from '@mui/icons-material/Help';
 import Typography from '@mui/material/Typography';
+import { HelperPopoverProps } from '../types';
 
-interface HelperPopoverProps {
-  message: string;
-}
 
 export default function HelperPopover({ message }: HelperPopoverProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);

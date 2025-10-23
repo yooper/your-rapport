@@ -1,5 +1,4 @@
 import React from 'react';
-import Grid from '@mui/material/Grid';
 import FieldMappingForm from '../forms/discovery-plugins/FieldMappingForm';
 import DiscoveryPluginAdvancedForm from '../forms/discovery-plugins/DiscoveryPluginAdvancedForm';
 import DiscoveryPluginBasicForm from '../forms/discovery-plugins/DiscoveryPluginBasicForm';

@@ -12,7 +12,7 @@ import {
   UUID,
 } from '../services/constants';
 import { capture } from '../datasources/browser_capture';
-import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { getLocalItem, updateRecord } from '../models/db/local';
 import { createTab } from './loaders';
 import { debug } from '../services/logger_services';

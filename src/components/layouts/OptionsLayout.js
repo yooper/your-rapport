@@ -19,6 +19,7 @@ import DiscoveryPluginDataTable from '../tables/DiscoveryPluginDataTable';
 import { DISCOVERY_PLUGIN } from '../../services/constants';
 import TagDataTable from '../tables/TagDataTable';
 import TagIcon from '@mui/icons-material/Tag';
+import ApiKeyDataTable from '../tables/ApiKeyDataTable';
 
 export default function OptionsLayout() {
   const urlParams = new URL(window.location.href).searchParams;
@@ -26,8 +27,12 @@ export default function OptionsLayout() {
   const [selectedComponent, setSelectedComponent] = useState(
     urlParams.get('view') ?? 'browser'
   );
-
   const componentMap = [
+    {
+      label: 'Api Key',
+      key: 'browser',
+      message: 'Manage your local api keys that help make it easier to ',
+    },
     {
       label: 'Browser Settings',
       key: 'browser',
@@ -107,6 +112,8 @@ function IconMapper(props) {
 
 function Renderer(props) {
   switch (props.selectedComponent) {
+    case 'apiKey':
+      return <ApiKeyDataTable />;
     case 'browser':
       return <BrowserSettingsForm />;
     case DISCOVERY_PLUGIN:

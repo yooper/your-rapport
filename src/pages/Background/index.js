@@ -246,6 +246,7 @@ chrome.runtime.onMessageExternal.addListener(function (
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
             screenShotsCollected: 0,
+            isDeepSave: false
           });
         })();
         return false;

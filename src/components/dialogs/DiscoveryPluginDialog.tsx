@@ -1,4 +1,5 @@
 import React, { Fragment, useState } from 'react';
+import { getSelectorTypeMap } from '../../utilities/loaders'
 import {
   Avatar,
   Chip,
@@ -11,7 +12,7 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
+  ListItemText, Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -34,12 +35,14 @@ import {
   QuestionMark as QuestionMarkIcon,
   CalendarMonth,
 } from '@mui/icons-material';
-
+import AddToQueueIcon from '@mui/icons-material/AddToQueue';
+import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
 import Mustache from 'mustache';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
-import discoveryPluginParser from '../../services/discovery_plugin_services';
+import { discoveryPluginRunner } from '../../services/discovery_plugin_services';
 import { sort_by_key } from '../../utilities/transformers';
-import { hideLoader, showLoader } from '../../utilities/loaders';
+import { hideLoader, showLoader, processNotification } from '../../utilities/loaders';
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 
 interface Plugin {
   Label: string;
@@ -56,7 +59,7 @@ interface RecordData {
 interface DiscoveryPluginDialogProps {
   selectorValue: string;
   record: RecordData;
-  plugins: Plugin[];
+  plugins: DiscoveryPlugin[];
   title: string;
   uxType: 'chip' | 'icon';
 }
@@ -71,27 +74,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
   const [open, setOpen] = useState(false);
 
   Mustache.escape = (text: string) => text;
-  sort_by_key(plugins, 'Label');
-
-  const getSelectorTypeMap = () => ({
-    address: 'Address',
-    associate: 'Associate',
-    bitcoin: 'Bitcoin Address',
-    dob: 'Date of Birth',
-    date: 'Date',
-    email: 'Email',
-    ethereum: 'Ethereum Address',
-    event: 'Event',
-    family: 'Family',
-    keyword: 'Keyword',
-    name: 'Name',
-    occupation: 'Occupation',
-    organization: 'Organization',
-    phone: 'Phone',
-    religion: 'Religion',
-    username: 'Username',
-  });
-
+  sort_by_key(plugins, 'label');
   const iconMap: Record<string, JSX.Element> = {
     address: (
       <Avatar>
@@ -209,9 +192,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
 
   const handleDelete = async (value: string) => {
     showLoader();
-    await fetch_wrapper(`{{WebHost}}v1/selector?Name=${value}`, {
-      method: 'DELETE',
-    });
+
     hideLoader();
   };
 
@@ -265,11 +246,14 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
           <form>
             <div>
               <Typography variant="h5">
+
                 {selectorValue}
-                <CopyToClipboardIcon
-                  record={{ pluginName: selectorValue }}
-                  copyFieldName={'pluginName'}
-                />
+                  <Tooltip title={'Copy the selected selector value into your clip board'}>
+                  <CopyToClipboardIcon
+                    record={{ pluginName: selectorValue }}
+                    copyFieldName={'pluginName'}
+                  />
+                </Tooltip>
               </Typography>
 
               <List dense>
@@ -280,7 +264,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
                   onClick={() => {
                     plugins.forEach((plugin) =>
                       !['Download', 'Live Page'].includes(plugin.label)
-                        ? discoveryPluginParser(plugin, record, selectorValue)
+                        ? discoveryPluginRunner(plugin, record, selectorValue)
                         : null
                     );
                   }}
@@ -302,15 +286,37 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
                         <ListItem
                           dense
                           key={`plugin-${plugin.pluginType}-${plugin.uuid}`}
-                          className="clickable"
-                          onClick={() =>
-                            discoveryPluginParser(plugin, record, selectorValue)
-                          }
                         >
                           <ListItemIcon>
-                            <OpenInNewIcon />
+                            <Tooltip title={'Queue item into the bulk automation collection'}>
+                              <IconButton disabled={!plugin.url || plugin.action !== 'CreateTab'}>
+                                <AddToQueueIcon onClick={() => {
+                                  // TODO: disable plugin click after the item has been queued
+                                  // assign the plugin value
+                                  const dp = {...plugin,...{selectorValue: selectorValue}}
+                                  const url = Mustache.render(dp.url, dp);
+                                    BulkAutomationUrl.queueUrl(url).then(() => {
+                                      processNotification({title: 'Url queued', message: 'The discovery plugin url has been placed in the automation queue', type:'info'})
+                                    })
+                                }}/>
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={'Open the website using the discovery plugin and rapport attributes'}>
+                              <IconButton
+                                className="clickable"
+                                onClick={() => { discoveryPluginRunner(plugin, record, selectorValue)}}
+                              >
+                                <OpenInNewIcon
+                                />
+                              </IconButton>
+                            </Tooltip>
+
                           </ListItemIcon>
-                          <ListItemText primary={plugin.label} />
+                          <ListItemText
+                            primary={plugin.label}
+                              className="clickable"
+                              onClick={() => { discoveryPluginRunner(plugin, record, selectorValue)}}
+                          />
                         </ListItem>
                       ))}
                   </List>

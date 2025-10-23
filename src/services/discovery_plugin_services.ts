@@ -1,39 +1,20 @@
 import Mustache from 'mustache';
 import { createTab, processNotification } from '../utilities/loaders';
 import { getUser } from '../models/schemas/User';
+import { DiscoveryPlugin } from '../models/schemas/DiscoveryPlugin';
+import { IRapport, NotificationPayload } from '../types';
+import { downloadBase64Image, downloadJsonData } from '../utilities/transformers';
+import { printPdfReport } from '../utilities/print_service';
 
-type PluginAction = 'submitForm' | 'singleTask' | 'createTab' | string;
-
-export interface DiscoveryPlugin {
-  url: string;
-  action: PluginAction;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | string;
-  contentTypeHeader?: string | null;
-  label?: string;
-  fieldMapping?: Record<string, string>;
-  // runtime-assigned
-  selectorValue?: string | number | null;
-  // legacy compatibility
-  PluginValue?: string | number | null;
-}
-
-export type RapportRecord = Record<string, unknown>;
-
-export type NotificationPayload = {
-  title?: string;
-  message?: string;
-  type?: 'success' | 'danger' | 'info' | 'default' | 'warning' | string;
-  [k: string]: unknown;
-};
 
 /**
  * Receives the discovery plugin and record. The selectorValue is the value of the selector that was selected by the end user.
  * Throws an error if the user lacks access to discovery plugins.
  * TODO: Add support for API / Configuration variables
  */
-export default async function discoveryPluginRunner(
+export async function discoveryPluginRunner(
   discoveryPlugin: DiscoveryPlugin,
-  rapport: RapportRecord = {},
+  rapport: IRapport,
   selectorValue: string | number | null = null
 ): Promise<void> {
   const user: any = await getUser();
@@ -45,17 +26,23 @@ export default async function discoveryPluginRunner(
   // assign the plugin value
   discoveryPlugin.selectorValue = selectorValue;
 
+  // runs the custom integration
+  if(discoveryPlugin.onClick){
+    discoveryPlugin.onClick(rapport);
+    return; // stop processing the request
+  }
+
   Mustache.escape = (text: string) => text;
 
   const url = Mustache.render(discoveryPlugin.url, discoveryPlugin);
 
   switch (discoveryPlugin.action) {
-    case 'submitForm': {
+    case 'SubmitForm': {
       const formFields = await _buildObject(discoveryPlugin, rapport);
       _submitForm(discoveryPlugin, formFields, url);
       break;
     }
-    case 'singleTask': {
+    case 'ForegroundRunner': {
       const formFields = await _buildObject(discoveryPlugin, rapport);
       const data = await _fetchRequest(
         discoveryPlugin,
@@ -66,7 +53,7 @@ export default async function discoveryPluginRunner(
       if (data) processNotification(data);
       break;
     }
-    case 'createTab':
+    case 'CreateTab':
     default: {
       const encodedUri = encodeURI(url);
       createTab(encodedUri);
@@ -80,8 +67,8 @@ export default async function discoveryPluginRunner(
  */
 function _submitForm(
   discoveryPlugin: DiscoveryPlugin,
-  formFields: Record<string, string>,
-  url: string
+  formFields: Record<string, string | File>,
+  url: string,
 ): void {
   const form = _createForm(discoveryPlugin, formFields, url);
   document.body.appendChild(form);
@@ -94,7 +81,7 @@ function _submitForm(
  */
 function _createForm(
   discoveryPlugin: DiscoveryPlugin,
-  formFields: Record<string, string>,
+  formFields: Record<string, string | File>,
   url: string
 ): HTMLFormElement {
   const form = document.createElement('form');
@@ -124,7 +111,7 @@ async function _fetchRequest(
   discoveryPlugin: DiscoveryPlugin,
   formFields: Record<string, string | File>,
   url: string,
-  _record: RapportRecord
+  _record: IRapport
 ): Promise<NotificationPayload | void> {
   const formData = new FormData();
   for (const [key, value] of Object.entries(formFields)) {
@@ -244,7 +231,7 @@ async function _fetchRequest(
  */
 async function _buildObject(
   discoveryPlugin: DiscoveryPlugin,
-  record: RapportRecord = {}
+  record: IRapport
 ): Promise<Record<string, string | File>> {
   const obj: Record<string, string> = {};
   const mapping = discoveryPlugin.fieldMapping ?? {};
@@ -254,4 +241,43 @@ async function _buildObject(
     obj[key] = Mustache.render(value, record as any);
   }
   return obj;
+}
+
+/**
+ * TODO: Map complex discovery plugins and their click handler
+ */
+export function getIntegratedPlugins() : DiscoveryPlugin[]
+{
+  // these plugins are not validated because they are invalid
+  return [
+    new DiscoveryPlugin({
+      uuid: '7d18fd15-4bb0-4861-ad7f-02a672c9ac20',
+      label: 'Download Record',
+      pluginType: 'content',
+      onClick: (record: IRapport) =>
+      {
+        downloadJsonData(record, `your.rapport.${record.uuid}.json`);
+      }
+    }),
+    new DiscoveryPlugin({
+      uuid: '8d18fd15-4bb0-4861-ad7f-02a672c9ac20',
+      label: 'Download Screenshot',
+      pluginType: 'content',
+      onClick: (record: IRapport) =>
+      {
+        if(record.screenshot){
+          downloadBase64Image(record.screenshot, `${record.uuid}.png`);
+        }
+      }
+    }),
+    new DiscoveryPlugin({
+      uuid: '0d18fd15-4bb0-4861-ad7f-02a672c9ac20',
+      label: 'Print Rapport',
+      pluginType: 'content',
+      onClick: (record: IRapport) =>
+      {
+        printPdfReport('basic', { records: [record] });
+      }
+    })
+  ]
 }

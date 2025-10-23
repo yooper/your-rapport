@@ -9,7 +9,6 @@ import {
   UUID,
 } from './constants';
 import { captureSingleScreenShot } from './collection_services';
-import { db } from '../models/db/dexieDb';
 import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
 import { addRecord } from '../models/db/local';
@@ -134,6 +133,7 @@ export async function initializeContextMenus() {
             value: valueDefault,
             keepTabOpen: keepTabOpenDefault,
             screenShotsCollected: 0,
+            isDeepSave: false
           });
           ExtensionPin.setTemporaryPin('SAVD');
         })();

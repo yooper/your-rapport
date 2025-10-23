@@ -1,10 +1,11 @@
 /**
  * Used for tracking the bulk collection objects
  */
-import { getLocalItem, updateRecord } from '../db/local';
+import { addRecord, getLocalItem, updateRecord } from '../db/local';
 import { BULK_AUTOMATION, UUID } from '../../services/constants';
+import { Configuration } from './Configuration';
 
-export class BulkAutomationUrl {
+export default class BulkAutomationUrl {
   constructor() {
     this.uuid = crypto.randomUUID();
     this.url = null;
@@ -19,6 +20,7 @@ export class BulkAutomationUrl {
     this.active = false;
     this.tabId = null;
     this.tab = null;
+    this.isDeepSave = false
   }
 
   /**
@@ -58,5 +60,37 @@ export class BulkAutomationUrl {
     return activeAutomation
       ? BulkAutomationUrl._getInstance(activeAutomation)
       : null;
+  }
+
+  /**
+   * Add the url to the queue
+   * TODO: implement deepSave conditions
+   * @param url
+   * @param {boolean} isDeepSave is false by default
+   *
+   * @returns {Promise<void>}
+   */
+  static async queueUrl(url, isDeepSave = false){
+    const unitDefault = await Configuration.getConfigurationValue(
+      'automationUnitDefault',
+      'count'
+    );
+    const valueDefault = await Configuration.getConfigurationValue(
+      'automationValueDefault',
+      100
+    );
+    const automation = {
+      uuid: crypto.randomUUID(),
+      url: url,
+      createdOn: Date.now(),
+      completedOn: null,
+      ranOn: null,
+      unit: unitDefault,
+      value: valueDefault,
+      keepTabOpen: true,
+      screenShotsCollected: 0,
+      isDeepSave: isDeepSave
+    };
+    await addRecord(BULK_AUTOMATION, UUID, automation);
   }
 }

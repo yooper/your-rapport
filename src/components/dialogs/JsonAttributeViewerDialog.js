@@ -29,7 +29,7 @@ export default function JsonAttributeViewerDialog(props) {
       >
         <DialogTitle id="form-dialog-title">Debug Data Attributes</DialogTitle>
         <DialogContent>
-          <JsonView src={props.record} theme="vscode" />
+          <JsonView src={props.record} theme="vscode" indentWidth={4}/>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="cancel" variant={'contained'}>

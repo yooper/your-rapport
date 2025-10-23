@@ -13,6 +13,7 @@ import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
 import { Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
+import SettingsIcon from '@mui/icons-material/Settings';
 import {
   DISCOVERY_PLUGIN,
   RAPPORT,
@@ -29,6 +30,8 @@ import { Artifact } from '../../models/schemas/Artifact';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
 import TagIcon from '@mui/icons-material/Tag';
 import LanguageIcon from '@mui/icons-material/Language';
+import { getIntegratedPlugin, getIntegratedPlugins } from '../../services/discovery_plugin_services';
+import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -83,6 +86,7 @@ export default function SearchDataTable(props) {
           const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
           const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
+          const [openAttributeViewer, setOpenAttributeViewer] = useState(false);
           const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(
             record.artifacts?.length > 0
           );
@@ -127,6 +131,15 @@ export default function SearchDataTable(props) {
                       />
                     </Tooltip>
                   </Badge>
+                  <Badge>
+                    <Tooltip title={'View the attributes of this capture.'}>
+                      <SettingsIcon
+                        onClick={() => {
+                          setOpenAttributeViewer(true);
+                        }}
+                      />
+                    </Tooltip>
+                  </Badge>
                   {hasMhtmlArtifact ? (
                     <Badge>
                       <Tooltip
@@ -167,6 +180,11 @@ export default function SearchDataTable(props) {
                 record={record}
                 rows={rows}
                 setRows={setRows}
+              />
+              <JsonAttributeViewerDialog
+                isOpen={openAttributeViewer}
+                setIsOpen={setOpenAttributeViewer}
+                record={record}
               />
             </>
           );
@@ -341,12 +359,11 @@ export default function SearchDataTable(props) {
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
+          const plugins = getIntegratedPlugins().filter(p => p.pluginType === 'content').concat(discoveryPlugins.filter(p => p.pluginType === 'content'));
           return (
             <DiscoveryPluginDialog
               key={`content-${value}-${record.uuid}`}
-              plugins={discoveryPlugins.filter((plugin) => {
-                return plugin.pluginType === 'content';
-              })}
+              plugins={plugins}
               title={'content'}
               record={record}
               uxType={'appsIcon'}
@@ -438,8 +455,8 @@ export default function SearchDataTable(props) {
     const deleteRecords = [];
     const deleteArtifacts = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
+      deleteArtifacts.push(rows[idx].artifacts.map((a) => a.uuid));
       deleteRecords.push(rows[idx]);
-      deleteArtifacts.push(...rows[idx].artifacts.map((a) => a.id));
     }
 
     await db.artifact.bulkDelete(deleteArtifacts);
