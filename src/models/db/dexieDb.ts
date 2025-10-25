@@ -23,7 +23,7 @@ db.version(2).stores({
   artifact: '&uuid, rapportUuid',
 });
 db.version(3).stores({
-  apiKey: 'id++, &key',
+  apiKey: '&key',
   discoveryPlugin: '&uuid, &label, pluginType',
 });
 

@@ -5,7 +5,6 @@ import CopyToClipboardIcon from '../CopyToClipboardIcon';
 import { createTab, hideLoader, showLoader } from '../../utilities/loaders';
 import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
-import SearchTableOptionMenu from '../menus/SearchTableOptionMenu';
 import PreviewImageDialog from '../dialogs/PreviewImageDialog';
 import UploadDataDialog from '../dialogs/UploadDataDialog';
 import { downloadJsonData } from '../../utilities/transformers';

@@ -100,7 +100,7 @@ function LargeButtonGrid() {
       },
     },
     {
-      title: 'Settings',
+      title: 'Configurations',
       toolTipTitle: `Adjust a variety of configurations, settings, and options.`,
       onClick: async () =>
         await chrome.tabs.create({
@@ -108,7 +108,7 @@ function LargeButtonGrid() {
         }),
     },
     {
-      title: 'Wiki Docs',
+      title: 'Documentation',
       toolTipTitle: `The wiki docs for this product and its source code.`,
       onClick: () => window.open('https://github.com/yooper/your-rapport/wiki'),
     },

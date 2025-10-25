@@ -20,6 +20,7 @@ import { DISCOVERY_PLUGIN } from '../../services/constants';
 import TagDataTable from '../tables/TagDataTable';
 import TagIcon from '@mui/icons-material/Tag';
 import ApiKeyDataTable from '../tables/ApiKeyDataTable';
+import ApiIcon from '@mui/icons-material/Api';
 
 export default function OptionsLayout() {
   const urlParams = new URL(window.location.href).searchParams;
@@ -30,8 +31,8 @@ export default function OptionsLayout() {
   const componentMap = [
     {
       label: 'Api Key',
-      key: 'browser',
-      message: 'Manage your local api keys that help make it easier to ',
+      key: 'apiKey',
+      message: 'Manage your local api keys that integrate with your third party plugins.',
     },
     {
       label: 'Browser Settings',
@@ -40,13 +41,13 @@ export default function OptionsLayout() {
     },
     {
       label: 'Discovery Plugins',
-      key: DISCOVERY_PLUGIN,
+      key: 'discoveryPlugin',
       message:
         'Connect or enrich your data to other service providers. Autolinks data repositories to your selectors.',
     },
     {
       label: 'Package Management',
-      key: 'package_management',
+      key: 'packageManagement',
       message:
         'Packages enhance and extend Your Rapport functionality. When you install a package it becomes a discovery plugin. Discovery plugins help you search for selectors.',
     },
@@ -95,11 +96,13 @@ export default function OptionsLayout() {
 
 function IconMapper(props) {
   switch (props.icon) {
+    case 'apiKey':
+      return <ApiIcon />
     case 'browser':
       return <WebIcon />;
-    case DISCOVERY_PLUGIN:
+    case 'discoveryPlugin':
       return <ExtensionIcon />;
-    case 'package_management':
+    case 'packageManagement':
       return <ListAltIcon />;
     case 'selector':
       return <LocalOfferIcon />;

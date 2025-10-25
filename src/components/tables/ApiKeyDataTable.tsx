@@ -1,48 +1,50 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
-import ConfigurationOptionRepo from '../../models/repository/ConfigurationOptionRepo';
 import MUIDataTable, {
   MUIDataTableColumn,
   MUIDataTableOptions,
   MUIDataTableIsRowCheck,
 } from 'mui-datatables';
-import ApiKeyFormDialog from '../dialogs/ApiKeyFormDialog';
+import ApiKeyFormDialog from '../dialogs/ApiKeyFormDialog'
 import { processNotification } from '../../utilities/loaders';
+import CopyToClipboardIcon from '../CopyToClipboardIcon';
+
 
 // ⬇️ Import your Dexie instance
 // Adjust this path to wherever you initialize Dexie and export `db`
 import { db } from '../../models/db/dexieDb';
 import { ApiKey } from '../../types';
+import { Tooltip } from '@mui/material';
 
 const ApiKeyDataTable: React.FC = () => {
   const [rows, setRows] = useState<ApiKey[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [config, setConfig] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     (async () => {
       setIsLoading(true);
-      setConfig(await ConfigurationOptionRepo.getConfigObject());
       setRows(await db.apiKey.toArray());
       setIsLoading(false);
     })();
   }, []);
 
   const columns: MUIDataTableColumn[] = [
-    { label: 'key', name: 'Api Key Name' },
+    { label: 'Api Key Name', name: 'key' },
     {
-      label: 'Copy Api Key',
+      label: 'Copy Api Key Value',
       name: 'CopyToClipboard',
       options: {
         filter: false,
         sort: false,
         customBodyRenderLite: (dataIndex: number) => (
-          <CopyToClipboardIcon
-            record={rows[dataIndex]}
-            copyFieldName={'value'}
-            message={'The Api Key Value was copied to your clipboard.'}
-          />
+          <Tooltip title={"Copy the Api key's value into your clipboard"}>
+            <CopyToClipboardIcon
+              record={rows[dataIndex]}
+              copyFieldName={'value'}
+              message={'The Api Key Value was copied to your clipboard.'}
+            />
+          </Tooltip>
         ),
       },
     },
@@ -55,23 +57,18 @@ const ApiKeyDataTable: React.FC = () => {
         customBodyRenderLite: (dataIndex: number) => {
           const row = rows[dataIndex];
           return (
+
             <ApiKeyFormDialog
               record={row}
               mode={'Edit'}
               originalKey={row?.key ?? undefined}
-              setRows={setRowsFromDb}
+              setRows={setRows}
             />
           );
         },
       },
     },
   ];
-
-  // Helper that refreshes rows from Dexie and updates table
-  const setRowsFromDb = async () => {
-    const all = await db.apiKey.toArray();
-    setRows(all);
-  };
 
   const options: MUIDataTableOptions = {
     searchAlwaysOpen: true,
@@ -81,7 +78,7 @@ const ApiKeyDataTable: React.FC = () => {
     }) => {
       // Collect selected primary keys
       const keysToDelete = Object.keys(rowsDeleted.lookup)
-        .map((idxStr) => rows[Number(idxStr)]?.Key)
+        .map((idxStr) => rows[Number(idxStr)]?.key)
         .filter((k): k is string => typeof k === 'string' && k.length > 0);
 
       let hadError = false;
@@ -91,19 +88,17 @@ const ApiKeyDataTable: React.FC = () => {
       } catch (e) {
         hadError = true;
         processNotification({
-          Title: 'Delete Failed',
-          Message: 'One or more API keys could not be deleted.',
-          Type: 'danger',
+          title: 'Delete Failed',
+          message: 'One or more API keys could not be deleted.',
+          type: 'danger',
         });
       }
 
-      await setRowsFromDb();
-
       if (!hadError) {
         processNotification({
-          Title: 'Api Key(s) Deleted',
-          Message: 'Api Key(s) were deleted',
-          Type: 'success',
+          title: 'Api Key(s) Deleted',
+          message: 'Api Key(s) were deleted.',
+          type: 'success',
         });
       }
     },
@@ -112,7 +107,7 @@ const ApiKeyDataTable: React.FC = () => {
         record={{ key: null, value: null }}
         mode={'Add'}
         originalKey={''}
-        setRows={setRowsFromDb}
+        setRows={setRows}
       />
     ),
     setTableProps: () => {
