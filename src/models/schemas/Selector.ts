@@ -57,22 +57,18 @@ export class Selector implements ISelector {
    * @param value Selector | Array<Selector>
    */
   static async delete(value: Selector | Array<Selector>): Promise<void> {
-    let names = [];
+    let names: string[] = [];
     if (Array.isArray(value)) {
       names = value.map((selector) => selector.name);
       await db.selector.bulkDelete(names);
     } else {
-      await db.selector.where('name').equals(value.name).delete();
+      await db.selector.delete(value.name);
       names.push(value.name);
     }
 
     const records: any[] = (await getLocalItem(RAPPORT)) ?? [];
     for (let record of records) {
-      for (const name in names) {
-        record.selectors = (record.selectors ?? []).filter(
-          (item: { name: string }) => item.name !== name
-        );
-      }
+      record.selectors = record.selectors.filter(s => !names.includes(s.name));
     }
     // re-save the rapport records
     await setLocalItem(RAPPORT, records);

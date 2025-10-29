@@ -43,6 +43,8 @@ import { discoveryPluginRunner } from '../../services/discovery_plugin_services'
 import { sort_by_key } from '../../utilities/transformers';
 import { hideLoader, showLoader, processNotification } from '../../utilities/loaders';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import { db } from '../../models/db/dexieDb';
+import { Selector } from '../../models/schemas/Selector';
 
 interface Plugin {
   Label: string;
@@ -192,7 +194,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
 
   const handleDelete = async (value: string) => {
     showLoader();
-
+    await Selector.delete(new Selector(selectorValue, 'not applicable'));
     hideLoader();
   };
 
