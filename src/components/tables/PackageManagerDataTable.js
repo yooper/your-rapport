@@ -5,16 +5,17 @@ import MUIDataTable from 'mui-datatables';
 import Chip from '@mui/material/Chip';
 import {
   hideLoader,
-  installPackage,
+  installPackage, processNotification,
   showLoader,
 } from '../../utilities/loaders';
 import { convertKeysToCamelCase } from '../../utilities/transformers';
-import { addRecord, deleteRecord, getLocalItem } from '../../models/db/local';
 import IconButton from '@mui/material/IconButton';
 import HelperPopover from '../HelperPopover';
 import { DISCOVERY_PLUGIN, UUID } from '../../services/constants';
 import { db } from '../../models/db/dexieDb';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 
+// TODO add bulk install packages
 export default function PackageManagerDataTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,8 +92,7 @@ export default function PackageManagerDataTable(props) {
     setIsLoading(true);
     showLoader();
     await installPackage(record);
-    // TODO: fix layout issue with notifications
-    //processNotification({title: `Discovery Plugin Installed`, message: `The discovery plugin ${dp.label}`, type: 'success'});
+    processNotification({title: `Discovery Plugin Installed`, message: `The discovery plugin ${record.label}`, type: 'success'});
     // TODO: refresh the package table without re-pulling the data
     await fetchData();
     hideLoader();
@@ -218,7 +218,7 @@ export default function PackageManagerDataTable(props) {
       setIsLoading(true);
       showLoader();
       for (const [idx, value] of Object.entries(records.lookup)) {
-        await deleteRecord(DISCOVERY_PLUGIN, UUID, rows[idx]);
+        await db.discoveryPlugin.delete(rows[idx].uuid);
       }
       await fetchData();
       setIsLoading(false);

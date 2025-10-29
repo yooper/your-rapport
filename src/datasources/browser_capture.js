@@ -43,15 +43,29 @@ export async function capture(tab, message = {}, deepSave = false) {
 
     // save the mhtml artifact.
     if (deepSave) {
-      const blob = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
-      const artifact = await Artifact.create(
-        blob,
-        record.uuid,
-        record.url,
-        'multipart/related'
-      );
-      db.artifact.add(artifact);
-      record.artifacts.push(Artifact.getAttachment(artifact));
+      // implement retry strategy to mitigate errors when saving
+      let retryCounter = 0;
+      let isSaved = false;
+      do{
+        try{
+          const blob = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
+          const artifact = await Artifact.create(
+            blob,
+            record.uuid,
+            record.url,
+            'multipart/related'
+          );
+          db.artifact.add(artifact);
+          record.artifacts.push(Artifact.getAttachment(artifact));
+          isSaved = true
+        }
+        catch(e){
+          debug(String(e))
+        }
+        finally {
+          retryCounter++;
+        }
+      } while (!isSaved && retryCounter < 3)
     }
 
     await addRecord(RAPPORT, UUID, record);
@@ -83,13 +97,6 @@ function splitCamelCase(input) {
     .trim(); // remove leading/trailing whitespace if any
 }
 
-// Compute SHA-256 hash of a blob
-async function calculateSha256(blob) {
-  const buffer = await blob.arrayBuffer();
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 /**
  * Return the text to be used in the search

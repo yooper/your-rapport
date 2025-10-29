@@ -117,7 +117,7 @@ function LargeButtonGrid() {
       toolTipTitle: `Learn about discovery plugins and how they can save your time through pre-existing automations.`,
       onClick: () =>
         chrome.tabs.create({
-          url: chrome.runtime.getURL('options.html?view=discovery_plugin'),
+          url: chrome.runtime.getURL('options.html?view=discoveryPlugin'),
         }),
     },
   ];

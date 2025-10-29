@@ -4,23 +4,15 @@ import { useEffect, useState, Fragment } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import {
-  deleteBulkRecords,
-  deleteRecord,
-  getLocalItem,
-  updateRecord,
-} from '../../models/db/local';
-import {
   hideLoader,
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
 import HelperPopover from '../HelperPopover';
 import IconButton from '@mui/material/IconButton';
-import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';
+import { UUID } from '../../services/constants';
 import DiscoveryPluginFormDialog from '../dialogs/DiscoveryPluginFormDialog';
 import { db } from '../../models/db/dexieDb';
-import RunCircleIcon from '@mui/icons-material/RunCircle';
-import Mustache from 'mustache';
 import { CloudDownload } from '@mui/icons-material';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
@@ -30,6 +22,7 @@ export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pluginTypes, setPluginTypes] = useState([]);
+  const [apiKeys, setApiKeys] = useState([]);
   const basePluginTypes = [
     'address',
     'application',
@@ -60,6 +53,8 @@ export default function DiscoveryPluginDataTable() {
       let allPluginTypes = [...new Set([...basePluginTypes])];
       allPluginTypes.sort();
       setPluginTypes(allPluginTypes);
+      // only make the key name available, we don't need this value
+      setApiKeys(await db.apiKey.toArray());
       setIsLoading(false);
       hideLoader();
     }
@@ -272,7 +267,7 @@ export default function DiscoveryPluginDataTable() {
                 mode={'Edit'}
                 rows={rows}
                 setRows={setRows}
-                apiKeys={[]}
+                apiKeys={apiKeys}
                 pluginTypes={pluginTypes}
                 setPluginTypes={setPluginTypes}
               />
@@ -337,7 +332,7 @@ export default function DiscoveryPluginDataTable() {
             mode={'Add'}
             rows={rows}
             setRows={setRows}
-            apiKeys={[]}
+            apiKeys={apiKeys}
             pluginTypes={pluginTypes}
             setPluginTypes={setPluginTypes}
           />

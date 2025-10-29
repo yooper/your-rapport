@@ -12,37 +12,30 @@ import Autocomplete from '@mui/material/Autocomplete';
 import InputAdornment from '@mui/material/InputAdornment';
 import HelperPopover from '../../HelperPopover';
 import { Tooltip } from '@mui/material';
-import { DiscoveryPluginFormProps } from '../../../types';
+import { ApiKey, DiscoveryPluginFormProps } from '../../../types';
 import { createTab} from '../../../utilities/loaders';
 
 const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
   setRecord,
+  apiKeys
 }) => {
   const [rows, setRows] = useState<Record<string, any>[]>([]);
-  const [apiKeys, setApiKeys] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      try {
-        // Placeholder for actual API fetch
-        setApiKeys([]); // Could be replaced with real logic later
-      } catch (err) {
-        console.error('Fetch failed for api keys endpoint');
-        setApiKeys([]);
-      } finally {
-        setIsLoading(false);
-      }
       setRows(toRows());
+
+      setIsLoading(false);
     }
 
     fetchData();
   }, []);
 
   const staticFieldMappings = [
-    '{{data}}',
+    '{{mhtml}}',
     '{{hash}}',
     '{{hashAlgorithm}}',
     '{{note}}',
@@ -52,12 +45,13 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
     '{{url}}',
     '{{domain}}',
     '{{selectorValue}}',
+    '{{uuid}}'
   ];
 
   const getFieldMappings = (): string[] => {
-    const apiKeyNames = apiKeys.map((apiKey) => `{${apiKey.key}}`);
+    const apiKeyNames = apiKeys.map((apiKey: ApiKey) => `{{${apiKey.key}}}`);
     const mappings = [...staticFieldMappings, ...apiKeyNames];
-    return mappings.sort();
+    return mappings;
   };
 
   const addRow = () => {
@@ -137,7 +131,7 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
         <div>
           <FormControl>
             <StyledTextFieldNoWidth
-              sx={{ m: 0.75, width: 400 }}
+              sx={{ m: 0.75, width: 500 }}
               variant="outlined"
               name="keyName"
               id="keyName"
@@ -158,7 +152,7 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
           </FormControl>
           <FormControl>
             <Autocomplete
-              sx={{ m: 0.75, width: 400 }}
+              sx={{ m: 0.75, width: 500 }}
               freeSolo
               options={getFieldMappings()}
               value={row.mappedFieldName ?? ''}

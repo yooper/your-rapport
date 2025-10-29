@@ -16,6 +16,7 @@ import { DiscoveryPluginFormProps } from '../../../types';
 const GroupHomeSupportForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
   setRecord,
+  apiKeys
 }) => {
   const [groupNames, setGroupNames] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);

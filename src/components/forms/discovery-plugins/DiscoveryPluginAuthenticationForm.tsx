@@ -2,8 +2,6 @@ import React, { Fragment } from 'react';
 import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import Typography from '@mui/material/Typography';
-import MenuItem from '@mui/material/MenuItem';
-import Autocomplete from '@mui/material/Autocomplete';
 import { StyledTextField } from '../../inputs/StyledTextField';
 import { Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';

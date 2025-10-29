@@ -37,6 +37,8 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
       description:
         'Submit a form and process the results and it opens a web page.',
     },
+    /**
+     * TODO: Finish implementation at a later date
     {
       label: 'Foreground Runner',
       action: 'ForegroundRunner',
@@ -49,6 +51,7 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
       description:
         'Run a data processing task in the background service worker of the browser.',
     },
+     */
   ];
 
   const eventTypes: { label: string; eventType: EventType }[] = [
@@ -133,7 +136,6 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
                 onChange={(e) => {
                   const action = e.target.value as PluginAction;
                   setRecord((prevState) => ({ ...prevState, action }));
-
                   if (action === 'BackgroundRunner') {
                     setRecord((prevState) => ({
                       ...prevState,

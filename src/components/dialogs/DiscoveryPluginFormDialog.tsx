@@ -11,9 +11,9 @@ import IconButton from '@mui/material/IconButton';
 import { sort_by_key } from '../../utilities/transformers';
 import DiscoveryPluginLayout from '../layouts/DiscoveryPluginLayout';
 import { processNotification } from '../../utilities/loaders';
-import Box from '@mui/material/Box';
 import { db } from '../../models/db/dexieDb';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import { ApiKey } from '../../types';
 
 type Mode = 'Add' | 'Edit';
 
@@ -26,7 +26,7 @@ interface DiscoveryPluginFormDialogProps {
   setRows: (rows: DiscoveryPlugin[]) => void;
 
   // passed through to DiscoveryPluginLayout
-  apiKeys?: unknown;
+  apiKeys: ApiKey[];
   pluginTypes: string[];
   setPluginTypes: (types: string[]) => void;
 }
@@ -112,7 +112,7 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
             <DiscoveryPluginLayout
               record={record}
               setRecord={setRecord}
-              apiKeys={props.apiKeys as any}
+              apiKeys={props.apiKeys}
               pluginTypes={props.pluginTypes}
               setPluginTypes={props.setPluginTypes}
             />

@@ -158,6 +158,7 @@ interface DiscoveryPluginFormProps {
   setRecord: (
     updater: (prev: DiscoveryPlugin) => DiscoveryPlugin
   ) => void;
+  apiKeys: ApiKey[]
 }
 
 type ApiKey = {
@@ -168,7 +169,6 @@ type ApiKey = {
 }
 
 interface DiscoveryPluginLayoutProps extends DiscoveryPluginFormProps{
-  apiKeys: ApiKey[];
   pluginTypes: string[];
   setPluginTypes: (types: string[]) => void;
 }

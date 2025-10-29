@@ -86,12 +86,13 @@ export default function ApiKeyFormDialog(props) {
             <form noValidate>
               <FormGroup>
                 <FormControl>
-                  <StyledTextField
+                  <StyledTextFieldNoWidth
                     sx={{ m: 0.5 }}
                     required
                     name="key"
                     id="key"
                     label="API Key Name"
+                    style={{ width: 500 }}
                     fullWidth={true}
                     defaultValue={record?.key ?? ''}
                     inputProps={{ 'aria-label': 'controlled' }}

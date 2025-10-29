@@ -119,9 +119,9 @@ function Renderer(props) {
       return <ApiKeyDataTable />;
     case 'browser':
       return <BrowserSettingsForm />;
-    case DISCOVERY_PLUGIN:
+    case 'discoveryPlugin':
       return <DiscoveryPluginDataTable />;
-    case 'package_management':
+    case 'packageManagement':
       return <PackageManagerDataTable />;
     case 'selector':
       return <SelectorDataTable />;

@@ -50,9 +50,9 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
       >
         <Tab label="Basic" {...a11yProps(0)} />
         <Tab label="Content Types" {...a11yProps(1)} />
-        <Tab label="Authentication" {...a11yProps(2)} />
+        <Tab label="Authentication" disabled={true}{...a11yProps(2)} />
         <Tab label="Field Mappings" {...a11yProps(3)} />
-        <Tab label="Header Mappings" {...a11yProps(4)} />
+        <Tab label="Header Mappings" disabled={true} {...a11yProps(4)} />
         <Tab label="Support" {...a11yProps(5)} />
         <Tab label="Description" {...a11yProps(6)} />
       </Tabs>
@@ -74,7 +74,7 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         />
       </TabPanel>
       <TabPanel value={value} index={3}>
-        <FieldMappingForm apiKeys={[]} record={record} setRecord={setRecord} />
+        <FieldMappingForm apiKeys={apiKeys} record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={4}>
         <HeaderMappingForm record={record} setRecord={setRecord} />

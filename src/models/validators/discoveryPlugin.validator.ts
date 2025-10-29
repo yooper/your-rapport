@@ -1,11 +1,6 @@
 // validation/discoveryPlugin.schema.ts
 import { z } from "zod";
 
-// If DiscoveryPluginAction is an enum, prefer nativeEnum:
-// enum DiscoveryPluginAction { Middleware = "Middleware", ... }
-// const zAction = z.nativeEnum(DiscoveryPluginAction).nullable();
-// If it's not an enum (string union unknown), keep it permissive:
-const zAction = z.string().min(1).nullable();
 
 // Helper: coerce empty string / undefined → null
 const nullableString = z.preprocess((v) => {
@@ -61,69 +56,38 @@ const httpMethod = z.enum(["GET", "POST", "PUT", "DELETE"]);
 const versionString = z.string().regex(/^[0-9]+(\.[0-9]+){1,2}([-\w\.]+)?$/);
 
 // Headers: string/number/boolean values (adjust as needed)
-const headersRecord = z.record(z.union([z.string(), z.number(), z.boolean()])).default({});
+const headersRecord = z.record(z.any()).default({});
 
 // fieldMapping: any values keyed by string
 const fieldMappingRecord = z.record(z.any()).default({});
 
 export const discoveryPluginSchema = z.object({
   uuid: z.uuid('v4'),
-
-  pluginType: z.string(),           // string | null
-  url: z.url(),                     // URL | null
+  pluginType: z.string(), //TODO restrict the values for plugin types
+  url: z.url(),
   active: z.boolean(),
-  groupName: z.string().min(1),
-  action: zAction,                      // DiscoveryPluginAction | null
-  homePage: nullableUrl,
+  groupName: z.string().min(1).default("Default"),
+  action: z.enum(["CreateTab", "SubmitForm"]),
+  homePage: z.url().nullable(),
   description: z.preprocess((v) => (v === "" ? null : v), z.string().max(5000).nullable()),
-  label: z.preprocess((v) => (v === "" ? null : v), z.string().max(255)),
+  label: z.preprocess((v) => (v === "" ? null : v), z.string().min(1).max(255)),
   readOnly: z.boolean(),
   sortOrder: z.number().int().min(0).default(0),
   timeOut: z.number().int().min(0).max(300000),       // 0..5 minutes; adjust to your semantics
   lastAccessedOn: nullableDate,
   createdOn: z.preprocess((v) => (v ? v : new Date()), z.date()),
   timeTakenIn: z.number().int().min(0).default(0),
-  method: httpMethod,
-
+  method: z.enum(["GET", "POST", "PUT", "DELETE"]),
   accessed: z.number().int().min(0).default(0),
   version: versionString,
-
-  mimeTypeRegex: nullableRegex,
+  mimeTypeRegex: z.string().nullable(),
   status: z.string().nullable(),
   statusError: z.preprocess((v) => (v === "" ? null : v), z.string().nullable()),
-  contentTypeHeader: nullableContentType,
+  contentTypeHeader: z.enum(["", "application/json", "multipart/form-data", "application/octet-stream"]).nullable(),
   fieldMapping: fieldMappingRecord,
   headers: headersRecord,
-  selectorValue: z.union([z.string(), z.number()]).nullable(),
-  country: countryCode2.nullable(),
-})
-.superRefine((obj, ctx) => {
-  // Cross-field rules (examples — tweak or remove as needed):
-
-  // If method is GET, you typically should not send a Content-Type header.
-  if (obj.method === "GET" && obj.contentTypeHeader) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["contentTypeHeader"],
-      message: "Content-Type is unusual for GET requests.",
-    });
-  }
-
-  // If a mimeTypeRegex exists, and a contentTypeHeader exists, ensure it matches.
-  if (obj.mimeTypeRegex && obj.contentTypeHeader) {
-    try {
-      const re = new RegExp(obj.mimeTypeRegex);
-      if (!re.test(obj.contentTypeHeader)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["contentTypeHeader"],
-          message: "contentTypeHeader does not match mimeTypeRegex.",
-        });
-      }
-    } catch {
-      // handled in nullableRegex
-    }
-  }
+  selectorValue: z.string().nullable(),
+  country: countryCode2.default("us"),
 });
 
 // Types you can import elsewhere

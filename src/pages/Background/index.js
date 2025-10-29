@@ -96,6 +96,7 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
  * Add in support for short-cut keys
  */
 chrome.commands.onCommand.addListener((command) => {
+  debug(`Command ${command} received`)
   switch (command) {
     case 'initStartCapture':
       (async () => {
@@ -255,6 +256,7 @@ chrome.runtime.onMessageExternal.addListener(function (
         return true;
     }
   } catch (e) {
+    debug('Error in extension listener ' + String(e))
     ExtensionPin.setTemporaryPin('ERR');
   }
 });

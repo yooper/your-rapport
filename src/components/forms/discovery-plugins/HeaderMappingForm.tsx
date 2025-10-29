@@ -17,6 +17,7 @@ import { createTab} from '../../../utilities/loaders';
 const HeaderMappingForm: React.FC<DiscoveryPluginFormProps> = ({
   record,
   setRecord,
+  apiKeys
 }) => {
   const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
