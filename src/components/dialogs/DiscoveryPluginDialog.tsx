@@ -64,6 +64,7 @@ interface DiscoveryPluginDialogProps {
   plugins: DiscoveryPlugin[];
   title: string;
   uxType: 'chip' | 'icon';
+  refreshRows: any;
 }
 
 const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
@@ -72,6 +73,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
   plugins,
   title,
   uxType,
+  refreshRows
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -195,6 +197,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
   const handleDelete = async (value: string) => {
     showLoader();
     await Selector.delete(new Selector(selectorValue, 'not applicable'));
+    refreshRows()
     hideLoader();
   };
 

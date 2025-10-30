@@ -80,9 +80,7 @@ export default function SelectorDataTable(props) {
         names.push(rows[idx].name);
       }
 
-      await Selector.delete();
-      await db.selector.bulkDelete(names);
-
+      await Selector.delete(names);
       setRows(await db.selector.toArray());
       setIsLoading(false);
       hideLoader();

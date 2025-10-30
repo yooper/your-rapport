@@ -39,8 +39,11 @@ export default function SearchDataTable(props) {
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
 
-  useEffect(() => {
-    async function fetchData() {
+  /**
+   * Load all the data into the UI
+   * @returns {Promise<void>}
+   */
+  const fetchData = async () => {
       showLoader();
       setIsLoading(true);
       const start = performance.now();
@@ -55,6 +58,7 @@ export default function SearchDataTable(props) {
       hideLoader();
     }
 
+  useEffect(() => {
     fetchData();
 
     /**
@@ -72,6 +76,14 @@ export default function SearchDataTable(props) {
     }, 3000); // wait 5 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
+
+  /**
+   * Wrapper around fetch data, meant to be passed into other components
+   * @returns {Promise<void>}
+   */
+  const refreshRows = async() =>{
+    fetchData();
+  }
 
   const columns = [
     {
@@ -270,6 +282,7 @@ export default function SearchDataTable(props) {
               record={record}
               uxType={'chip'}
               selectorValue={tag.name}
+              refreshRows={refreshRows}
             />
           ));
         },
@@ -305,6 +318,7 @@ export default function SearchDataTable(props) {
               record={record}
               uxType={'chip'}
               selectorValue={selector.name}
+              refreshRows={refreshRows}
             />
           ));
         },
@@ -330,6 +344,7 @@ export default function SearchDataTable(props) {
               record={record}
               uxType={'chip'}
               selectorValue={value}
+              refreshRows={refreshRows}
             />
           );
         },
@@ -367,6 +382,7 @@ export default function SearchDataTable(props) {
               record={record}
               uxType={'appsIcon'}
               pluginValue={''}
+              refreshRows={refreshRows}
             />
           );
         },

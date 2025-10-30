@@ -31,9 +31,16 @@ export default function Popup() {
     async function fetchData() {
       setIsLoading(true);
       showLoader();
-      await chrome.runtime.sendMessage({cmd: 'ping'});
-      setIsLoading(false);
-      hideLoader();
+      try{
+        await chrome.runtime.sendMessage({cmd: 'ping'});
+      }
+      catch(e){
+        // do nothing
+      }
+      finally{
+        setIsLoading(false);
+        hideLoader();
+      }
     }
 
     fetchData();

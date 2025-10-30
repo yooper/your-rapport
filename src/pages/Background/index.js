@@ -137,6 +137,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
+  if (message.cmd === 'ping') {
+    return false;
+  }
+
   /**
    * Received from the content script
    */
