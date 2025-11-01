@@ -158,7 +158,7 @@ async function _buildObject(
         const recordObj: Record<string, any> = { ...record };
         // handle error in calling function
         // TODO: add custom error object
-        if (!(fieldName in recordObj) || !recordObj[fieldName]) {
+        if (!['mhtml'].includes(fieldName) && (!(fieldName in recordObj) || !recordObj[fieldName])) {
           throw new Error(`Field Name ${fieldName} does not exist in the record ${record.uuid}`)
         }
 
@@ -182,7 +182,7 @@ async function _buildObject(
             // convert to a file
             const fileRecord = await mhtmls.first() || null;
             if (fileRecord?.data instanceof Blob){
-              obj[key] = new File([fileRecord.data], `rapport.${record.uuid}.mhtml`, {type: "text/plain"});
+              obj[key] = new File([fileRecord.data], `rapport.${record.uuid}.mhtml`, {type: 'multipart/related'});
             }
             else{
               throw new Error('This Rapport record has no data in the mhtml record space.')
