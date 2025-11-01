@@ -50,7 +50,7 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
 
   const addRecord = async () => {
       const newRecord: DiscoveryPlugin = new DiscoveryPlugin({...record , ...{ uuid: crypto.randomUUID() }})
-      const result = DiscoveryPlugin.validate(newRecord);
+      const result = await DiscoveryPlugin.validate(newRecord);
       // invalid discovery plugin
       if(!result.ok){
         processNotification({title:'Invalid Discovery Plugin', message:result.errors, type:'danger'})
@@ -66,7 +66,7 @@ const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
 
   const editRecord = async () => {
       const modifiedRecord: DiscoveryPlugin = new DiscoveryPlugin({...record})
-      const result = DiscoveryPlugin.validate(modifiedRecord);
+      const result = await DiscoveryPlugin.validate(modifiedRecord);
       // invalid discovery plugin
       if(!result.ok){
         processNotification({title:'Invalid Discovery Plugin', message:result.errors, type:'danger'})

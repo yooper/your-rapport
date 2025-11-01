@@ -84,12 +84,8 @@ export const discoveryPluginSchema = z.object({
   status: z.string().nullable(),
   statusError: z.preprocess((v) => (v === "" ? null : v), z.string().nullable()),
   contentTypeHeader: z.enum(["", "application/json", "multipart/form-data", "application/octet-stream"]).nullable(),
-  fieldMapping: fieldMappingRecord,
-  headers: headersRecord,
+  fieldMapping: z.any().default({}),
+  headers: z.any().default({}),
   selectorValue: z.string().nullable(),
   country: countryCode2.default("us"),
 });
-
-// Types you can import elsewhere
-export type DiscoveryPluginValidated = z.infer<typeof discoveryPluginSchema>;
-export type DiscoveryPluginInput = z.input<typeof discoveryPluginSchema>;

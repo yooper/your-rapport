@@ -38,6 +38,7 @@ export default function SearchDataTable(props) {
   const [selectors, setSelectors] = useState(null);
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
+  const [updatedOn, setUpdatedOn] = useState(null)
 
   /**
    * Load all the data into the UI
@@ -66,14 +67,15 @@ export default function SearchDataTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON);
-      const pageCachedOn = localStorage.getItem(UPDATED_ON) ?? null;
-
-      if (updatedOn != pageCachedOn) {
-        await fetchData(); // check for new data every 10 seconds.
-        localStorage.setItem(UPDATED_ON, updatedOn);
+      const lastModified = await Configuration.getConfigurationValue(UPDATED_ON);
+      if (updatedOn !== lastModified) {
+        setUpdatedOn(lastModified)
+        showLoader()
+        const screenshots = (await getLocalItem(RAPPORT)) ?? [];
+        setRows(screenshots);
+        hideLoader()
       }
-    }, 3000); // wait 5 seconds before re-renders
+    }, 5000); // wait 5 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
 

@@ -1,6 +1,6 @@
 // DiscoveryPlugin.ts
 import { DiscoveryPluginAction, DiscoveryPluginInit, onClick } from '../../types';
-import { discoveryPluginSchema, type DiscoveryPluginValidated } from "../validators/discoveryPlugin.validator";
+import { discoveryPluginSchema } from "../validators/discoveryPlugin.validator";
 
 
 
@@ -90,9 +90,9 @@ export class DiscoveryPlugin {
     return pl;
   }
 
-  static validate(input: unknown)
+  static async validate(input: unknown)
   {
-      const res = discoveryPluginSchema.safeParse(input);
+      const res = await discoveryPluginSchema.safeParseAsync(input);
       if (!res.success) {
         return { ok: false, errors: res.error.issues.map(i => `${i.path.join(".") || "(root)"}: ${i.message}`+ "   ") };
       }

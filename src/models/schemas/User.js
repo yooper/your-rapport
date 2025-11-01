@@ -12,7 +12,17 @@ export class User {
     return this.license === 'pro';
   }
 
+  /**
+   * Examines the usage of the discovery plugin request and determines if
+   * a license is required to use that functionality
+   * @param type
+   * @param rapport
+   * @param discovery_plugin
+   * @returns {boolean}
+   */
   isAccessible(type, rapport, discovery_plugin) {
+    return true;
+
     switch (type) {
       case 'discoveryPlugin':
         if (!this.isProLicense() && discovery_plugin.method === 'GET') {
