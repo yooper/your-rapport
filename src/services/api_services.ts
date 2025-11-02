@@ -5,7 +5,6 @@ import { db } from '../models/db/dexieDb';
  * This is a proof of concept for interacting with the extensions data and
  * allowing for automated test cases to be built more readily
  * TODO: add ACLs
- * TODO: block requests to the apiKeys data
  */
 export async function processApiRequest(): Promise<APIResponse> {
   const params = new URLSearchParams(window.location.search);
