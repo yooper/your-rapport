@@ -29,8 +29,10 @@ import { Artifact } from '../../models/schemas/Artifact';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
 import TagIcon from '@mui/icons-material/Tag';
 import LanguageIcon from '@mui/icons-material/Language';
-import { getIntegratedPlugin, getIntegratedPlugins } from '../../services/discovery_plugin_services';
+import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
 import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
+import IconButton from '@mui/material/IconButton';
+import AttachmentIcon from '@mui/icons-material/Attachment';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -100,9 +102,7 @@ export default function SearchDataTable(props) {
           const [isOpen, setIsOpen] = useState(false);
           const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
           const [openAttributeViewer, setOpenAttributeViewer] = useState(false);
-          const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(
-            record.artifacts?.length > 0
-          );
+          const mhtmlAttachment = record.artifacts.find(a => a.mimeType === 'multipart/related')
 
           return (
             <>
@@ -118,6 +118,7 @@ export default function SearchDataTable(props) {
               <div>
                 <Box>
                   <Badge badgeContent={0} color={'primary'}>
+                    <IconButton>
                     <VerticalGenericTableDialog
                       selectedRecord={record}
                       title={`Data Integrity Attributes`}
@@ -134,36 +135,50 @@ export default function SearchDataTable(props) {
                         'size',
                       ]}
                     />
+                    </IconButton>
                   </Badge>
                   <Badge>
                     <Tooltip title={'Add or modify tags'}>
-                      <TagIcon
-                        onClick={() => {
-                          setOpenAddTagDialog(true);
-                        }}
-                      />
+                      <IconButton>
+                        <TagIcon
+                          onClick={() => {
+                            setOpenAddTagDialog(true);
+                          }}
+                        />
+                      </IconButton>
                     </Tooltip>
                   </Badge>
                   <Badge>
                     <Tooltip title={'View the attributes of this capture.'}>
+                      <IconButton>
                       <SettingsIcon
                         onClick={() => {
                           setOpenAttributeViewer(true);
                         }}
                       />
+                      </IconButton>
                     </Tooltip>
                   </Badge>
-                  {hasMhtmlArtifact ? (
-                    <Badge>
-                      <Tooltip
-                        title={'Download the mhtml file for this Rapport.'}
-                      >
+                  <Badge badgeContent={record.artifacts.length} color={'primary'} >
+                    <Tooltip title={'See the attachments'}>
+                      <IconButton disabled={record.artifacts.length===0}>
+                        <AttachmentIcon
+                          onClick={() => {
+                          }}
+                          />
+                      </IconButton>
+                    </Tooltip>
+                  </Badge>
+                  <Badge>
+                    <Tooltip
+                      title={'Download the mhtml file for this Rapport.'}
+                    >
+                      <IconButton disabled={!Boolean(mhtmlAttachment)}>
                         <LanguageIcon
                           onClick={() => {
                             if (record.artifacts.length > 0) {
-                              Artifact.downloadArtifact(
-                                record.artifacts[0],
-                                `your.rapport.${record.artifacts[0].id}.mhtml`
+
+                              Artifact.downloadArtifact(mhtmlAttachment,`your.rapport.artifact.${mhtmlAttachment.uuid}.mhtml`
                               );
                             } else {
                               createTab(
@@ -175,11 +190,9 @@ export default function SearchDataTable(props) {
                             }
                           }}
                         />
-                      </Tooltip>
-                    </Badge>
-                  ) : (
-                    <span></span>
-                  )}
+                      </IconButton>
+                    </Tooltip>
+                  </Badge>
                 </Box>
               </div>
               <PreviewImageDialog

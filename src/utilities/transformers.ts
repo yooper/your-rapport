@@ -375,3 +375,11 @@ export function sanitizeFileName(fileName: string): string {
   return sanitized;
 }
 
+
+export function safeJsonParse<T = unknown>(text: string): { ok: true; value: T } | { ok: false; error: Error } {
+  try {
+    return { ok: true, value: JSON.parse(text) as T };
+  } catch (err) {
+    return { ok: false, error: err as Error };
+  }
+}

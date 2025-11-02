@@ -3,7 +3,7 @@ export class JobQueue {
     this.type = null;
     this.status = null;
     this.objects = {};
-    this.jobId = crypto.randomUUID();
+    this.uuid = crypto.randomUUID();
     this.startedOn = null;
     this.completedOn = null;
     this.runningTime = 0;

@@ -111,7 +111,7 @@ export default function AddTagsFormDialog(props) {
                     {...params}
                     label="Assign Tags.."
                     helperText={
-                      'Press Enter to add a tag. Multiple tags can set.'
+                      'PRESS ENTER to add a tag. Multiple tags can set.'
                     }
                   />
                 )}

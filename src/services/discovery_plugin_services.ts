@@ -3,10 +3,13 @@ import { createTab, processNotification } from '../utilities/loaders';
 import { getUser } from '../models/schemas/User';
 import { DiscoveryPlugin } from '../models/schemas/DiscoveryPlugin';
 import { ApiKey, IRapport, NotificationPayload } from '../types';
-import { base64ToFile, downloadBase64Image, downloadJsonData } from '../utilities/transformers';
+import { base64ToFile, downloadBase64Image, downloadJsonData, safeJsonParse } from '../utilities/transformers';
 import { printPdfReport } from '../utilities/print_service';
 import { db } from '../models/db/dexieDb';
 import { debug } from './logger_services';
+import { Artifact } from '../models/schemas/Artifact';
+import { updateRecord } from '../models/db/local';
+
 
 
 /**
@@ -28,7 +31,6 @@ export async function discoveryPluginRunner(
 
   // assign the plugin value
   discoveryPlugin.selectorValue = selectorValue;
-
   const apiKeys = await db.apiKey.toArray();
 
   // runs the custom integration
@@ -39,7 +41,8 @@ export async function discoveryPluginRunner(
 
   Mustache.escape = (text: string) => text;
 
-  const url = Mustache.render(discoveryPlugin.url, discoveryPlugin);
+  // restrict what values can be used in the template
+  const url = Mustache.render(discoveryPlugin.url,{...discoveryPlugin, ...rapport});
 
   switch (discoveryPlugin.action) {
     case 'SubmitForm': {
@@ -49,21 +52,123 @@ export async function discoveryPluginRunner(
     }
     case 'ForegroundRunner': {
       const formFields = await _buildObject(discoveryPlugin, rapport, apiKeys);
-      const data = await _fetchRequest(
-        discoveryPlugin,
-        formFields,
-        url,
-        rapport
-      );
-      if (data) processNotification(data);
+      _processFetch(discoveryPlugin, formFields, url, rapport);
       break;
     }
+    // a background runner is a foreground
+    case 'BackgroundRunner':
+      // TODO queue the job
+      debug('background runner request');
+      break;
+
     case 'CreateTab':
     default: {
+      // TODO
       const encodedUri = encodeURI(url);
       createTab(encodedUri);
       break;
     }
+  }
+}
+
+/**
+ * Process the fetch request and attach the response as an artifact
+ * @param discoveryPlugin
+ * @param formFields
+ * @param url
+ */
+async function _processFetch(
+  discoveryPlugin: DiscoveryPlugin,
+  formFields: Record<string, string | File>,
+  url: string,
+  rapport: IRapport
+): Promise<any> {
+  // Build body and initial headers
+  const { body, headers } = _buildBodyAndHeaders(discoveryPlugin, formFields);
+
+  // Auth
+  const auth = _buildAuthHeader(discoveryPlugin, {});
+  if (auth) headers.set('Authorization', auth);
+
+  // Custom headers from plugin
+  if (discoveryPlugin.headers) {
+    for (const [k, v] of Object.entries(discoveryPlugin.headers)) {
+      if (v != null) headers.set(k, String(v));
+    }
+  }
+
+  const method = discoveryPlugin.method || 'GET';
+  const requestInit: RequestInit = {
+    method,
+    headers
+  };
+
+  if(method !== 'GET'){
+    requestInit.body = body;
+  }
+
+  try {
+    processNotification({
+      title: 'Discovery Plugin Request Sent',
+      message: 'Waiting for response from the server.',
+      type: 'info',
+    });
+
+    const response = await fetch(url, requestInit);
+
+    if (response.ok) {
+      processNotification({
+        title: 'Discovery Plugin Request Received',
+        message: 'Your request was successfully accepted and data processing has begun.',
+        type: 'success',
+      });
+
+      // TODO: implement a mime type reader, since we shouldn't trust the source
+      const contentType = response.headers.get('content-type') || '';
+      // attach the results as an artifact of the rapport
+      const artifact = await Artifact.create(await response.blob(), rapport.uuid, url, contentType);
+      // add the artifact
+      await db.artifact.add(artifact)
+      rapport.artifacts.push(Artifact.getAttachment(artifact));
+      await updateRecord('rapport', 'uuid', rapport);
+      return; // finish processing
+    }
+
+    // 4xx
+    else if (response.status >= 400 && response.status < 500) {
+      const text = await response.text();
+      const parsed = safeJsonParse<any>(text);
+      if (parsed.ok && parsed.value && typeof parsed.value === 'object') {
+        processNotification({
+          title: `HTTP 400 Error from ${discoveryPlugin.label ?? 'Plugin'}`,
+          message: text,
+          type: 'danger',
+        })
+      }
+      processNotification({
+        title: `Server Error from ${discoveryPlugin.label ?? 'Plugin'}`,
+        message: text,
+        type: 'danger',
+      });
+    }
+
+    // 5xx and others
+    const text = await response.text();
+    processNotification({
+      Title: `Server Error from ${discoveryPlugin.label ?? 'Plugin'}`,
+      Message: text || `HTTP ${response.status}`,
+      Type: 'danger',
+    });
+  } catch (error: any) {
+    let message: string = error?.message || String(error);
+    if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
+      message = `The service provider at ${url} is unreachable, misconfigured, or your plugin is not set up correctly.`;
+    }
+    processNotification({
+      title: `${discoveryPlugin.label ?? 'Discovery Plugin'} Runner Failed`,
+      message: message,
+      type: 'danger',
+    });
   }
 }
 
@@ -120,7 +225,7 @@ function _createForm(
  */
 async function _buildObject(
   discoveryPlugin: DiscoveryPlugin,
-  record: IRapport,
+  rapport: IRapport,
   apiKeys: ApiKey[]
 ): Promise<Record<string, string | File>> {
 
@@ -128,7 +233,7 @@ async function _buildObject(
   const apiKeysObj = apiKeys.reduce(
     (obj, item) => Object.assign(obj, { [item.key]: item.value }), {});
 
-  const mergedRecords: Record<string, any> = {...record, ...apiKeysObj}
+  const mergedRecords: Record<string, any> = {...rapport, ...apiKeysObj}
 
   const mapping = {...discoveryPlugin.fieldMapping ?? {}};
 
@@ -155,11 +260,11 @@ async function _buildObject(
       }
       // TODO, handle edge cases
       else if(['file'].includes(contentType)) {
-        const recordObj: Record<string, any> = { ...record };
+        const recordObj: Record<string, any> = { ...rapport };
         // handle error in calling function
         // TODO: add custom error object
         if (!['mhtml'].includes(fieldName) && (!(fieldName in recordObj) || !recordObj[fieldName])) {
-          throw new Error(`Field Name ${fieldName} does not exist in the record ${record.uuid}`)
+          throw new Error(`Field Name ${fieldName} does not exist in the rapport ${rapport.uuid}`)
         }
 
         // screenshot specific conversion
@@ -169,31 +274,22 @@ async function _buildObject(
         // special case for mhtml instances
         else if(fieldName === 'mhtml'){
           // there must only be one mhtml record
-          const mhtmls = db.artifact.where('rapportUuid').equals(record.uuid)
-            .filter((a => a.mimeType === 'multipart/related'));
-          const count = await mhtmls.count()
-          if(count === 0){
+          const found = rapport.artifacts.find(a => a.mimeType === 'multipart/related') || null;
+          if(!found){
             throw new Error('Rapport has no associated MHTML artifact.');
           }
-          else if(count > 1){
-            throw new Error('This Rapport record has more than one MHTML artifact, which is invalid.')
-          }
-          else{
-            // convert to a file
-            const fileRecord = await mhtmls.first() || null;
-            if (fileRecord?.data instanceof Blob){
-              obj[key] = new File([fileRecord.data], `rapport.${record.uuid}.mhtml`, {type: 'multipart/related'});
+          const mhtml = await db.artifact.get(found.uuid);
+          if (mhtml?.data instanceof Blob){
+              obj[key] = new File([mhtml.data], `rapport.${rapport.uuid}.mhtml`, {type: 'multipart/related'});
             }
             else{
-              throw new Error('This Rapport record has no data in the mhtml record space.')
+              throw new Error('This Rapport mhtml error')
             }
-          }
         }
-        else{
+        else {
           // convert everything else
-          obj[key] = new File([recordObj[fieldName]], `rapport.${record.uuid}.txt`, {type: "text/plain"});
+          obj[key] = new File([recordObj[fieldName]], `rapport.${rapport.uuid}.txt`, {type: "text/plain"});
         }
-
 
       }
       // the field name doesn't exist, but may be part of the expanded attributes
@@ -205,6 +301,58 @@ async function _buildObject(
     }
   }
   return obj;
+}
+
+function _buildBodyAndHeaders(
+  dp: DiscoveryPlugin,
+  formFields: Record<string, any>
+): { body: BodyInit | null; headers: Headers } {
+  const headers = new Headers();
+
+  if (dp.ContentTypeHeader === 'application/json') {
+    // For JSON, assume there are no File objects; if there are, caller should not request JSON.
+    const payload: Record<string, any> = {};
+    for (const [k, v] of Object.entries(formFields)) {
+      // Drop undefined; keep null; stringify non-File values
+      if (v === undefined) continue;
+      if (v instanceof File) {
+        // If this happens, JSON is probably not appropriate—serialize minimal metadata.
+        payload[k] = { name: v.name, size: v.size, type: v.type };
+      } else {
+        payload[k] = v;
+      }
+    }
+    headers.set('Content-Type', 'application/json');
+    return { body: JSON.stringify(payload), headers };
+  }
+
+  // Default to multipart/form-data
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(formFields)) {
+    if (v === undefined) continue;
+    if (v instanceof File) {
+      fd.append(k, v, v.name);
+    } else if (Array.isArray(v)) {
+      // Append arrays with index: field[0], field[1], ...
+      v.forEach((item, idx) => fd.append(`${k}[${idx}]`, item ?? ''));
+    } else if (v !== null && typeof v === 'object') {
+      // For objects, append as JSON string
+      fd.append(k, JSON.stringify(v));
+    } else {
+      fd.append(k, String(v ?? ''));
+    }
+  }
+  return { body: fd, headers };
+}
+
+
+/**
+ * TODO: build authorization piece
+ * @param dp
+ * @param configurations
+ */
+function _buildAuthHeader(dp: DiscoveryPlugin, configurations: any): string | undefined {
+  return undefined;
 }
 
 /**

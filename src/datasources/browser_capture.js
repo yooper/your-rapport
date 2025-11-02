@@ -1,4 +1,4 @@
-import { addRecord, getLocalItem, setLocalItem } from '../models/db/local';
+import { addRecord } from '../models/db/local';
 import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';

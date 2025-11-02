@@ -112,7 +112,7 @@ export default function TagFormDialog(props) {
                       {...params}
                       label="Add Tags.."
                       helperText={
-                        'Press Enter after each tag phrase to add a tag. Multiple tags can be set before saving.'
+                        'PRESS ENTER after each tag phrase to add a tag. Multiple tags can be set before saving.'
                       }
                     />
                   )}
