@@ -1,5 +1,5 @@
 import Mustache from 'mustache';
-import { createTab from '../utilities/loaders';
+import { createTab, processNotification } from '../utilities/loaders';
 import { getUser } from '../models/schemas/User';
 import { DiscoveryPlugin } from '../models/schemas/DiscoveryPlugin';
 import { ApiKey, IRapport, NotificationPayload } from '../types';
@@ -10,15 +10,6 @@ import { debug } from './logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { updateRecord } from '../models/db/local';
 import { getJobQueue} from '../pages/Background/index'
-
-/**
- * TODO: Implement Notifications
- * @param data
- */
-function processNotification(data: any){
-
-}
-
 
 
 /**
@@ -91,7 +82,7 @@ async function _processFetch(
   const { body, headers } = _buildBodyAndHeaders(discoveryPlugin, formFields);
 
   // Auth
-  const auth = _buildAuthHeader(discoveryPlugin, {});
+  const auth = await _buildAuthHeader(discoveryPlugin);
   if (auth) headers.set('Authorization', auth);
 
   // Custom headers from plugin
@@ -313,7 +304,7 @@ function _buildBodyAndHeaders(
 ): { body: BodyInit | null; headers: Headers } {
   const headers = new Headers();
 
-  if (dp.ContentTypeHeader === 'application/json') {
+  if (dp.contentTypeHeader === 'application/json') {
     // For JSON, assume there are no File objects; if there are, caller should not request JSON.
     const payload: Record<string, any> = {};
     for (const [k, v] of Object.entries(formFields)) {
@@ -351,11 +342,25 @@ function _buildBodyAndHeaders(
 
 
 /**
- * TODO: build authorization piece
  * @param dp
- * @param configurations
  */
-function _buildAuthHeader(dp: DiscoveryPlugin, configurations: any): string | undefined {
+async function _buildAuthHeader(dp: DiscoveryPlugin): Promise<string | undefined> {
+
+  const apiKeys = await db.apiKey.toArray();
+  const apiKeysObj = apiKeys.reduce(
+    (obj, item) => Object.assign(obj, { [item.key]: item.value }), {});
+
+  // Bearer takes precedence if both are present
+  if (dp.authorizationBearerToken) {
+    const token = Mustache.render(`${dp.authorizationBearerToken}`, apiKeysObj);
+    return `Bearer ${token}`;
+  }
+  if (dp.authorizationUserName && dp.authorizationPassword) {
+    const user = Mustache.render(`${dp.authorizationUserName}`, apiKeys);
+    const pass = Mustache.render(`${dp.authorizationPassword}`, apiKeys);
+    const basic = btoa(`${user}:${pass}`);
+    return `Basic ${basic}`;
+  }
   return undefined;
 }
 
@@ -398,6 +403,11 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
   ]
 }
 
+/**
+ * Once a rapport is saved, iterate through the active background runners and queue
+ * them for running
+ * @param rapport
+ */
 export async function applyBackgroundJobs(rapport: IRapport) : Promise<void> {
   const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner').toArray();
   for ( const discoveryPlugin of plugins){

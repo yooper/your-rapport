@@ -25,6 +25,8 @@ export class Rapport {
     tags,
     caseManagementUuid,
     note,
+    isImportant,
+    relevance,
     bulkAutomationUuid,
   }) {
     this.uuid = uuid;
@@ -45,8 +47,11 @@ export class Rapport {
     this.tags = tags;
     this.caseManagementUuid = caseManagementUuid;
     this.note = note;
+    this.isImportant = isImportant;
+    this.relevance = relevance;
     this.bulkAutomationUuid = bulkAutomationUuid;
     this.artifacts = [];
+
   }
 
   static async createFromTab(tab, text, screenShot, selectors) {
@@ -75,6 +80,8 @@ export class Rapport {
       tags: [], // Placeholder for future tagging
       caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387',
       note: null,
+      isImportant: false,
+      relevance: 'low'
     });
   }
 
@@ -114,6 +121,7 @@ export class Rapport {
       tags: [], // Placeholder for future tagging
       caseManagementUuid: '30583002-f730-4383-bf28-fdd8aadcf387',
       note: null,
+      isImportant: false
     });
   }
 }

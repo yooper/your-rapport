@@ -72,7 +72,8 @@ export interface IRapport
   isValidatedSource: boolean;
   note?: string | null;
   referrer?: string | null;
-  relevance: string | 'low';
+  relevance: 'low' | 'medium' | 'high';
+  isImportant: boolean | false;
   text?: string;
   selectors: Array<Selector>;
   tags: Array<string>;
@@ -232,6 +233,10 @@ export interface DiscoveryPluginInit {
   selectorValue?: string | number | null;
   country?: string | null;
   onClick?: onClick | null // for use with plugins that require javascript to run/extend the functionality
+  authorizationBearerToken?: string | null;
+  authorizationUserName?: string | null;
+  authorizationPassword?: string | null;
+
 }
 
 export type IBackgroundJob = {

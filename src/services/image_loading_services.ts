@@ -3,7 +3,6 @@
  */
 import { debug } from './logger_services';
 import { IRapport } from '../types';
-import { DOMElement } from 'react';
 
 export async function waitForAllImagesToLoad(): Promise<void> {
   const location = window.location;

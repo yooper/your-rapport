@@ -2,8 +2,6 @@
 import { DiscoveryPluginAction, DiscoveryPluginInit, onClick } from '../../types';
 import { discoveryPluginSchema } from "../validators/discoveryPlugin.validator";
 
-
-
 export class DiscoveryPlugin {
   readonly uuid: string = crypto.randomUUID();
   pluginType: string | 'content';
@@ -33,6 +31,10 @@ export class DiscoveryPlugin {
   selectorValue: string | number | null;
   country: string = 'us';
   onClick: onClick | null;
+  authorizationBearerToken: string | null;
+  authorizationUserName: string | null;
+  authorizationPassword: string | null;
+
 
   constructor(init: DiscoveryPluginInit = {}) {
     this.uuid = init.uuid ?? crypto.randomUUID();
@@ -62,6 +64,9 @@ export class DiscoveryPlugin {
     this.selectorValue = init.selectorValue ?? null;
     this.country = init.country ?? 'us';
     this.onClick = init.onClick ?? null;
+    this.authorizationBearerToken = init.authorizationBearerToken ?? null;
+    this.authorizationUserName = init.authorizationUserName ?? null;
+    this.authorizationPassword = init.authorizationPassword ?? null;
   }
 
   /** Increment access count and mark last accessed time */

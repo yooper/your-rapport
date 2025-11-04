@@ -41,6 +41,8 @@ export default function SearchDataTable(props) {
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
   const [updatedOn, setUpdatedOn] = useState(null)
+  const attachmentHeaders = ['uuid', 'mimeType', 'size', 'url', 'view']
+
 
   /**
    * Load all the data into the UI
@@ -103,7 +105,6 @@ export default function SearchDataTable(props) {
           const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
           const [openAttributeViewer, setOpenAttributeViewer] = useState(false);
           const mhtmlAttachment = record.artifacts.find(a => a.mimeType === 'multipart/related')
-
           return (
             <>
               <img
@@ -165,7 +166,7 @@ export default function SearchDataTable(props) {
                         <GenericTableDialog
                           title={'Associated Attachments'}
                           iconType={'AttachmentIcon'}
-                          defaultHeaders={Object.keys(record.artifacts[0]).concat('view') }
+                          defaultHeaders={attachmentHeaders}
                           defaultRecords={record.artifacts.map(a => {
                             return {
                               ...a,
