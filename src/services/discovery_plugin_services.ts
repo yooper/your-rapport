@@ -1,5 +1,5 @@
 import Mustache from 'mustache';
-import { createTab, processNotification } from '../utilities/loaders';
+import { createTab from '../utilities/loaders';
 import { getUser } from '../models/schemas/User';
 import { DiscoveryPlugin } from '../models/schemas/DiscoveryPlugin';
 import { ApiKey, IRapport, NotificationPayload } from '../types';
@@ -9,6 +9,15 @@ import { db } from '../models/db/dexieDb';
 import { debug } from './logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { updateRecord } from '../models/db/local';
+import { getJobQueue} from '../pages/Background/index'
+
+/**
+ * TODO: Implement Notifications
+ * @param data
+ */
+function processNotification(data: any){
+
+}
 
 
 
@@ -50,15 +59,10 @@ export async function discoveryPluginRunner(
       _submitForm(discoveryPlugin, formFields, url);
       break;
     }
-    case 'ForegroundRunner': {
+    case 'BackgroundRunner':
+    case 'ForegroundRunner':
       const formFields = await _buildObject(discoveryPlugin, rapport, apiKeys);
       _processFetch(discoveryPlugin, formFields, url, rapport);
-      break;
-    }
-    // a background runner is a foreground
-    case 'BackgroundRunner':
-      // TODO queue the job
-      debug('background runner request');
       break;
 
     case 'CreateTab':
@@ -392,4 +396,13 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       }
     })
   ]
+}
+
+export async function applyBackgroundJobs(rapport: IRapport) : Promise<void> {
+  const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner').toArray();
+  for ( const discoveryPlugin of plugins){
+    debug('Queuing job', {discoveryPlugin, rapport});
+    getJobQueue().enqueue({ discoveryPlugin, rapport })
+  }
+
 }

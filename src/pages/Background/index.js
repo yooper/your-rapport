@@ -28,6 +28,7 @@ import {
 import { debug } from '../../services/logger_services';
 import { captureSingleScreenShot } from '../../services/collection_services';
 import { Selector } from '../../models/schemas/Selector';
+import { JobQueue } from '../../models/schemas/JobQueue';
 
 /**
  * Initialize configuration values when the app is installed
@@ -50,6 +51,16 @@ export function setActiveAutomation(bulkAutomationUrl) {
 }
 
 initializePortConnection();
+
+let _jobQueue = null;
+
+export function getJobQueue(){
+  if(!_jobQueue){
+    _jobQueue = new JobQueue(2);
+  }
+  return _jobQueue
+}
+
 
 /**
  * The web page failed to load
@@ -136,7 +147,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return false;
   }
-
+  if (message.cmd === 'queueJob') {
+    (async () => {
+      getJobQueue().enqueue(message.backgroundJob)
+      debug('job queued', message.backgroundJob);
+    })();
+    return false;
+  }
   if (message.cmd === 'ping') {
     return false;
   }

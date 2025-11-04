@@ -32,7 +32,6 @@ export default function Popup() {
       setIsLoading(true);
       showLoader();
       try{
-        await chrome.runtime.sendMessage({cmd: 'ping'});
       }
       catch(e){
         // do nothing

@@ -234,6 +234,12 @@ export interface DiscoveryPluginInit {
   onClick?: onClick | null // for use with plugins that require javascript to run/extend the functionality
 }
 
+export type IBackgroundJob = {
+  discoveryPlugin: DiscoveryPlugin,
+  rapport: IRapport,
+  selectorValue: string | number | null
+};
+
 export type onClick = (record: IRapport) => void;
 
 export type DiscoveryPluginAction =

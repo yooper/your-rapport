@@ -1,7 +1,4 @@
 import { Store } from 'react-notifications-component';
-import { convertKeysToCamelCase } from './transformers';
-import { addRecord } from '../models/db/local';
-import { DISCOVERY_PLUGIN, UUID } from '../services/constants';
 import { debug } from '../services/logger_services';
 import Package from '../models/schemas/Package';
 
@@ -174,7 +171,6 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/github/gh-save-screenshot.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-text-username.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-title-username.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-url-username.json',

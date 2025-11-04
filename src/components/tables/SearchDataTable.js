@@ -14,9 +14,7 @@ import { Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import SettingsIcon from '@mui/icons-material/Settings';
 import {
-  DISCOVERY_PLUGIN,
   RAPPORT,
-  SELECTOR,
   UPDATED_ON,
   UUID,
 } from '../../services/constants';
@@ -33,6 +31,8 @@ import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
 import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import IconButton from '@mui/material/IconButton';
 import AttachmentIcon from '@mui/icons-material/Attachment';
+import GenericTableDialog from '../dialogs/GenericTableDialog';
+import Button from '@mui/material/Button';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -162,10 +162,17 @@ export default function SearchDataTable(props) {
                   <Badge badgeContent={record.artifacts.length} color={'primary'} >
                     <Tooltip title={'See the attachments'}>
                       <IconButton disabled={record.artifacts.length===0}>
-                        <AttachmentIcon
-                          onClick={() => {
-                          }}
-                          />
+                        <GenericTableDialog
+                          title={'Associated Attachments'}
+                          iconType={'AttachmentIcon'}
+                          defaultHeaders={Object.keys(record.artifacts[0]).concat('view') }
+                          defaultRecords={record.artifacts.map(a => {
+                            return {
+                              ...a,
+                              'view': `chrome-extension://${chrome.runtime.id}/api.html?format=file&uuid=${a.uuid}`
+                            }
+                          })}
+                        />
                       </IconButton>
                     </Tooltip>
                   </Badge>

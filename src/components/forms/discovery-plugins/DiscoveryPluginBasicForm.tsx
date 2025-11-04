@@ -163,7 +163,7 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
           <Grid item>
             <FormControl>
               <StyledTextField
-                disabled={record.action !== 'BackgroundRunner'}
+                disabled={true}
                 sx={{ m: 0.75 }}
                 variant="outlined"
                 name="eventType"

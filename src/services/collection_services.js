@@ -13,6 +13,7 @@ export async function captureSingleScreenShot(deepSave = false) {
   if (activeTab.id in pageInfo) {
     // TODO reduce duplicity of terms being used.
     await capture(activeTab, pageInfo[activeTab.id].pageInfo, deepSave);
+    //
   } else {
     debug(
       `Could not capture single screenshot, no active tab found with page info, is dev tools open?`,

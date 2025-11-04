@@ -6,6 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import JsonView from 'react18-json-view';
 
+// TODO: fix rendering bug with json data not being indented.
 export default function JsonAttributeViewerDialog(props) {
   const [open, setOpen] = useState(false);
 

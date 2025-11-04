@@ -21,6 +21,8 @@ export default class BulkAutomationUrl {
     this.tabId = null;
     this.tab = null;
     this.isDeepSave = false
+    // optional discovery plugin to use for configuring the
+    this.discoveryPluginUuid = null;
   }
 
   /**

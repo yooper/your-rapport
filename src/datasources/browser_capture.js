@@ -6,6 +6,7 @@ import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
 import { db } from '../models/db/dexieDb';
 import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
+import { applyBackgroundJobs } from '../services/discovery_plugin_services';
 
 /**
  * TODO: wake up the service worker 1st
@@ -69,6 +70,10 @@ export async function capture(tab, message = {}, deepSave = false) {
     }
 
     await addRecord(RAPPORT, UUID, record);
+    // queue up the background jobs
+    applyBackgroundJobs(record);
+    //
+
     // update the configuration last saved on metadata
     configuration[UPDATED_ON] = Date.now();
     configuration.screenShotCount++;
@@ -87,6 +92,7 @@ export async function capture(tab, message = {}, deepSave = false) {
     setTimeout(() => {
       ExtensionPin.setDefault(tab);
     }, 3000);
+    // TODO process
   }
 }
 
