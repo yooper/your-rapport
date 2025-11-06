@@ -205,15 +205,19 @@ function processAutomation(description = null) {
     automation.completedOn = Date.now();
     automation.screenShotsCollected = screenCollectionCount;
     automation.description = description;
+    automation.ranOn = Date.now();
     automation.active = false;
     updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
       debug('automation task completed', automation);
-      updateRecord(BULK_AUTOMATION, UUID, automation, automation).then(
+      updateRecord(BULK_AUTOMATION, UUID, automation).then(
         (response) => {
-          port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
-          debug(`closing automation`, automation);
-          // we no longer need to track this page
-          automation = null;
+          debug(`processAutomation: Completed`, automation);
+          try{
+            port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+          }
+          catch(e){
+            debug(String(e), {method: 'processAutomation'} )
+          }
         }
       );
     });

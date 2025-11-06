@@ -43,15 +43,9 @@ import { discoveryPluginRunner } from '../../services/discovery_plugin_services'
 import { sort_by_key } from '../../utilities/transformers';
 import { hideLoader, showLoader, processNotification } from '../../utilities/loaders';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
-import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
+import HelperPopover from '../HelperPopover';
 
-interface Plugin {
-  Label: string;
-  PluginType: string;
-  Uuid: string;
-  GroupName: string;
-}
 
 interface RecordData {
   Uuid: string;
@@ -293,6 +287,9 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
                           key={`plugin-${plugin.pluginType}-${plugin.uuid}`}
                         >
                           <ListItemIcon>
+                            <IconButton>
+                            <HelperPopover message={plugin.description}/>
+                            </IconButton>
                             <Tooltip title={'Queue item into the bulk automation collection'}>
                               <IconButton disabled={!plugin.url || plugin.action !== 'CreateTab'}>
                                 <AddToQueueIcon onClick={() => {

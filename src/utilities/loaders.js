@@ -27,6 +27,13 @@ export function hideLoader() {
  * @param data
  */
 export function processNotification(data, duration = 3000) {
+
+  // TODO: handle notifications created in the service worker
+  if(typeof window === 'undefined'){
+    debug('background runner notification', data);
+    return;
+  }
+
   Store.addNotification({
     title: data.title,
     message: data.message,

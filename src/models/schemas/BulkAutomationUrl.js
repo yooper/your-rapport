@@ -25,43 +25,19 @@ export default class BulkAutomationUrl {
     this.discoveryPluginUuid = null;
   }
 
-  /**
-   *
-   * @returns {Promise<BulkAutomationUrl|null>}
-   */
-  static async getActiveAutomation() {
-    const automationQueue = await getLocalItem(BULK_AUTOMATION);
-    const activeAutomation = automationQueue.find((a) => a.active);
-    return activeAutomation
-      ? BulkAutomationUrl._getInstance(activeAutomation)
-      : null;
-  }
-
-  /**
-   * Internal function for returning an instance
-   * @param obj
-   * @returns {BulkAutomationUrl}
-   * @private
-   */
-  static _getInstance(obj) {
-    const instance = new BulkAutomationUrl();
-    Object.assign(instance, obj);
-    return instance;
-  }
 
   static async getAndSetNextAutomation() {
     const automationQueue = await getLocalItem(BULK_AUTOMATION);
-    const activeAutomation = automationQueue.find((a) => !a.ranOn);
+    automationQueue.forEach(a => a.active = false);
+    const activeAutomation = automationQueue.find(a => !a.ranOn && !a.completedOn)
     if (!activeAutomation) {
+      await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
       return null;
     }
 
-    activeAutomation.ranOn = Date.now();
     activeAutomation.active = true;
     await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-    return activeAutomation
-      ? BulkAutomationUrl._getInstance(activeAutomation)
-      : null;
+    return activeAutomation;
   }
 
   /**

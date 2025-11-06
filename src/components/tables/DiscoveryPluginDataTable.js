@@ -17,6 +17,7 @@ import { CloudDownload } from '@mui/icons-material';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { downloadJsonData } from '../../utilities/transformers';
+import UploadDataDialog from '../dialogs/UploadDataDialog';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -336,6 +337,7 @@ export default function DiscoveryPluginDataTable() {
             pluginTypes={pluginTypes}
             setPluginTypes={setPluginTypes}
           />
+          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading} dataType={'discoveryPlugin'} />
         </Fragment>
       );
     },

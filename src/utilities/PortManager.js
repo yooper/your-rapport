@@ -18,7 +18,6 @@ import { createTab } from './loaders';
 import { debug } from '../services/logger_services';
 import { captureSingleScreenShot } from '../services/collection_services';
 import { getActiveAutomation, setActiveAutomation } from '../pages/Background';
-import { Configuration } from '../models/schemas/Configuration';
 
 export class PortManager {
   constructor() {
@@ -51,6 +50,8 @@ export class PortManager {
     this.tabInfo[port.sender.tab.id] = port.sender.tab;
 
     port.onMessage.addListener(this.onMessage.bind(this));
+
+    // TODO: create re-connect strategy
     port.onDisconnect.addListener(() => {
       debug('Port disconnected');
       this.port = null;
@@ -94,13 +95,14 @@ export function initializePortConnection() {
 
 /**
  * Process the message, send a null or false to void sending a response back to the content script.
+ * This can disconnect and not work
  * TODO: add statefulness validation
  * @param message
  * @param tab
  * @returns {{}}
  */
 export async function processReceivedMessage(tab, message) {
-  // whenever a request comes in to activate autoscroll while the ui is already scrolling
+  // process the request from the service worker while autoscroll in the UI is activated.
   // deactivate the scroll and end the automation.
 
   switch (message.cmd) {
@@ -115,14 +117,12 @@ export async function processReceivedMessage(tab, message) {
       break;
     case PROCESS_QUEUE_AUTOMATION_URLS: // autoscroll collect was initiated through automation request
       const automations = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      const found = automations.find((a) => !a.ranOn);
+      const found = automations.find((a) => a.active) ?? await BulkAutomationUrl.getAndSetNextAutomation();
       if (!found) {
         debug('No automations to run');
         return;
       } else {
         debug(`Initializing automation ${found.url}`, found);
-        found.active = true;
-        found.ranOn = Date.now();
         await updateRecord(BULK_AUTOMATION, UUID, found);
         setActiveAutomation(found);
         await createTab(found.url);
@@ -134,7 +134,7 @@ export async function processReceivedMessage(tab, message) {
       portManager.addTabInfo(tab, message);
       const activeAutomation = getActiveAutomation();
       if (!activeAutomation) {
-        debug('No active automation');
+        debug(PAGE_INITIALIZED+': No active automation');
         return false; // stop processing in calling function if false is returned
       }
 
@@ -149,10 +149,12 @@ export async function processReceivedMessage(tab, message) {
         );
         activeAutomation.description = 'Page automation blocker detected';
         activeAutomation.active = false;
+        activeAutomation.ranOn = activeAutomation.completedOn = Date.now();
         await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
         // start next automation, since this one failed.
-        const nextActiveAutomation =
-          await BulkAutomationUrl.getAndSetNextAutomation();
+        const nextActiveAutomation = await BulkAutomationUrl.getAndSetNextAutomation();
+        setActiveAutomation(null);
+
         if (nextActiveAutomation) {
           debug('Launching next automation url', nextActiveAutomation);
           setActiveAutomation(nextActiveAutomation);

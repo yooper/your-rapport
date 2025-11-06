@@ -13,6 +13,7 @@ import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
 import { Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import SettingsIcon from '@mui/icons-material/Settings';
+
 import {
   RAPPORT,
   UPDATED_ON,
@@ -32,7 +33,6 @@ import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import IconButton from '@mui/material/IconButton';
 import AttachmentIcon from '@mui/icons-material/Attachment';
 import GenericTableDialog from '../dialogs/GenericTableDialog';
-import Button from '@mui/material/Button';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -552,7 +552,7 @@ export default function SearchDataTable(props) {
     customToolbar: () => {
       return (
         <>
-          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading} />
+          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading} dataType={'rapports'}/>
         </>
       );
     },

@@ -102,7 +102,11 @@ async function _processFetch(
     requestInit.body = body;
   }
 
+
   try {
+
+
+
     processNotification({
       title: 'Discovery Plugin Request Sent',
       message: 'Waiting for response from the server.',
@@ -414,5 +418,4 @@ export async function applyBackgroundJobs(rapport: IRapport) : Promise<void> {
     debug('Queuing job', {discoveryPlugin, rapport});
     getJobQueue().enqueue({ discoveryPlugin, rapport })
   }
-
 }

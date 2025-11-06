@@ -12,9 +12,11 @@ import { CloudUpload } from '@mui/icons-material';
 import { Fragment } from '@emotion/react/jsx-runtime';
 import IconButton from '@mui/material/IconButton';
 import { getLocalItem, setLocalItem } from '../../models/db/local';
-import { hideLoader, showLoader } from '../../utilities/loaders';
+import { hideLoader, processNotification, showLoader } from '../../utilities/loaders';
 import { Configuration } from '../../models/schemas/Configuration';
 import { RAPPORT, UPDATED_ON } from '../../services/constants';
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import { db } from '../../models/db/dexieDb';
 
 /**
  * TODO: Add support for extracting selectors from incoming records
@@ -24,9 +26,44 @@ import { RAPPORT, UPDATED_ON } from '../../services/constants';
  * @constructor
  */
 export default function UploadDataDialog(props) {
-  const { isLoading, setIsLoading } = props;
+  const { isLoading, setIsLoading, dataType } = props;
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
+
+
+  const handleDiscoveryPluginsUpload = async(e) =>{
+        const newRecords = JSON.parse(e.target.result);
+        if (Array.isArray(newRecords)) {
+          const validPlugins = []
+          for (const discoveryPlugin of newRecords) {
+            const result = await DiscoveryPlugin.validate(discoveryPlugin);
+            if (!result.ok) {
+              processNotification({title:'Invalid Discovery Plugin ' + discoveryPlugin.label, message:result.errors, type:'danger'})
+              // TODO: bad plugin, notify the end user
+            } else {
+              // the plugin by default must be off, if a background runner
+              if (discoveryPlugin.action === 'BackgroundRunner') {
+                discoveryPlugin.active = false;
+              }
+              validPlugins.push(discoveryPlugin);
+            }
+          }
+          await db.discoveryPlugin.bulkPut(validPlugins);
+        } else { // single object
+          const discoveryPlugin = newRecords;
+          const result = await DiscoveryPlugin.validate(discoveryPlugin);
+          if (!result.ok) {
+            processNotification({title:'Invalid Discovery Plugin ' + discoveryPlugin.label, message:result.errors, type:'danger'}, 5000)
+          } else {
+            // the plugin by default must be off, if a background runner
+            if (discoveryPlugin.action === 'BackgroundRunner') {
+              discoveryPlugin.active = false;
+            }
+            await db.discoveryPlugin.put(discoveryPlugin);
+          }
+        }
+  }
+
 
   const handleFileChange = (event) => {
     showLoader();
@@ -40,25 +77,39 @@ export default function UploadDataDialog(props) {
       return;
     }
 
+
+
     const reader = new FileReader();
     reader.onload = async (e) => {
-      try {
-        let configuration = await Configuration.getConfiguration();
-        // get/set the record count
-        configuration.recordCount = configuration?.recordCount ?? 0;
-        const newRecords = JSON.parse(e.target.result);
-        // TODO: fix issue with adding duplicates, the uuid is the unique key
-        let rapports = (await getLocalItem(RAPPORT)) ?? [];
-        // TODO: sort by dates.
-        configuration.screenShotCount = rapports.length;
-        await setLocalItem(RAPPORT, rapports.concat(newRecords));
-        // update the configuration last
-        configuration[UPDATED_ON] = Date.now();
-        await Configuration.setConfiguration(configuration);
-      } catch (err) {
+      showLoader()
+      setIsLoading(true)
+      try{
+        if(dataType === 'discoveryPlugin') {
+          await handleDiscoveryPluginsUpload(e)
+        }
+        else
+        {
+          let configuration = await Configuration.getConfiguration();
+          // get/set the record count
+          configuration.recordCount = configuration?.recordCount ?? 0;
+          const newRecords = JSON.parse(e.target.result);
+          // TODO: use a background job to rebuild the selectors.
+
+          // TODO: fix issue with adding duplicates, the uuid is the unique key
+          let rapports = (await getLocalItem(RAPPORT)) ?? [];
+          // TODO: sort by dates.
+          configuration.screenShotCount = rapports.length;
+          await setLocalItem(RAPPORT, rapports.concat(newRecords));
+          // update the configuration last
+          configuration[UPDATED_ON] = Date.now();
+          await Configuration.setConfiguration(configuration);
+        }
+      }
+      catch (err) {
         setError('Invalid JSON format.');
         hideLoader();
-      } finally {
+      }
+      finally {
         setIsLoading(false);
         hideLoader();
         setOpen(false);
@@ -79,7 +130,7 @@ export default function UploadDataDialog(props) {
         <CloudUpload style={{ zIndex: 1000 }} variant="outlined" />
       </IconButton>
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Upload a Your Rapport Dataset</DialogTitle>
+        <DialogTitle>Upload Dataset</DialogTitle>
         <DialogContent>
           <Input
             type="file"

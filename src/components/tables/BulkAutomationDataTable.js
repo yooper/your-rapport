@@ -9,7 +9,6 @@ import {
   updateRecord,
 } from '../../models/db/local';
 import {
-  createTab,
   hideLoader,
   processNotification,
   showLoader,
@@ -21,11 +20,8 @@ import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
 import {
   BULK_AUTOMATION,
-  DISCOVERY_PLUGIN,
   PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
-  SELECTOR,
-  UPDATED_ON,
   UUID,
 } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
@@ -76,8 +72,27 @@ export default function BulkAutomationTable(props) {
     );
     const automationQueue = (await getLocalItem(BULK_AUTOMATION)) ?? [];
     automationQueue.forEach((a) => (a.active = false));
+
+    const found = automationQueue.find(a => !a.ranOn);
+    found.active = true;
     await setLocalItem(BULK_AUTOMATION, automationQueue);
-    port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+    let retry = 0;
+    do{
+      try{
+        port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+        return;
+      }
+      catch(e){
+        debug(String(e), { cmd: PROCESS_QUEUE_AUTOMATION_URLS, method: 'startAutomationProcess' })
+      }
+      finally {
+        retry++;
+      }
+    }
+    while(retry < 3);
+    if(retry > 3) {
+      debug('Failed to start automation process', { method: 'startAutomationProcess' })
+    }
   }
 
   const getRecord = (rowData) => {
@@ -258,6 +273,7 @@ export default function BulkAutomationTable(props) {
                     'automationBulkCollectionModel',
                     false
                   );
+                  // sync to storage
                   await setLocalItem(BULK_AUTOMATION, automationQueue);
                   port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
                 }}

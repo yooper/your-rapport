@@ -70,11 +70,11 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
   debug('web navigation error detected', details);
   if (!activeAutomation) {
     return; // no global active automation running, don't monitor errors
-  } else if (
-    new URL(details.url).hostname === new URL(activeAutomation.url).hostname
-  ) {
+  }
+  else if (new URL(details.url).hostname === new URL(activeAutomation.url).hostname) {
     debug('Active automation detected', activeAutomation);
-  } else {
+  }
+  else {
     // host names did not match
     debug(
       `Details url ${details.url} did not match active automation ${activeAutomation.url}`,
@@ -83,7 +83,6 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
     return;
   }
 
-  activeAutomation.ranOn = Date.now();
   activeAutomation.description = details.error;
   activeAutomation.completedOn = Date.now();
   activeAutomation.active = false;
