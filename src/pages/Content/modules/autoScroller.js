@@ -187,6 +187,7 @@ export function autoScroller(message) {
       // do not keep scrolling and capturing if the state is invalid
       if (state === STATE_ACTIVE) {
         // restart the functionality for scraping
+        // TODO: Make a browser configuration
         setTimeout(autoScroll, 1500); // TODO: Adjust the delay as needed, make it a configuration setting
       }
     })();

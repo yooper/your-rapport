@@ -16,11 +16,10 @@ import {
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB,
   ENQUEUE_BULK_AUTOMATION_URL,
-  PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
   UUID,
 } from '../../services/constants';
-import { BulkAutomationUrl } from '../../models/schemas/BulkAutomationUrl';
+import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
 import {
   initializePortConnection,
   processReceivedMessage,
@@ -63,7 +62,7 @@ export function getJobQueue(){
 
 
 /**
- * The web page failed to load
+ * The web page failed to load, check if the url was in the automation queue
  */
 chrome.webNavigation.onErrorOccurred.addListener((details) => {
   const activeAutomation = getActiveAutomation();
@@ -85,6 +84,7 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
 
   activeAutomation.description = details.error;
   activeAutomation.completedOn = Date.now();
+  activeAutomation.ranOn = Date.now();
   activeAutomation.active = false;
   updateRecord(BULK_AUTOMATION, UUID, activeAutomation).then(async () => {
     // Determines if it was a single automation request or multiple
@@ -97,8 +97,13 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
       debug(`Single automation request failed. See record for details.`);
       return; // single automation request
     }
-    // process the next automation request
-    processReceivedMessage(null, { cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+    else{
+      const nextAutomation = await BulkAutomationUrl.getAndSetNextAutomation();
+      if(nextAutomation){
+        setActiveAutomation(nextAutomation);
+        await createTab(nextAutomation.url);
+      }
+    }
   });
 });
 

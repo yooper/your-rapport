@@ -6,9 +6,6 @@ import {
   PAGE_INITIALIZED,
   PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
-  START_CAPTURE,
-  STOP_SCRIPT,
-  STOPPED,
   UUID,
 } from '../services/constants';
 import { capture } from '../datasources/browser_capture';
@@ -117,17 +114,28 @@ export async function processReceivedMessage(tab, message) {
       break;
     case PROCESS_QUEUE_AUTOMATION_URLS: // autoscroll collect was initiated through automation request
       const automations = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      const found = automations.find((a) => a.active) ?? await BulkAutomationUrl.getAndSetNextAutomation();
+      let found = automations.find((a) => a.active) ?? await BulkAutomationUrl.getAndSetNextAutomation();
       if (!found) {
         debug('No automations to run');
         return;
-      } else {
-        debug(`Initializing automation ${found.url}`, found);
-        await updateRecord(BULK_AUTOMATION, UUID, found);
-        setActiveAutomation(found);
-        await createTab(found.url);
-        debug(`Automation ${found.url} Tab Opened`, { tab, found });
       }
+      else if(tab.url === found.url)
+      {
+        // The current tab is the automation currently running, re-compute which automation queue item to run
+        found.active = false;
+        found.description = "Bulk automation queue sync issue, skipping to next automation"
+        found.ranOn = Date.now();
+        found.completedOn = Date.now();
+        await updateRecord(BULK_AUTOMATION, UUID, found);
+        found = await BulkAutomationUrl.getAndSetNextAutomation();
+      }
+
+      debug(`Initializing automation ${found.url}`, found);
+      // prevent the case where the current active automation
+      await updateRecord(BULK_AUTOMATION, UUID, found);
+      setActiveAutomation(found);
+      await createTab(found.url);
+      debug(`Automation ${found.url} Tab Opened`, { tab, found });
       break;
     // the content script is ready
     case PAGE_INITIALIZED:
@@ -137,10 +145,6 @@ export async function processReceivedMessage(tab, message) {
         debug(PAGE_INITIALIZED+': No active automation');
         return false; // stop processing in calling function if false is returned
       }
-
-      // TODO: perform check in service worker too,
-      //const parser = new DOMParser();
-      //const document = parser.parseFromString(message.html ?? '', message.contentType)
 
       if (message.isAutomationBlockerDetected) {
         debug(

@@ -41,6 +41,7 @@ function isAccessDeniedPage(document) {
     'are you a robot',
     'are you human',
     'Hmm, this page',
+    '404'
   ];
   const bodyText = document.body.innerText.toLowerCase();
   return keywords.some((keyword) => bodyText.includes(keyword));

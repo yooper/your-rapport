@@ -30,7 +30,7 @@ import { debug } from '../../services/logger_services';
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const port = chrome.runtime.connect({ name: RAPPORT });
+  let port = chrome.runtime.connect({ name: RAPPORT });
 
   useEffect(() => {
     async function fetchData() {
@@ -87,6 +87,8 @@ export default function BulkAutomationTable(props) {
       }
       finally {
         retry++;
+        // reconnect
+        port = chrome.runtime.connect({ name: RAPPORT });
       }
     }
     while(retry < 3);
@@ -275,7 +277,25 @@ export default function BulkAutomationTable(props) {
                   );
                   // sync to storage
                   await setLocalItem(BULK_AUTOMATION, automationQueue);
-                  port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+                  let retry = 0;
+                  do{
+                    try{
+                      port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
+                      return;
+                    }
+                    catch(e){
+                      debug(String(e), { cmd: PROCESS_QUEUE_AUTOMATION_URLS, method: 'customBodyRender' })
+                    }
+                    finally {
+                      retry++;
+                      // reconnect
+                      port = chrome.runtime.connect({ name: RAPPORT });
+                    }
+                  }
+                  while(retry < 3);
+                  if(retry > 3){
+                    processNotification({title: 'Failed Automation', message: 'Refresh this page to start the automations, '})
+                  }
                 }}
               >
                 <DirectionsRunIcon />

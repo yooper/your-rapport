@@ -9,9 +9,7 @@ import { autoScroller } from './modules/autoScroller';
 import { initMarkJsHandler } from './modules/markText';
 import {
   ACTIVATE_AUTOMATION,
-  ACTIVATE_CAPTURE,
   AUTOMATION_RUNNING,
-  BULK_AUTOMATION,
   PAGE_INITIALIZED,
   RAPPORT,
 } from '../../services/constants';
@@ -47,7 +45,17 @@ function getPageInfo() {
 /**
  * Upon connection send details about the page
  */
-port.postMessage(getPageInfo());
+setTimeout(() => {
+  port.postMessage(getPageInfo());
+}, 2000); // give the page a couple seconds to load up.
+
+/**
+ * Check if the page automation is stuck after several seconds
+ */
+setTimeout(() => {
+
+})
+
 
 /**
  * Process and route incoming messages
@@ -98,5 +106,4 @@ const composeMessage = (message) => {
 
 //initAutoScrollerHandler();
 initMarkJsHandler();
-
 waitForAllImagesToLoad();
