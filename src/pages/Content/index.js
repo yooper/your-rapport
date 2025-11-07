@@ -19,7 +19,7 @@ import { isAutomationBlockerDetected } from './modules/automationBlockerDetectio
 import { waitForAllImagesToLoad } from '../../services/image_loading_services';
 
 export const pageUuid = crypto.randomUUID();
-export const port = chrome.runtime.connect({ name: RAPPORT });
+export let port = chrome.runtime.connect({ name: RAPPORT });
 
 /**
  *
@@ -46,15 +46,24 @@ function getPageInfo() {
  * Upon connection send details about the page
  */
 setTimeout(() => {
-  port.postMessage(getPageInfo());
+  let retry = 0;
+  do{
+    try {
+      port.postMessage(getPageInfo());
+    }
+    catch(e){
+      debug(`Try # ${retry} to reconnect to service worker`);
+      chrome.runtime.connect({ name: RAPPORT });
+    }
+  }
+  while(retry++ < 3)
+
 }, 2000); // give the page a couple seconds to load up.
 
 /**
  * Check if the page automation is stuck after several seconds
  */
-setTimeout(() => {
-
-})
+//setTimeout(() => {})
 
 
 /**
@@ -83,6 +92,7 @@ const route = (message) => {
   debug('Message received', message);
 
   autoScroller(message);
+
 
   switch (cmd) {
     // automated trigger

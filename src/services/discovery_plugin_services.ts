@@ -87,8 +87,12 @@ async function _processFetch(
 
   // Custom headers from plugin
   if (discoveryPlugin.headers) {
+    const apiKeys = await db.apiKey.toArray();
+    const apiKeysObj = apiKeys.reduce(
+      (obj, item) => Object.assign(obj, { [item.key]: item.value }), {});
+
     for (const [k, v] of Object.entries(discoveryPlugin.headers)) {
-      if (v != null) headers.set(k, String(v));
+      if (v != null) headers.set(k, Mustache.render(v, apiKeysObj));
     }
   }
 
@@ -104,8 +108,6 @@ async function _processFetch(
 
 
   try {
-
-
 
     processNotification({
       title: 'Discovery Plugin Request Sent',
@@ -360,8 +362,8 @@ async function _buildAuthHeader(dp: DiscoveryPlugin): Promise<string | undefined
     return `Bearer ${token}`;
   }
   if (dp.authorizationUserName && dp.authorizationPassword) {
-    const user = Mustache.render(`${dp.authorizationUserName}`, apiKeys);
-    const pass = Mustache.render(`${dp.authorizationPassword}`, apiKeys);
+    const user = Mustache.render(`${dp.authorizationUserName}`, apiKeysObj);
+    const pass = Mustache.render(`${dp.authorizationPassword}`, apiKeysObj);
     const basic = btoa(`${user}:${pass}`);
     return `Basic ${basic}`;
   }

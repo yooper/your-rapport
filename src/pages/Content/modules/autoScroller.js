@@ -208,19 +208,17 @@ function processAutomation(description = null) {
     automation.description = description;
     automation.ranOn = Date.now();
     automation.active = false;
-    updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
-      debug('automation task completed', automation);
-      updateRecord(BULK_AUTOMATION, UUID, automation).then(
-        (response) => {
-          debug(`processAutomation: Completed`, automation);
-          try{
-            port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
-          }
-          catch(e){
-            debug(String(e), {method: 'processAutomation'} )
-          }
+      updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
+      debug(`processAutomation: Completed with reason: ${description}`, automation);
+      try{
+        // TODO: Investigate whether to reconnect, when port is undefined would work better
+        if(port !== undefined) {
+          port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
         }
-      );
-    });
+      }
+      catch(e) {
+        debug(String(e), { method: 'processAutomation' })
+      }
+    })
   }
 }

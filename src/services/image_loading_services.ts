@@ -99,7 +99,7 @@ export async function mergeImagesVertically(
   // Load all images and gather dimensions, that have a screenshot
   for (const rapport of rapports.filter((r) => r.screenshot)) {
     const img = new Image();
-    img.src = rapport.screenshot;
+    img.src = rapport.screenshot ?? 'TODO:// Add reference to a default no-image';
     await new Promise((resolve) => {
       img.onload = resolve;
     });

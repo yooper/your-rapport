@@ -50,9 +50,9 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
       >
         <Tab label="Basic" {...a11yProps(0)} />
         <Tab label="Content Types" {...a11yProps(1)} />
-        <Tab label="Authentication" disabled={true}{...a11yProps(2)} />
+        <Tab label="Authentication" {...a11yProps(2)} />
         <Tab label="Field Mappings" {...a11yProps(3)} />
-        <Tab label="Header Mappings" disabled={true} {...a11yProps(4)} />
+        <Tab label="Header Mappings" {...a11yProps(4)} />
         <Tab label="Support" {...a11yProps(5)} />
         <Tab label="Description" {...a11yProps(6)} />
       </Tabs>
@@ -62,13 +62,14 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
           setPluginTypes={setPluginTypes}
           record={record}
           setRecord={setRecord}
-        />
+          apiKeys={apiKeys}/>
       </TabPanel>
       <TabPanel value={value} index={1}>
-        <DiscoveryPluginAdvancedForm record={record} setRecord={setRecord} />
+        <DiscoveryPluginAdvancedForm apiKeys={apiKeys} record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={2}>
         <DiscoveryPluginAuthenticationForm
+          apiKeys={apiKeys}
           record={record}
           setRecord={setRecord}
         />
@@ -77,10 +78,10 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         <FieldMappingForm apiKeys={apiKeys} record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={4}>
-        <HeaderMappingForm record={record} setRecord={setRecord} />
+        <HeaderMappingForm apiKeys={apiKeys} record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={5}>
-        <GroupHomeSupportForm record={record} setRecord={setRecord} />
+        <GroupHomeSupportForm apiKeys={[]} record={record} setRecord={setRecord} />
       </TabPanel>
       <TabPanel value={value} index={6}>
         <DescriptionForm record={record} setRecord={setRecord} />

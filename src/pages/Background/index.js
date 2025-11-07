@@ -107,6 +107,7 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
   });
 });
 
+
 /**
  * Add in support for short-cut keys
  */

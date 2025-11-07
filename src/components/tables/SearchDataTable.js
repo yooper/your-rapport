@@ -41,7 +41,7 @@ export default function SearchDataTable(props) {
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
   const [updatedOn, setUpdatedOn] = useState(null)
-  const attachmentHeaders = ['uuid', 'mimeType', 'size', 'url', 'view']
+  const attachmentHeaders = ['view', 'uuid', 'mimeType', 'size', 'url']
 
 
   /**
