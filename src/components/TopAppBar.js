@@ -5,48 +5,68 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Tooltip } from '@mui/material';
 import { createTab } from '../utilities/loaders';
+import IconButton from '@mui/material/IconButton';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+
   const menuItems = [
-    { name: 'search', label: 'Search Dashboard', url: '/search.html' },
-    { name: 'options', label: 'Settings', url: '/options.html' },
-    {
-      name: 'videos',
-      label: 'Training Videos',
-      url: 'https://www.youtube.com/@your-rapport',
-    },
-    { name: 'login', label: 'Authenticate', url: '/login.html' },
+    { name: 'support', label: 'Support This App($3 per month)', url: 'https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00', title:'Help support this app and make this menu item disappear.' },
+    { name: 'search', label: 'Dashboard', url: '/search.html', title:'Search, filter, and explore your collection' },
+    { name: 'automations', label: 'Automations', url: '/automation.html', title:'Manage the back log of automations that are queued up to run.' },
+    { name: 'options', label: 'Configurations', url: '/options.html', title:'Configure settings, add Api Keys, Tags, Selectors, install Discovery Plugins and more' },
+    { name: 'discoveryPlugin', label: 'Discovery Plugins', url: '/options.html?view=discoveryPlugin', title:'Adjust which discovery plugins are active or set to run automatically.' },
+    { name: 'documentation', label: 'Documentation', url: 'https://github.com/yooper/your-rapport/wiki', title:'Adjust which discovery plugins are active or set to run automatically.' },
   ];
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = (event) => {
+  const handleClose = async(event) => {
     setAnchorEl(null);
     const { optionValue } = event.currentTarget.dataset;
     const found = menuItems.find((menuItem) => menuItem.name === optionValue);
-
-    if (found === undefined) {
-      return;
+    if(found){
+      createTab(found.url, '_blank');
     }
-    createTab(found.url);
-  };
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
-          <Tooltip title="Help Support - Your Rapport">
-            <a
-              href={'https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00'}
-              target={'_blank'}
-            >
-              <img alt="Your Rapport" src="/icon-48.png" />
-            </a>
-          </Tooltip>
+          <IconButton
+            onClick={handleMenu}
+            aria-controls="menu-appbar"
+            aria-haspopup="true"
+          >
+                <img alt="Your Rapport" src="/icon-48.png" />
+          </IconButton>
+          <Menu
+            id="main-menu"
+            anchorEl={anchorEl}
+            keepMounted
+            open={open}
+            onClose={handleClose}
+          >
+          {menuItems &&
+            menuItems.map((menuItem) => (
+            <Tooltip title={menuItem.title}>
+              <MenuItem
+                aria-label={menuItem.title}
+                key={menuItem.label}
+                onClick={handleClose}
+                data-option-value={menuItem.name}
+              >
+                {menuItem.label}
+              </MenuItem>
+            </Tooltip>
+            ))}
+          </Menu>
           <span>&nbsp;&nbsp;&nbsp;</span>
           <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
             Your Rapport

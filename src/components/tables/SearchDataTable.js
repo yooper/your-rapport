@@ -10,10 +10,10 @@ import UploadDataDialog from '../dialogs/UploadDataDialog';
 import { downloadJsonData } from '../../utilities/transformers';
 import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
-import { Badge, Tooltip } from '@mui/material';
+import { Avatar, Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import SettingsIcon from '@mui/icons-material/Settings';
-
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import {
   RAPPORT,
   UPDATED_ON,
@@ -27,12 +27,14 @@ import VerticalGenericTableDialog from '../dialogs/VerticalGenericTableDialog';
 import { Artifact } from '../../models/schemas/Artifact';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
 import TagIcon from '@mui/icons-material/Tag';
-import LanguageIcon from '@mui/icons-material/Language';
 import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
 import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import IconButton from '@mui/material/IconButton';
 import AttachmentIcon from '@mui/icons-material/Attachment';
 import GenericTableDialog from '../dialogs/GenericTableDialog';
+import Chip from '@mui/material/Chip';
+import SelectorFormDialog from '../dialogs/SelectorFormDialog';
+import SelectorFormDialogV2 from '../dialogs/SelectorFormDialogV2';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -138,17 +140,7 @@ export default function SearchDataTable(props) {
                     />
                     </IconButton>
                   </Badge>
-                  <Badge>
-                    <Tooltip title={'Add or modify tags'}>
-                      <IconButton>
-                        <TagIcon
-                          onClick={() => {
-                            setOpenAddTagDialog(true);
-                          }}
-                        />
-                      </IconButton>
-                    </Tooltip>
-                  </Badge>
+
                   <Badge>
                     <Tooltip title={'View the attributes of this capture.'}>
                       <IconButton>
@@ -177,43 +169,12 @@ export default function SearchDataTable(props) {
                       </IconButton>
                     </Tooltip>
                   </Badge>
-                  <Badge>
-                    <Tooltip
-                      title={'Download the mhtml file for this Rapport.'}
-                    >
-                      <IconButton disabled={!Boolean(mhtmlAttachment)}>
-                        <LanguageIcon
-                          onClick={() => {
-                            if (record.artifacts.length > 0) {
-
-                              Artifact.downloadArtifact(mhtmlAttachment,`your.rapport.artifact.${mhtmlAttachment.uuid}.mhtml`
-                              );
-                            } else {
-                              createTab(
-                                'https://github.com/yooper/your-rapport/issues/16'
-                              );
-                              debug(
-                                'Mhtml file not available for download when auto scroll capture is run.'
-                              );
-                            }
-                          }}
-                        />
-                      </IconButton>
-                    </Tooltip>
-                  </Badge>
                 </Box>
               </div>
               <PreviewImageDialog
                 record={record}
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
-              />
-              <AddTagsFormDialog
-                isOpen={openAddTagDialog}
-                setIsOpen={setOpenAddTagDialog}
-                record={record}
-                rows={rows}
-                setRows={setRows}
               />
               <JsonAttributeViewerDialog
                 isOpen={openAttributeViewer}
@@ -295,9 +256,11 @@ export default function SearchDataTable(props) {
             return !filters.some((filter) => tagsLabels.includes(filter));
           },
         },
-        customBodyRender: (value, tableMeta, updateValue) => {
-          const record = getRecord(tableMeta.rowData);
-          return value?.map((tag, index) => (
+        customBodyRenderLite: (dataIndex) => {
+          const record = rows[dataIndex];
+          const [open, setOpen] = useState(false);
+
+          const chips = record.tags?.map((tag, index) => (
             <DiscoveryPluginDialog
               key={`tag-${tag.name}-${record.uuid}`}
               plugins={[]}
@@ -308,6 +271,23 @@ export default function SearchDataTable(props) {
               refreshRows={refreshRows}
             />
           ));
+
+          return (
+            <>
+              <IconButton onClick={() => { setOpen(true)}}>
+                <AddCircleOutlineIcon color={'primary'}/>
+              </IconButton>
+              {chips}
+              <AddTagsFormDialog
+                isOpen={open}
+                setIsOpen={setOpen}
+                record={record}
+                rows={rows}
+                setRows={setRows}
+              />
+            </>
+          )
+
         },
       },
     },
@@ -325,13 +305,17 @@ export default function SearchDataTable(props) {
             return !filters.some((filter) => selectorLabels.includes(filter));
           },
         },
-        customBodyRender: (value, tableMeta, updateValue) => {
-          const record = getRecord(tableMeta.rowData);
+        customBodyRenderLite: (dataIndex) => {
+          const record = rows[dataIndex];
+          const [open, setOpen] = useState(false);
+
           if (record.selectors?.length == 0) {
-            return <div></div>;
+            return <IconButton onClick={() => { setOpen(true)}}>
+              <AddCircleOutlineIcon color={'primary'}/>
+            </IconButton>;
           }
           // TODO add support for regex activated discovery plugins.
-          return record.selectors.map((selector, index) => (
+          const chips = record.selectors.map((selector, index) => (
             <DiscoveryPluginDialog
               key={`selector-${selector.name}-${selector.selectorTypeName}-${record.uuid}`}
               plugins={discoveryPlugins.filter((plugin) => {
@@ -344,6 +328,25 @@ export default function SearchDataTable(props) {
               refreshRows={refreshRows}
             />
           ));
+          return (
+            <>
+              <IconButton onClick={() =>{
+                setOpen(true)
+              }}>
+                <AddCircleOutlineIcon
+                  color={'primary'}
+                />
+              </IconButton>
+              {chips}
+              <SelectorFormDialogV2
+                open={open}
+                setOpen={setOpen}
+                isloading={isLoading}
+                setIsLoading={setIsLoading}
+                refreshRows={refreshRows}
+              />
+            </>
+          )
         },
       },
     },

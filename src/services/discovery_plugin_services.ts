@@ -381,6 +381,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       uuid: '7d18fd15-4bb0-4861-ad7f-02a672c9ac20',
       label: 'Download Record',
       pluginType: 'content',
+      description: 'Download a JSON file that has all the metadata. Great for sharing with others.',
       onClick: (record: IRapport) =>
       {
         downloadJsonData(record, `your.rapport.${record.uuid}.json`);
@@ -390,6 +391,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       uuid: '8d18fd15-4bb0-4861-ad7f-02a672c9ac20',
       label: 'Download Screenshot',
       pluginType: 'content',
+      description: 'Download the screenshot to your computer.',
       onClick: (record: IRapport) =>
       {
         if(record.screenshot){
@@ -401,6 +403,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       uuid: '0d18fd15-4bb0-4861-ad7f-02a672c9ac20',
       label: 'Print Rapport',
       pluginType: 'content',
+      description: 'Print a PDF report that includes the metadata',
       onClick: (record: IRapport) =>
       {
         printPdfReport('basic', { records: [record] });
