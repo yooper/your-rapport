@@ -45,16 +45,12 @@ import { hideLoader, showLoader, processNotification } from '../../utilities/loa
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { Selector } from '../../models/schemas/Selector';
 import HelperPopover from '../HelperPopover';
+import { IRapport } from '../../types';
 
-
-interface RecordData {
-  Uuid: string;
-  [key: string]: any;
-}
 
 interface DiscoveryPluginDialogProps {
   selectorValue: string;
-  record: RecordData;
+  record: IRapport;
   plugins: DiscoveryPlugin[];
   title: string;
   uxType: 'chip' | 'icon';
@@ -73,7 +69,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
 
   Mustache.escape = (text: string) => text;
   sort_by_key(plugins, 'label');
-  const iconMap: Record<string, JSX.Element> = {
+  const iconMap: Record<string, React.JSX.Element> = {
     address: (
       <Avatar>
         <HomeIcon sx={{ fontSize: 'small' }} />
@@ -288,7 +284,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
                         >
                           <ListItemIcon>
                             <IconButton>
-                            <HelperPopover message={plugin.description}/>
+                            <HelperPopover message={plugin.description ?? ''}/>
                             </IconButton>
                             <Tooltip title={'Queue item into the bulk automation collection'}>
                               <IconButton disabled={!plugin.url || plugin.action !== 'CreateTab'}>

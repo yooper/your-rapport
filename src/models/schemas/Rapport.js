@@ -54,6 +54,14 @@ export class Rapport {
 
   }
 
+  /**
+   * TODO: fix naming convention on screenShot, make screenshot throughout the code base.
+   * @param tab
+   * @param text
+   * @param screenShot
+   * @param selectors
+   * @returns {Promise<Rapport>}
+   */
   static async createFromTab(tab, text, screenShot, selectors) {
     const uuid = crypto.randomUUID();
     const createdOn = Date.now();

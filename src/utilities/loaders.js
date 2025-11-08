@@ -1,6 +1,7 @@
 import { Store } from 'react-notifications-component';
 import { debug } from '../services/logger_services';
 import Package from '../models/schemas/Package';
+import { db } from '../models/db/dexieDb';
 
 /**
  * Show the loader...
@@ -38,8 +39,8 @@ export function processNotification(data, duration = 3000) {
     title: data.title,
     message: data.message,
     type: data.type,
-    insert: 'top',
-    container: 'top-right',
+    insert: 'bottom',
+    container: 'bottom-right',
     animationIn: ['animate__animated', 'animate__fadeIn'],
     animationOut: ['animate__animated', 'animate__fadeOut'],
     dismiss: {
@@ -165,6 +166,13 @@ export async function runWithMinDelay(taskFn) {
  * @returns {Promise<void>}
  */
 export async function initializeDiscoveryPlugins() {
+
+  const count = await db.discoveryPlugin.count();
+  if(count > 0){
+    debug('Discovery plugins already initialized.');
+    return;
+  }
+
   // install the default discovery plugins
   const defaultDiscoveryPlugins = [
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/sec-edgar.json',

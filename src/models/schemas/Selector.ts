@@ -16,6 +16,8 @@ import { Configuration } from './Configuration';
 import { ISelector } from '../../types';
 import { db } from '../db/dexieDb';
 import { findAllMatches } from '../../utilities/transformers';
+import { DiscoveryPluginSchema } from '../validators/DiscoveryPlugin.validator';
+import { SelectorSchema } from '../validators/Selector.validator';
 
 /**
  * Represents a single Selector used for tagging or filtering records.
@@ -99,4 +101,14 @@ export class Selector implements ISelector {
     configuration[UPDATED_ON] = Date.now().toString();
     await setLocalItem(CONFIGURATION, configuration);
   }
+
+  static validate(input: unknown)
+  {
+      const res = SelectorSchema.safeParse(input);
+      if (!res.success) {
+        return { ok: false, errors: res.error.issues.map(i => `${i.path.join(".") || "(root)"}: ${i.message}`+ "   ") };
+      }
+      return { ok: true, data: res.data };
+  }
+
 }

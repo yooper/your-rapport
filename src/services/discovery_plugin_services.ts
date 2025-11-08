@@ -41,8 +41,12 @@ export async function discoveryPluginRunner(
 
   Mustache.escape = (text: string) => text;
 
+
   // restrict what values can be used in the template
-  const url = Mustache.render(discoveryPlugin.url,{...discoveryPlugin, ...rapport});
+  const apiKeysObj = apiKeys.reduce(
+    (obj, item) => Object.assign(obj, { [item.key]: item.value }), {});
+
+  const url = Mustache.render(discoveryPlugin.url,{...discoveryPlugin, ...rapport, ...apiKeysObj});
 
   switch (discoveryPlugin.action) {
     case 'SubmitForm': {
@@ -222,7 +226,7 @@ function _createForm(
 }
 
 /**
- * Use Mustache templates to do variable substitution
+ * Use Mustache templates to do variable substitution.
  */
 async function _buildObject(
   discoveryPlugin: DiscoveryPlugin,
@@ -268,7 +272,7 @@ async function _buildObject(
           throw new Error(`Field Name ${fieldName} does not exist in the rapport ${rapport.uuid}`)
         }
 
-        // screenshot specific conversion
+        // screenshot specific conversion for making the screenshot downloadable
         if(fieldName === 'screenshot'){
           obj[key] = base64ToFile(recordObj[fieldName], `rapport.uuid.${fieldName}.png`)
         }
@@ -288,10 +292,21 @@ async function _buildObject(
             }
         }
         else {
-          // convert everything else
+          // convert everything else to a text file
           obj[key] = new File([recordObj[fieldName]], `rapport.${rapport.uuid}.txt`, {type: "text/plain"});
         }
-
+      }
+      else if(['base64'].includes(contentType)){
+        const recordObj: Record<string, any> = { ...rapport };
+        if(fieldName === 'screenshot'){
+          const [prefix, base64] = recordObj[fieldName].includes(',')
+            ? recordObj[fieldName].split(',')
+            : [null, recordObj[fieldName]];
+          obj[key] = base64;
+        }
+        else{
+          obj[key] = atob(recordObj[fieldName])
+        }
       }
       // the field name doesn't exist, but may be part of the expanded attributes
       // or data artifacts..

@@ -1,6 +1,7 @@
 import React from 'react';
 import FieldMappingForm from '../forms/discovery-plugins/FieldMappingForm';
 import DiscoveryPluginAdvancedForm from '../forms/discovery-plugins/DiscoveryPluginAdvancedForm';
+import DiscoveryPluginAuthenticationForm from '../forms/discovery-plugins/DiscoveryPluginAuthenticationForm';
 import DiscoveryPluginBasicForm from '../forms/discovery-plugins/DiscoveryPluginBasicForm';
 import GroupHomeSupportForm from '../forms/discovery-plugins/GroupHomeSupportForm';
 import HeaderMappingForm from '../forms/discovery-plugins/HeaderMappingForm';
@@ -8,7 +9,6 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import DiscoveryPluginAuthenticationForm from '../forms/discovery-plugins/DiscoveryPluginAuthenticationForm';
 import DescriptionForm from '../forms/discovery-plugins/DescriptionForm';
 import { DiscoveryPluginLayoutProps } from '../../types';
 

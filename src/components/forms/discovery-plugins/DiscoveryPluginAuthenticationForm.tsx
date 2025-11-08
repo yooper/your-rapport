@@ -6,14 +6,12 @@ import { StyledTextField, StyledTextFieldNoWidth } from '../../inputs/StyledText
 import { Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
-import { ApiKey } from '../../../types';
+import { ApiKey, DiscoveryPluginFormProps } from '../../../types';
 import Autocomplete from '@mui/material/Autocomplete';
 
-const DiscoveryPluginAdvancedForm: ({
-    record,
-    setRecord,
-    apiKeys
-  }: { record: any; setRecord: any; apiKeys: any }) => void = ({ record, setRecord, apiKeys }) => {
+const DiscoveryPluginAuthenticationForm: React.FC<
+  DiscoveryPluginFormProps
+> = ({ record, setRecord, apiKeys }) => {
 
   const apiKeyNames = apiKeys.map((apiKey: ApiKey) => `{{${apiKey.key}}}`);
 
@@ -95,4 +93,4 @@ const DiscoveryPluginAdvancedForm: ({
   );
 };
 
-export default DiscoveryPluginAdvancedForm;
+export default DiscoveryPluginAuthenticationForm;

@@ -208,6 +208,33 @@ export default function DiscoveryPluginDataTable() {
       },
     },
     {
+      name: 'authorizationBearerToken',
+      label: 'AUTH BEARER TOKEN',
+      options: {
+        display: 'excluded',
+        filter: true,
+        sort: false,
+      },
+    },
+    {
+      name: 'authorizationUserName',
+      label: 'AUTH USER NAME',
+      options: {
+        display: 'excluded',
+        filter: true,
+        sort: false,
+      },
+    },
+    {
+      name: 'authorizationPassword',
+      label: 'AUTH PW',
+      options: {
+        display: 'excluded',
+        filter: true,
+        sort: false,
+      },
+    },
+    {
       name: 'regex',
       label: 'Regex',
       options: {

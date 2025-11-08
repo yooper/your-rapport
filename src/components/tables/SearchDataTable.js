@@ -312,6 +312,13 @@ export default function SearchDataTable(props) {
           if (record.selectors?.length == 0) {
             return <IconButton onClick={() => { setOpen(true)}}>
               <AddCircleOutlineIcon color={'primary'}/>
+              <SelectorFormDialogV2
+                open={open}
+                setOpen={setOpen}
+                isloading={isLoading}
+                setIsLoading={setIsLoading}
+                refreshRows={refreshRows}
+              />
             </IconButton>;
           }
           // TODO add support for regex activated discovery plugins.
@@ -321,7 +328,7 @@ export default function SearchDataTable(props) {
               plugins={discoveryPlugins.filter((plugin) => {
                 return plugin.pluginType === selector.selectorTypeName;
               })}
-              title={selector.selectorTypeName}
+              title={selector.selectorTypeName ?? ''}
               record={record}
               uxType={'chip'}
               selectorValue={selector.name}

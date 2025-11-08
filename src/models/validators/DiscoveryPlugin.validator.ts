@@ -61,7 +61,7 @@ const headersRecord = z.record(z.any()).default({});
 // fieldMapping: any values keyed by string
 const fieldMappingRecord = z.record(z.any()).default({});
 
-export const discoveryPluginSchema = z.object({
+export const DiscoveryPluginSchema = z.object({
   uuid: z.uuid('v4'),
   pluginType: z.string(), //TODO restrict the values for plugin types
   url: z.url(),
@@ -88,4 +88,5 @@ export const discoveryPluginSchema = z.object({
   headers: z.any().default({}),
   selectorValue: z.string().nullable().default(null),
   country: countryCode2.default("us"),
+  authorizationBearerToken: z.string().nullable()
 });

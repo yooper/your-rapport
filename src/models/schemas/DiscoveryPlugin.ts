@@ -1,6 +1,6 @@
 // DiscoveryPlugin.ts
 import { DiscoveryPluginAction, DiscoveryPluginInit, onClick } from '../../types';
-import { discoveryPluginSchema } from "../validators/discoveryPlugin.validator";
+import { DiscoveryPluginSchema } from "../validators/DiscoveryPlugin.validator";
 
 export class DiscoveryPlugin {
   readonly uuid: string = crypto.randomUUID();
@@ -97,10 +97,10 @@ export class DiscoveryPlugin {
 
   static async validate(input: unknown)
   {
-      const res = await discoveryPluginSchema.safeParseAsync(input);
+      const res = await DiscoveryPluginSchema.safeParseAsync(input);
       if (!res.success) {
         return { ok: false, errors: res.error.issues.map(i => `${i.path.join(".") || "(root)"}: ${i.message}`+ "   ") };
       }
       return { ok: true, data: res.data };
-    }
+  }
 }

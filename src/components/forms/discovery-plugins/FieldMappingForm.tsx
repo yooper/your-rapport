@@ -41,7 +41,7 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
     '{{note}}',
     '{{referrer}}',
     '{{relevance}}',
-    '{{screenShot}}',
+    '{{screenshot}}',
     '{{url}}',
     '{{domain}}',
     '{{selectorValue}}',

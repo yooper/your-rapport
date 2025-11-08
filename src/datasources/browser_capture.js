@@ -24,7 +24,7 @@ export async function capture(tab, message = {}, deepSave = false) {
   configuration.screenShotCount = configuration?.screenShotCount ?? 0;
 
   // normalize text
-  const text = tab.title.toLowerCase() + ' ' + getText(message, deepSave);
+  const text = tab.title?.toLowerCase() ?? '' + ' ' + getText(message, deepSave);
 
   try {
     // search the saved record for keywords

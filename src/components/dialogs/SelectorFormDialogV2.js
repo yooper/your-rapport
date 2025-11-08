@@ -22,6 +22,8 @@ import {
 import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
 import { debug } from '../../services/logger_services';
+import * as SelectorSchema from 'zod';
+import { SelectorInfer } from '../../models/validators/Selector.validator';
 
 export default function SelectorFormDialogV2(props) {
   const [record, setRecord] = useState({});
@@ -47,12 +49,18 @@ export default function SelectorFormDialogV2(props) {
     showLoader();
     record.active = true;
     try {
-      await Selector.add(new Selector(record.name, record.selectorTypeName));
-      processNotification({
-        title: 'Selector Added',
-        message: `Selector ${record.name} has been added.`,
-        type: 'success',
-      });
+      const result = Selector.validate(record);
+      if(!result.ok){
+        processNotification({title:'Invalid Selector Settings', message:result.errors, type:'danger'});
+      }
+      else{
+        await Selector.add(new Selector(record.name, record.selectorTypeName));
+        processNotification({
+          title: 'Selector Added',
+          message: `Selector ${record.name} has been added.`,
+          type: 'success',
+        });
+      }
     } catch (e) {
       debug(e.toString());
       processNotification({
@@ -111,7 +119,7 @@ export default function SelectorFormDialogV2(props) {
                   name="selectorTypeName"
                   id="selectorTypeName"
                   label="Selector Type"
-                  defaultValue={record?.selectorTypeName ?? ''}
+                  defaultValue={record?.selectorTypeName ?? 'keyword'}
                   inputProps={{ 'aria-label': 'controlled' }}
                   onChange={handleChange}
                   select
