@@ -25,7 +25,7 @@ import {
   processReceivedMessage,
 } from '../../utilities/PortManager';
 import { debug } from '../../services/logger_services';
-import { captureSingleScreenShot } from '../../services/collection_services';
+import { bulkCollectionCreateTab, captureSingleScreenShot } from '../../services/collection_services';
 import { Selector } from '../../models/schemas/Selector';
 import { JobQueue } from '../../models/schemas/JobQueue';
 
@@ -101,7 +101,8 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
       const nextAutomation = await BulkAutomationUrl.getAndSetNextAutomation();
       if(nextAutomation){
         setActiveAutomation(nextAutomation);
-        await createTab(nextAutomation.url);
+        await debug('error is caused here');
+        bulkCollectionCreateTab(nextAutomation.url);
       }
     }
   });
@@ -236,7 +237,7 @@ chrome.runtime.onMessageExternal.addListener(function (
       case AUTO_COLLECT_STARTING:
         (async () => {
           try {
-            await createTab(message.url);
+            await createTab(message.url,true);
             await sleep(3000);
             const activeTab = await getActiveTab();
             await chrome.tabs.sendMessage(activeTab.id, {

@@ -31,7 +31,7 @@ export default function AutomationLayout() {
       key: BULK_AUTOMATION,
       message:
         'Insert a list of urls that will be opened in a tab and collected',
-      url: 'https://github.com/yooper/your-rapport/wiki/Your-Rapport-Bulk-Collection'
+      url: 'https://github.com/yooper/your-rapport/wiki/Setting-Up-And-Running-Automations'
     }
   ];
 

@@ -13,7 +13,7 @@ import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { getLocalItem, updateRecord } from '../models/db/local';
 import { createTab } from './loaders';
 import { debug } from '../services/logger_services';
-import { captureSingleScreenShot } from '../services/collection_services';
+import { bulkCollectionCreateTab, captureSingleScreenShot } from '../services/collection_services';
 import { getActiveAutomation, setActiveAutomation } from '../pages/Background';
 
 export class PortManager {
@@ -121,20 +121,15 @@ export async function processReceivedMessage(tab, message) {
       }
       else if(tab.url === found.url)
       {
-        // The current tab is the automation currently running, re-compute which automation queue item to run
-        found.active = false;
-        found.description = "Bulk automation queue sync issue, skipping to next automation"
-        found.ranOn = Date.now();
-        found.completedOn = Date.now();
-        await updateRecord(BULK_AUTOMATION, UUID, found);
-        found = await BulkAutomationUrl.getAndSetNextAutomation();
+        // The current tab is the automation currently running,
+        return;
       }
 
       debug(`Initializing automation ${found.url}`, found);
       // prevent the case where the current active automation
       await updateRecord(BULK_AUTOMATION, UUID, found);
       setActiveAutomation(found);
-      await createTab(found.url);
+      await bulkCollectionCreateTab(found.url);
       debug(`Automation ${found.url} Tab Opened`, { tab, found });
       break;
     // the content script is ready
@@ -162,7 +157,7 @@ export async function processReceivedMessage(tab, message) {
         if (nextActiveAutomation) {
           debug('Launching next automation url', nextActiveAutomation);
           setActiveAutomation(nextActiveAutomation);
-          await createTab(nextActiveAutomation.url);
+          await bulkCollectionCreateTab(nextActiveAutomation.url);
         }
         return false; // stop processing in calling function if false is returned
       }

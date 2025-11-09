@@ -26,6 +26,7 @@ import {
 } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
 import { debug } from '../../services/logger_services';
+import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
@@ -72,9 +73,8 @@ export default function BulkAutomationTable(props) {
     );
     const automationQueue = (await getLocalItem(BULK_AUTOMATION)) ?? [];
     automationQueue.forEach((a) => (a.active = false));
+    await BulkAutomationUrl.getAndSetNextAutomation();
 
-    const found = automationQueue.find(a => !a.ranOn);
-    found.active = true;
     await setLocalItem(BULK_AUTOMATION, automationQueue);
     let retry = 0;
     do{
