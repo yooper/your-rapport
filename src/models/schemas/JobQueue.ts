@@ -1,5 +1,6 @@
 import { IBackgroundJob } from '../../types';
 import { discoveryPluginRunner } from '../../services/discovery_plugin_services';
+import { debug } from '../../services/logger_services';
 
 export class JobQueue {
   private queue: IBackgroundJob[] = [];
@@ -36,10 +37,9 @@ export class JobQueue {
         try {
           const {discoveryPlugin, rapport, selectorValue} = job;
           // toggle the background runner to a foreground runner
-          discoveryPlugin.action = 'ForegroundRunner';
           await discoveryPluginRunner(discoveryPlugin, rapport, selectorValue)
         } catch (error) {
-          console.error("Job failed:", error);
+          debug("Job failed:", error);
           // Implement retry logic or error handling here
         } finally {
           this.activeJobs--;

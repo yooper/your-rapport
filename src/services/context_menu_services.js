@@ -16,6 +16,7 @@ import { selectCorrectLink } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
 import { fetchBlob } from './image_loading_services';
 import { applyBackgroundJobs } from './discovery_plugin_services';
+import { debug } from 'util';
 
 /**
  * Add the selectors as menu items
@@ -86,7 +87,9 @@ export async function initializeContextMenus() {
           rapport.bulkAutomationUuid = null;
           await addRecord(RAPPORT, UUID, rapport);
           // add hook
-          applyBackgroundJobs(rapport);
+          applyBackgroundJobs(rapport).then(() => {
+            debug('background job completed', rapport)
+          })
           // update the configuration last saved on metadata
           let configuration = await Configuration.getConfiguration();
           // get/set the record count

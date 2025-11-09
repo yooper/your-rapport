@@ -71,7 +71,9 @@ export async function capture(tab, message = {}, deepSave = false) {
 
     await addRecord(RAPPORT, UUID, record);
     // queue up the background jobs
-    applyBackgroundJobs(record);
+    applyBackgroundJobs(record).then(() => {
+      debug('background job completed', record)
+    })
     //
 
     // update the configuration last saved on metadata
