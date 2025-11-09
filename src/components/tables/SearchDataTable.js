@@ -32,8 +32,6 @@ import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import IconButton from '@mui/material/IconButton';
 import AttachmentIcon from '@mui/icons-material/Attachment';
 import GenericTableDialog from '../dialogs/GenericTableDialog';
-import Chip from '@mui/material/Chip';
-import SelectorFormDialog from '../dialogs/SelectorFormDialog';
 import SelectorFormDialogV2 from '../dialogs/SelectorFormDialogV2';
 
 export default function SearchDataTable(props) {
@@ -274,9 +272,11 @@ export default function SearchDataTable(props) {
 
           return (
             <>
-              <IconButton onClick={() => { setOpen(true)}}>
-                <AddCircleOutlineIcon color={'primary'}/>
-              </IconButton>
+              <Tooltip title={'Add tags to your rapport'}>
+                <IconButton onClick={() => { setOpen(true)}}>
+                  <AddCircleOutlineIcon color={'primary'}/>
+                </IconButton>
+              </Tooltip>
               {chips}
               <AddTagsFormDialog
                 isOpen={open}
@@ -310,16 +310,20 @@ export default function SearchDataTable(props) {
           const [open, setOpen] = useState(false);
 
           if (record.selectors?.length == 0) {
-            return <IconButton onClick={() => { setOpen(true)}}>
-              <AddCircleOutlineIcon color={'primary'}/>
-              <SelectorFormDialogV2
-                open={open}
-                setOpen={setOpen}
-                isloading={isLoading}
-                setIsLoading={setIsLoading}
-                refreshRows={refreshRows}
-              />
-            </IconButton>;
+            return (
+            <Tooltip title={'Add a new selector'}>
+              <IconButton onClick={() => { setOpen(true)}}>
+                <AddCircleOutlineIcon color={'primary'}/>
+                <SelectorFormDialogV2
+                  open={open}
+                  setOpen={setOpen}
+                  isloading={isLoading}
+                  setIsLoading={setIsLoading}
+                  refreshRows={refreshRows}
+                />
+              </IconButton>
+            </Tooltip>
+            )
           }
           // TODO add support for regex activated discovery plugins.
           const chips = record.selectors.map((selector, index) => (
@@ -337,13 +341,15 @@ export default function SearchDataTable(props) {
           ));
           return (
             <>
-              <IconButton onClick={() =>{
-                setOpen(true)
-              }}>
-                <AddCircleOutlineIcon
-                  color={'primary'}
-                />
-              </IconButton>
+              <Tooltip title={'Add a new selector'}>
+                <IconButton onClick={() =>{
+                  setOpen(true)
+                }}>
+                  <AddCircleOutlineIcon
+                    color={'primary'}
+                  />
+                </IconButton>
+              </Tooltip>
               {chips}
               <SelectorFormDialogV2
                 open={open}

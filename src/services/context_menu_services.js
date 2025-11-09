@@ -16,7 +16,7 @@ import { selectCorrectLink } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
 import { fetchBlob } from './image_loading_services';
 import { applyBackgroundJobs } from './discovery_plugin_services';
-import { debug } from 'util';
+import { debug } from '../services/logger_services';
 
 /**
  * Add the selectors as menu items

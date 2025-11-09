@@ -3,6 +3,7 @@ import ExtensionPin from './ExtensionPin';
 import { SELECTOR } from '../services/constants';
 import { ActiveTab } from '../types';
 import { Selector } from '../models/schemas/Selector';
+import { db } from '../models/db/dexieDb';
 
 // Utility: Convert string to boolean
 export function stringToBoolean(str: string | null): boolean {
@@ -134,7 +135,7 @@ export async function scanPage(activeTab: ActiveTab): Promise<void> {
     }
   );
 
-  const selectors = findAllMatches(response.text, await getLocalItem(SELECTOR));
+  const selectors = findAllMatches(response.text, await db.selector.toArray());
   const totalCount = Math.min(
     selectors.reduce((sum: number, item: any) => sum + item.count, 0),
     99
