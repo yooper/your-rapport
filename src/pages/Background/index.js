@@ -64,7 +64,7 @@ export function getJobQueue(){
 /**
  * The web page failed to load, check if the url was in the automation queue
  */
-chrome.webNavigation.onErrorOccurred.addListener((details) => {
+chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
   const activeAutomation = getActiveAutomation();
   debug('web navigation error detected', details);
   if (!activeAutomation) {
@@ -86,26 +86,24 @@ chrome.webNavigation.onErrorOccurred.addListener((details) => {
   activeAutomation.completedOn = Date.now();
   activeAutomation.ranOn = Date.now();
   activeAutomation.active = false;
-  updateRecord(BULK_AUTOMATION, UUID, activeAutomation).then(async () => {
-    // Determines if it was a single automation request or multiple
-    const bulkCollect = await Configuration.getConfigurationValue(
+  await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+  const bulkCollect = await Configuration.getConfigurationValue(
       'automationBulkCollectionModel',
       true
     );
-    debug(`bulk collect is ${bulkCollect}`);
-    if (!bulkCollect) {
-      debug(`Single automation request failed. See record for details.`);
-      return; // single automation request
+  debug(`bulk collect is ${bulkCollect}`);
+  if (!bulkCollect) {
+    debug(`Single automation request failed. See record for details.`);
+    return; // single automation request
+  }
+  else{
+    const nextAutomation = await BulkAutomationUrl.getAndSetNextAutomation();
+    if(nextAutomation){
+      setActiveAutomation(nextAutomation);
+      await debug('error is caused here');
+      bulkCollectionCreateTab(nextAutomation.url);
     }
-    else{
-      const nextAutomation = await BulkAutomationUrl.getAndSetNextAutomation();
-      if(nextAutomation){
-        setActiveAutomation(nextAutomation);
-        await debug('error is caused here');
-        bulkCollectionCreateTab(nextAutomation.url);
-      }
-    }
-  });
+  }
 });
 
 

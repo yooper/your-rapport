@@ -29,6 +29,7 @@ export async function capture(tab, message = {}, deepSave = false) {
   try {
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
+    await debug('Calling screenshot capture', {tab,message})
     const screenShot = await chrome.tabs.captureVisibleTab();
     const record = await Rapport.createFromTab(
       tab,

@@ -8,6 +8,7 @@ import { debug } from './logger_services';
  * @returns {Promise<void>}
  */
 export async function captureSingleScreenShot(deepSave = false) {
+
   const activeTab = await getActiveTab();
   const pageInfo = getTabInfo();
   if (activeTab.id in pageInfo) {

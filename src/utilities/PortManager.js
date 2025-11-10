@@ -114,23 +114,18 @@ export async function processReceivedMessage(tab, message) {
       break;
     case PROCESS_QUEUE_AUTOMATION_URLS: // autoscroll collect was initiated through automation request
       const automations = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      let found = automations.find((a) => a.active) ?? await BulkAutomationUrl.getAndSetNextAutomation();
+      const found = automations.find((a) => a.active);
       if (!found) {
         debug('No automations to run');
         return;
+      } else {
+        debug(`Initializing automation ${found.url}`, found);
+        found.ranOn = Date.now();
+        await updateRecord(BULK_AUTOMATION, UUID, found);
+        setActiveAutomation(found);
+        await createTab(found.url);
+        debug(`Automation ${found.url} Tab Opened`, { tab, found });
       }
-      else if(tab.url === found.url)
-      {
-        // The current tab is the automation currently running,
-        return;
-      }
-
-      debug(`Initializing automation ${found.url}`, found);
-      // prevent the case where the current active automation
-      await updateRecord(BULK_AUTOMATION, UUID, found);
-      setActiveAutomation(found);
-      await bulkCollectionCreateTab(found.url);
-      debug(`Automation ${found.url} Tab Opened`, { tab, found });
       break;
     // the content script is ready
     case PAGE_INITIALIZED:
@@ -148,7 +143,8 @@ export async function processReceivedMessage(tab, message) {
         );
         activeAutomation.description = 'Page automation blocker detected';
         activeAutomation.active = false;
-        activeAutomation.ranOn = activeAutomation.completedOn = Date.now();
+        activeAutomation.ranOn = Date.now();
+        activeAutomation.completedOn = Date.now();
         await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
         // start next automation, since this one failed.
         const nextActiveAutomation = await BulkAutomationUrl.getAndSetNextAutomation();

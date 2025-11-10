@@ -165,18 +165,21 @@ export function autoScroller(message) {
       }
 
       if (automation) {
-        if (
-          state !== STATE_ACTIVE ||
-          (automation.unit === 'count' &&
-            automation.value < screenCollectionCount)
-        ) {
-          state = STATE_STOPPED; // max screenshots
-          debug(
-            `Max screenshots captured for automation ${automation.url}`,
-            automation
-          );
-          processAutomation('Max screenshots captured');
-          return;
+        debug('automation debugging')
+        if (state !== STATE_ACTIVE) {
+          // page did not scroll
+          if(automation.unit === 'count' && automation.value < screenCollectionCount) {
+            state = STATE_STOPPED; // max screenshots
+            debug(
+              `Screen scroll stopped, ending automation for ${automation.url}`,
+              automation
+            );
+            processAutomation('Max screenshots captured');
+            return;
+          }
+          else{
+            // the page state is no longer active.
+          }
         }
       } else if (screenCollectionCount > MAX_SCREENSHOTS) {
         debug(`Max screenshots captured for autoscroll collect.`, message);

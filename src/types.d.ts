@@ -239,9 +239,17 @@ export interface DiscoveryPluginInit {
 
 }
 
+
 export type IBackgroundJob = {
   discoveryPlugin: DiscoveryPlugin,
   rapport: IRapport,
+  bulkAutomationUrl: BulkAutomationUrl,
+  status: 'queued'|'error'|'in progress'|'completed';
+  startedOn: Date|null,
+  details: string|null,
+  completedOn: Date|null,
+  type: 'DiscoveryPlugin'|'Rapport'|'BulkAutomation'
+  createdOn: Date,
   selectorValue: string | number | null
 };
 

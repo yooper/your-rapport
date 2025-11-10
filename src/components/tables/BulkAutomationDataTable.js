@@ -71,27 +71,24 @@ export default function BulkAutomationTable(props) {
       'automationBulkCollectionModel',
       true
     );
-    const automationQueue = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-    automationQueue.forEach((a) => (a.active = false));
     await BulkAutomationUrl.getAndSetNextAutomation();
-
-    await setLocalItem(BULK_AUTOMATION, automationQueue);
     let retry = 0;
+    let success = false;
     do{
       try{
         port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
-        return;
+        success = true;
       }
       catch(e){
         debug(String(e), { cmd: PROCESS_QUEUE_AUTOMATION_URLS, method: 'startAutomationProcess' })
-      }
-      finally {
-        retry++;
         // reconnect
         port = chrome.runtime.connect({ name: RAPPORT });
       }
+      finally {
+        retry++;
+      }
     }
-    while(retry < 3);
+    while(!success && retry < 3);
     if(retry > 3) {
       debug('Failed to start automation process', { method: 'startAutomationProcess' })
     }
