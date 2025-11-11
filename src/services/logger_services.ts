@@ -14,7 +14,7 @@ export async function debug(
 ): Promise<void> {
   try {
     const value: boolean = await Configuration.getConfigurationValue<boolean>(
-      'debug',
+      'debugMessagesEnabled',
       true
     );
     if (value && includeTrace) {

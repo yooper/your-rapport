@@ -22,21 +22,3 @@ export async function captureSingleScreenShot(deepSave = false) {
     );
   }
 }
-
-/**
- * Track the urls that have been requested by the automation engine, so we don't
- * get overlap in our creation tabs
- * @type {*[]}
- */
-let automationQueueUrls = []
-
-export function bulkCollectionCreateTab(url)
-{
-  if(automationQueueUrls.includes(url)){
-    debug(`bulkCollectionCreateTab: ${url} is already in queue`);
-  }
-  else{
-    automationQueueUrls.push(url);
-    createTab(url);
-  }
-}

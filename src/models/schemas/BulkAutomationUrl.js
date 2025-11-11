@@ -34,10 +34,12 @@ export default class BulkAutomationUrl {
       await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
       return null;
     }
-
-    activeAutomation.active = true;
-    await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-    return activeAutomation;
+    else{
+      activeAutomation.active = true;
+      activeAutomation.ranOn = new Date();
+      await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
+      return activeAutomation;
+    }
   }
 
   /**

@@ -25,6 +25,7 @@ export class Configuration {
       automationDelayTabOpenDefault: 3000,
       automationKeepTabOpenDefault: true,
       automationBulkCollectionModel: false,
+      debugMessagesEnabled: true
     };
   }
 

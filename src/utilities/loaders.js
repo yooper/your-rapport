@@ -39,8 +39,8 @@ export function processNotification(data, duration = 3000) {
     title: data.title,
     message: data.message,
     type: data.type,
-    insert: 'bottom',
-    container: 'bottom-right',
+    insert: 'top',
+    container: 'top-left',
     animationIn: ['animate__animated', 'animate__fadeIn'],
     animationOut: ['animate__animated', 'animate__fadeOut'],
     dismiss: {

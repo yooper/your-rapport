@@ -65,24 +65,25 @@ export default function BulkAutomationTable(props) {
    */
   async function startAutomationProcess() {
     if (rows.length === 0) {
+      processNotification({title:'No Bulk Automations', message:'Enter some web site urls in order to collect them', type:'info'})
       return;
     }
     await Configuration.setConfigurationValue(
       'automationBulkCollectionModel',
       true
     );
-    await BulkAutomationUrl.getAndSetNextAutomation();
     let retry = 0;
     let success = false;
     do{
       try{
         port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
         success = true;
+        return;
       }
       catch(e){
         debug(String(e), { cmd: PROCESS_QUEUE_AUTOMATION_URLS, method: 'startAutomationProcess' })
         // reconnect
-        port = chrome.runtime.connect({ name: RAPPORT });
+        //port = chrome.runtime.connect({ name: RAPPORT });
       }
       finally {
         retry++;

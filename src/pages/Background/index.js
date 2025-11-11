@@ -15,7 +15,7 @@ import {
   AUTO_COLLECT_STARTING,
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB,
-  ENQUEUE_BULK_AUTOMATION_URL,
+  ENQUEUE_BULK_AUTOMATION_URL, PROCESS_QUEUE_AUTOMATION_URLS,
   RAPPORT,
   UUID,
 } from '../../services/constants';
@@ -25,7 +25,7 @@ import {
   processReceivedMessage,
 } from '../../utilities/PortManager';
 import { debug } from '../../services/logger_services';
-import { bulkCollectionCreateTab, captureSingleScreenShot } from '../../services/collection_services';
+import { captureSingleScreenShot } from '../../services/collection_services';
 import { Selector } from '../../models/schemas/Selector';
 import { JobQueue } from '../../models/schemas/JobQueue';
 
@@ -62,47 +62,25 @@ export function getJobQueue(){
 
 
 /**
- * The web page failed to load, check if the url was in the automation queue
+ * The web page failed to load
  */
-chrome.webNavigation.onErrorOccurred.addListener(async(details) => {
+let errorUrls = [];
+chrome.webNavigation.onErrorOccurred.addListener((details) => {
   const activeAutomation = getActiveAutomation();
-  debug('web navigation error detected', details);
-  if (!activeAutomation) {
+  if(!activeAutomation){
     return; // no global active automation running, don't monitor errors
   }
-  else if (new URL(details.url).hostname === new URL(activeAutomation.url).hostname) {
-    debug('Active automation detected', activeAutomation);
-  }
-  else {
-    // host names did not match
-    debug(
-      `Details url ${details.url} did not match active automation ${activeAutomation.url}`,
-      { details, activeAutomation }
-    );
-    return;
-  }
-
-  activeAutomation.description = details.error;
-  activeAutomation.completedOn = Date.now();
-  activeAutomation.ranOn = Date.now();
-  activeAutomation.active = false;
-  await updateRecord(BULK_AUTOMATION, UUID, activeAutomation);
-  const bulkCollect = await Configuration.getConfigurationValue(
-      'automationBulkCollectionModel',
-      true
-    );
-  debug(`bulk collect is ${bulkCollect}`);
-  if (!bulkCollect) {
-    debug(`Single automation request failed. See record for details.`);
-    return; // single automation request
+  else if(new URL(details.url).hostname === new URL(activeAutomation.url).hostname){
+    debug('Active automation detected, web navigation error', activeAutomation);
+    activeAutomation.ranOn = Date.now();
+    activeAutomation.description = details.error;
+    activeAutomation.completedOn = Date.now();
+    activeAutomation.active = false;
+    processReceivedMessage(null, {cmd: PROCESS_QUEUE_AUTOMATION_URLS, activeAutomation}, )
   }
   else{
-    const nextAutomation = await BulkAutomationUrl.getAndSetNextAutomation();
-    if(nextAutomation){
-      setActiveAutomation(nextAutomation);
-      await debug('error is caused here');
-      bulkCollectionCreateTab(nextAutomation.url);
-    }
+    // host names did not match
+    debug(`Details url ${details.url} did not match active automation ${activeAutomation.url}`, {details, activeAutomation });
   }
 });
 

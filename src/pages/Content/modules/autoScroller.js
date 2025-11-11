@@ -206,22 +206,20 @@ export function autoScroller(message) {
  */
 function processAutomation(description = null) {
   if (automation) {
+    debug(`processAutomation: Completed with reason: ${description}`, automation);
     automation.completedOn = Date.now();
     automation.screenShotsCollected = screenCollectionCount;
     automation.description = description;
     automation.ranOn = Date.now();
     automation.active = false;
-      updateRecord(BULK_AUTOMATION, UUID, automation).then(() => {
-      debug(`processAutomation: Completed with reason: ${description}`, automation);
-      try{
-        // TODO: Investigate whether to reconnect, when port is undefined would work better
-        if(port !== undefined) {
-          port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
-        }
+    try{
+      // TODO: Investigate whether to reconnect, when port is undefined would work better
+      if(port !== undefined) {
+        port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS, activeAutomation:automation });
       }
-      catch(e) {
-        debug(String(e), { method: 'processAutomation' })
-      }
-    })
+    }
+    catch(e) {
+      debug(String(e), { method: 'processAutomation' })
+    }
   }
 }
