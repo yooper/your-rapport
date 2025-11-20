@@ -16,15 +16,13 @@ import {
 import BulkAutomationAddDialog from '../dialogs/automations/BulkAutomationAddDialog';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import IconButton from '@mui/material/IconButton';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
 import {
   BULK_AUTOMATION,
-  PROCESS_QUEUE_AUTOMATION_URLS,
-  RAPPORT,
   UUID,
 } from '../../services/constants';
-import { Configuration } from '../../models/schemas/Configuration';
 import { debug } from '../../services/logger_services';
 
 export default function BulkAutomationTable(props) {
@@ -319,6 +317,32 @@ export default function BulkAutomationTable(props) {
               <DirectionsRunIcon />
             </IconButton>
           </Tooltip>
+          <Tooltip
+            title={
+              'Stop automations from running.'
+            }
+          >
+            <IconButton onClick={async () => {
+              showLoader()
+              const automations = await getLocalItem(BULK_AUTOMATION);
+              automations.forEach(a => {
+                // flagged to run
+                if(a.active && !a.ranOn){
+                  a.active = false;
+                }
+              })
+              await setLocalItem(BULK_AUTOMATION, automations);
+              hideLoader()
+              processNotification({
+                title: 'Automations Queuing Stopped',
+                message:'Automations will stop running shortly',
+                type:'info'}
+              )
+            }}>
+              <CancelIcon />
+            </IconButton>
+          </Tooltip>
+
         </>
       );
     },

@@ -16,7 +16,7 @@ import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import FormGroup from '@mui/material/FormGroup';
 import HelperPopover from '../../HelperPopover';
 import Grid from '@mui/material/Unstable_Grid2';
-import BulkdAutomationUrl, { BulkAutomationUrl } from '../../../models/schemas/BulkAutomationUrl';
+import BulkdAutomationUrl from '../../../models/schemas/BulkAutomationUrl';
 import { Configuration } from '../../../models/schemas/Configuration';
 import { BULK_AUTOMATION } from '../../../services/constants';
 

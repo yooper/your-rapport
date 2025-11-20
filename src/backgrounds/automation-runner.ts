@@ -3,7 +3,7 @@ import { takeNext, complete, fail, recoverExpiredLeases } from './automation-que
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
 import { updateRecord, getLocalItem } from '../models/db/local'
-import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, UUID } from '../services/constants';
+import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, PAGE_INITIALIZED, UUID } from '../services/constants';
 import { IBulkAutomationRecord } from '../types';
 import { sleep } from '../utilities/loaders';
 
@@ -139,8 +139,8 @@ export function waitForPageInfo(tabId: number) {
       reject(new Error('content handshake timeout'));
       }, 5000);
     const onMsg = (msg: any, sender: chrome.runtime.MessageSender) => {
-      if (sender.tab?.id === tabId && msg?.cmd === 'YR_PAGE_INFO') {
-        debug('YR_PAGE_INFO return ', msg?.pageInfo)
+      if (sender.tab?.id === tabId && msg?.cmd === PAGE_INFO) {
+        debug(PAGE_INFO+' return ', msg?.pageInfo)
         const pageInfo = { ...msg.pageInfo}
         clearTimeout(timer);
         chrome.runtime.onMessage.removeListener(onMsg);
@@ -149,7 +149,7 @@ export function waitForPageInfo(tabId: number) {
     };
     // send the initialization message to the content script
     chrome.runtime.onMessage.addListener(onMsg);
-    chrome.tabs.sendMessage(tabId, { cmd: 'YR_INITIALIZE' });
+    chrome.tabs.sendMessage(tabId, { cmd: PAGE_INITIALIZED });
   });
 }
 

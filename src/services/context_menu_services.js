@@ -2,7 +2,7 @@ import { getSelectorTypeMap } from '../utilities/loaders';
 import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
 import {
-  ACTIVATE_CAPTURE,
+  ACTIVATE_CAPTURE, BULK_AUTOMATION,
   RAPPORT,
   UPDATED_ON,
   UUID,
@@ -127,7 +127,8 @@ export async function initializeContextMenus() {
             frameUrl: info.frameUrl,
             pageUrl: info.pageUrl,
           });
-          await BulkAutomationUrl.createBulkAutomationJob(urlLink, unitDefault, valueDefault);
+          const record = await BulkAutomationUrl.createBulkAutomationJob(urlLink, unitDefault, valueDefault);
+          await addRecord(BULK_AUTOMATION, UUID, record);
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;

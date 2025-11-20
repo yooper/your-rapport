@@ -24,15 +24,11 @@ export type StorageKey =
 export const UPDATED_ON = 'updated_on' as const;
 export const UUID = 'uuid' as const;
 
-export type CommonFieldName = typeof UPDATED_ON | typeof UUID;
-
 /**
  * State mapping
  */
 export const INITIALIZED = 'initialized' as const;
 export const STOPPED = 'stopped' as const;
-
-export type StateName = typeof INITIALIZED | typeof STOPPED;
 
 /**
  * Commands

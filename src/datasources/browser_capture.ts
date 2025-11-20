@@ -113,10 +113,6 @@ export async function capture(
     }
     ExtensionPin.setBgColorAndText('red', 'ERR', tab);
 
-    // TODO: stop scrolling when an error occurs
-    //if (tab.id != null) {
-    //  chrome.tabs.sendMessage(tab.id, { cmd: 'YR_STOP' } as unknown);
-    //}
   } finally {
     setTimeout(() => {
       ExtensionPin.setDefault(tab);

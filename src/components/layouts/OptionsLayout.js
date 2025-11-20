@@ -16,7 +16,6 @@ import BrowserSettingsForm from '../forms/BrowserSettingsForm';
 import PackageManagerDataTable from '../tables/PackageManagerDataTable';
 import SelectorDataTable from '../tables/SelectorDataTable';
 import DiscoveryPluginDataTable from '../tables/DiscoveryPluginDataTable';
-import { DISCOVERY_PLUGIN } from '../../services/constants';
 import TagDataTable from '../tables/TagDataTable';
 import TagIcon from '@mui/icons-material/Tag';
 import ApiKeyDataTable from '../tables/ApiKeyDataTable';

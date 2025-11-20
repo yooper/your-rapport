@@ -2,8 +2,11 @@ import { IBackgroundJob } from '../../types';
 import { discoveryPluginRunner } from '../../services/discovery_plugin_services';
 import { debug } from '../../services/logger_services';
 
+/**
+ * TODO: Add persistent queue
+ */
 export class JobQueue {
-  private queue: IBackgroundJob[] = [];
+  private static queue: IBackgroundJob[] = [];
   private isProcessing: boolean = false;
   private readonly concurrencyLimit: number;
   private activeJobs: number = 0;
@@ -17,7 +20,7 @@ export class JobQueue {
    * @param job The asynchronous function to be executed.
    */
   enqueue(job: IBackgroundJob): void {
-    this.queue.push(job);
+    JobQueue.queue.push(job);
     this.processQueue();
   }
 
@@ -30,8 +33,8 @@ export class JobQueue {
     }
 
     this.isProcessing = true;
-    while (this.queue.length > 0 && this.activeJobs < this.concurrencyLimit) {
-      const job = this.queue.shift(); // Get the next job
+    while (JobQueue.queue.length > 0 && this.activeJobs < this.concurrencyLimit) {
+      const job = JobQueue.queue.shift(); // Get the next job
       if (job) {
         this.activeJobs++;
         try {
@@ -44,7 +47,7 @@ export class JobQueue {
         } finally {
           this.activeJobs--;
           // Continue processing if there are more jobs and capacity
-          this.processQueue();
+          await this.processQueue();
         }
       }
     }

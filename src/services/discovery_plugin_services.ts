@@ -433,7 +433,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
 export async function applyBackgroundJobs(rapport: IRapport) : Promise<void> {
   const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner').toArray();
   for ( const discoveryPlugin of plugins){
-    debug('Queuing job', {discoveryPlugin, rapport});
+    await debug('Queuing job', {discoveryPlugin, rapport});
     getJobQueue().enqueue({ discoveryPlugin, rapport })
   }
 }
