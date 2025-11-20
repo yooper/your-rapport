@@ -43,10 +43,12 @@ export default function SelectorFormDialogV2(props) {
 
   const handleClose = () => {
     setOpen(false);
+    props.setOpen(false);
   };
 
   const handleSave = async () => {
     showLoader();
+    props.setIsLoading(true);
     record.active = true;
     try {
       const result = Selector.validate(record);
@@ -54,6 +56,7 @@ export default function SelectorFormDialogV2(props) {
         processNotification({title:'Invalid Selector Settings', message:result.errors, type:'danger'});
       }
       else{
+        // takes awhile to run
         await Selector.add(new Selector(record.name, record.selectorTypeName));
         processNotification({
           title: 'Selector Added',
@@ -73,7 +76,6 @@ export default function SelectorFormDialogV2(props) {
       props.setIsLoading(false);
       refreshRows()
       hideLoader();
-
     }
   };
 

@@ -268,8 +268,45 @@ export type NotificationPayload = {
   [k: string]: unknown;
 };
 
-
-
 interface HelperPopoverProps {
   message: string;
+}
+
+export interface PageInfo {
+  uuid: string;
+  title: string;
+  contentType: string;
+  html: string;
+  url: string;
+  screenShotCount: number;
+  isAutomationBlockerDetected: boolean;
+  visibleText: string;
+  text: string;
+  createdOn: number;
+  tab: number | null;
+  automation: IBulkAutomationRecord | null,
+  sequence: number
+}
+
+export interface IBulkAutomationRecord {
+  uuid: string;
+  url: string;
+  unit: 'count' | 'time';
+  value: number;
+  screenShotsCollected: number;
+  keepTabOpen: boolean;
+  createdOn: Date;
+  ranOn: number | null;            // epoch ms or null
+  completedOn: number | null;      // epoch ms or null
+  description: string | null;
+  active: boolean;
+  tabId: number | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tab: any | null;
+  isDeepSave: boolean;
+  discoveryPluginUuid: string | null;
+  status: 'queued' | 'running' | 'done' | 'failed';
+  failReason: string | null;
+  attempts: number;
+  leaseUntil: number | null;
 }

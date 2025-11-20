@@ -37,10 +37,12 @@
     "activeTab",
     "tabs",
     "webNavigation",
-    "pageCapture"
+    "pageCapture",
+    "alarms",
+    "scripting"
   ],
   "commands": {
-    "initStartCapture": {
+    "deepSave": {
       "suggested_key": {
         "default": "Ctrl+Shift+S"
       },

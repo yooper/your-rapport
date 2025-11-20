@@ -5,7 +5,7 @@ import {
   initializeDiscoveryPlugins,
   sleep,
 } from '../../utilities/loaders';
-import { addRecord, updateRecord } from '../../models/db/local';
+import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl'
 import { initializeContextMenus } from '../../services/context_menu_services';
 import ExtensionPin from '../../utilities/ExtensionPin';
 import { scanPage } from '../../utilities/transformers';
@@ -15,44 +15,25 @@ import {
   AUTO_COLLECT_STARTING,
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB,
-  ENQUEUE_BULK_AUTOMATION_URL, PROCESS_QUEUE_AUTOMATION_URLS,
-  RAPPORT,
-  UUID,
+  ENQUEUE_BULK_AUTOMATION_URL, PAGE_INFO
 } from '../../services/constants';
-import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
-import {
-  initializePortConnection,
-  processReceivedMessage,
-} from '../../utilities/PortManager';
+
 import { debug } from '../../services/logger_services';
-import { captureSingleScreenShot } from '../../services/collection_services';
-import { Selector } from '../../models/schemas/Selector';
+
+
 import { JobQueue } from '../../models/schemas/JobQueue';
 
+import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
+
 /**
- * Initialize configuration values when the app is installed
+ * Initialize services when the extension is installed / activated
  */
 await initializeContextMenus();
 await initializeDiscoveryPlugins();
+initializeAutomationRunner();
 
-/**
- * Global var for tracking the currently running automation
- * @type {BulkAutomationUrl}
- */
-let _activeAutomationUrl = null;
-
-export function getActiveAutomation() {
-  return _activeAutomationUrl;
-}
-
-export function setActiveAutomation(bulkAutomationUrl) {
-  _activeAutomationUrl = bulkAutomationUrl;
-}
-
-initializePortConnection();
 
 let _jobQueue = null;
-
 export function getJobQueue(){
   if(!_jobQueue){
     _jobQueue = new JobQueue(2);
@@ -60,173 +41,90 @@ export function getJobQueue(){
   return _jobQueue
 }
 
-
-/**
- * The web page failed to load
- */
-let errorUrls = [];
-chrome.webNavigation.onErrorOccurred.addListener((details) => {
-  const activeAutomation = getActiveAutomation();
-  if(!activeAutomation){
-    return; // no global active automation running, don't monitor errors
-  }
-  else if(new URL(details.url).hostname === new URL(activeAutomation.url).hostname){
-    debug('Active automation detected, web navigation error', activeAutomation);
-    activeAutomation.ranOn = Date.now();
-    activeAutomation.description = details.error;
-    activeAutomation.completedOn = Date.now();
-    activeAutomation.active = false;
-    processReceivedMessage(null, {cmd: PROCESS_QUEUE_AUTOMATION_URLS, activeAutomation}, )
-  }
-  else{
-    // host names did not match
-    debug(`Details url ${details.url} did not match active automation ${activeAutomation.url}`, {details, activeAutomation });
-  }
-});
-
-
 /**
  * Add in support for short-cut keys
  */
-chrome.commands.onCommand.addListener((command) => {
+chrome.commands.onCommand.addListener(async(command) => {
   debug(`Command ${command} received`)
+
+  const activeTab = await getActiveTab()
+  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO });
+  const { pageInfo } = response
+
   switch (command) {
-    case 'initStartCapture':
-      (async () => {
-        await captureSingleScreenShot(true);
-      })();
+    case 'deepSave':
+      await capture(activeTab, pageInfo, true);
       return true;
+      break;
     case 'initScanPage':
-      (async () => {
-        const activeTab = await getActiveTab();
-        await scanPage(activeTab);
-      })();
-      return false;
+      await scanPage(activeTab)
       break;
     case 'initAutoScroll':
-      (async () => {
-        const activeTab = await getActiveTab();
-        processReceivedMessage(activeTab, { cmd: AUTO_COLLECT_STARTING });
-      })();
-      return false;
+      chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE })
+        .then(response => {debug(ACTIVATE_CAPTURE+':', response);
+        })
+      return true;
+      break;
     default:
-      debug('Unknown command');
-      //response = await chrome.tabs.sendMessage(activeTab.id, { cmd: command });
-      //await capture(activeTab, response);
       break;
   }
-  return false;
 });
 
 /**
- * Receives messages from the content script or the extension page. Some of the incoming
- * requests will need to be mapped to the portManager
+ * This functions as the public api that other parts of the app message with
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.cmd === 'initStartCapture') {
+  if (message.cmd === 'deepSave') {
     (async () => {
-      await captureSingleScreenShot(true);
+      const response = await chrome.tabs.sendMessage(sender.tab.id, { cmd: PAGE_INFO });
+      const { pageInfo } = response
+      await capture(sender.tab, pageInfo, true);
+      sendResponse({completed: true, deepSave: true, pageInfo})
     })();
-    return false;
+    return true;
   }
-  if (message.cmd === 'queueJob') {
-    (async () => {
-      getJobQueue().enqueue(message.backgroundJob)
-      debug('job queued', message.backgroundJob);
-    })();
-    return false;
-  }
-  if (message.cmd === 'ping') {
-    return false;
-  }
-
   /**
-   * Received from the content script
+   * Tell the content script the save was successful
    */
   if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
-      await capture(sender.tab, message);
-      sendResponse({ completed: true });
-    })();
-    return true;
-  } else if (message.cmd === 'setActiveAutomation') {
-    (async () => {
-      setActiveAutomation(message.automation);
+      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
       sendResponse({ completed: true });
     })();
     return true;
   }
-
-  (async () => {
-    switch (message.cmd) {
-      case 'updateScreenShotRecord':
-        await updateRecord(RAPPORT, UUID, message.record);
-        // TODO fix
-        //findAllMatches([message.record], await db.selector.toArray());
-        sendResponse({ completed: true });
-        break;
-      case 'deepSave':
-        await captureSingleScreenShot(true);
-        sendResponse({ completed: true });
-        break;
-      case AUTO_COLLECT_STARTING:
-        const tab = await getActiveTab();
-        await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE });
-        break;
-      case 'indexSelector':
-        try {
-          await Selector.add(message.selector);
-        } catch (e) {
-          // ignore
-          debug(e);
-        }
-        break;
-    }
-  })();
-  return false;
 });
 
 /**
  * Let the 'Who Am I' extension be able to RPC the extension's functionality
  */
 // For a single request:
-chrome.runtime.onMessageExternal.addListener(function (
-  message,
-  sender,
-  sendResponse
-) {
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   if (sender.id !== 'gdnhlhadhgnhaenfcphpeakdghkccfoo') {
     return; // deny access to all extensions, except the Who Am I
   }
-
   try {
-    switch (message.cmd) {
-      case 'singleCollect':
-      case 'deepSave':
-        (async () => {
+    (async () => {
+      const response = await chrome.tabs.sendMessage(sender.tab.id, { cmd: PAGE_INFO });
+      const { pageInfo } = response
+      switch (message.cmd) {
+        case 'singleCollect':
+        case 'deepSave':
           await createTab(message.url);
+          // wait for page contents to load
+          // TODO: make this configurable or dynamic based on the domain
           await sleep(3000);
-          await captureSingleScreenShot(true);
-        })();
-        return false;
-      case 'autoscrollCollect':
-      case AUTO_COLLECT_STARTING:
-        (async () => {
-          try {
-            await createTab(message.url,true);
-            await sleep(3000);
-            const activeTab = await getActiveTab();
-            await chrome.tabs.sendMessage(activeTab.id, {
-              cmd: ACTIVATE_CAPTURE,
-            });
-          } catch (err) {
-            debug(err);
-          }
-        })();
-        return false;
-      case 'enqueueBulkAutomation': // legacy call, deprecated
-      case ENQUEUE_BULK_AUTOMATION_URL:
-        (async () => {
+          await capture(sender.tab, pageInfo, true)
+          sendResponse({ completed: true })
+          break;
+        case AUTO_COLLECT_STARTING:
+        case 'autoScrollCollect':
+          chrome.tabs.sendMessage(sender.tab.id, { cmd: ACTIVATE_CAPTURE })
+            .then(response => {
+              debug(ACTIVATE_CAPTURE + ':', response);
+            })
+          break;
+        case ENQUEUE_BULK_AUTOMATION_URL:
           const unitDefault = await Configuration.getConfigurationValue(
             'automationUnitDefault',
             'count'
@@ -235,34 +133,18 @@ chrome.runtime.onMessageExternal.addListener(function (
             'automationValueDefault',
             100
           );
-          const keepTabOpenDefault = await Configuration.getConfigurationValue(
-            'automationKeepTabOpenDefault',
-            true
-          );
-          await addRecord(BULK_AUTOMATION, UUID, {
-            uuid: crypto.randomUUID(),
-            url: message.url,
-            createdOn: Date.now(),
-            completedOn: null,
-            ranOn: null,
-            active: false,
-            unit: unitDefault,
-            value: valueDefault,
-            keepTabOpen: keepTabOpenDefault,
-            screenShotsCollected: 0,
-            isDeepSave: false
-          });
-        })();
-        return false;
-      default:
-        debug(`Unknown external command cmd ${message.cmd}`);
-        return true;
-    }
+          await BulkAutomationUrl.createBulkAutomationJob(message.url, unitDefault, valueDefault);
+          break;
+
+      }
+    })()
+    return true;
   } catch (e) {
-    debug('Error in extension listener ' + String(e))
-    ExtensionPin.setTemporaryPin('ERR');
+    debug('onMessageExternal', { message, sender })
   }
-});
+})
+
+
 
 /**
  * On install open the github page & install default discovery plugins
@@ -292,15 +174,5 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
     // TODO: Fix bug with autocompleting, can cause loop that requires disabling the extension to exit out.
     ExtensionPin.setDefault(tab);
-  }
-});
-
-chrome.tabs.onCreated.addListener((tab) => {
-  const activeAutomation = getActiveAutomation();
-  if (tab.url && activeAutomation && tab.url === activeAutomation.url) {
-    debug(`automation tab created ${activeAutomation.url}`, {
-      tab,
-      activeAutomation,
-    });
   }
 });

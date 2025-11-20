@@ -38,7 +38,7 @@ export async function getLocalItem(key) {
  * @param key
  * @param idFieldName
  * @param record
- * @returns {Promise<void>}
+ * @returns {Promise<Record[]>}
  */
 export async function updateRecord(key, idFieldName, record) {
   let records = (await getLocalItem(key)) ?? [];

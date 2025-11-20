@@ -26,12 +26,10 @@ import {
 } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
 import { debug } from '../../services/logger_services';
-import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  let port = chrome.runtime.connect({ name: RAPPORT });
 
   useEffect(() => {
     async function fetchData() {
@@ -64,36 +62,35 @@ export default function BulkAutomationTable(props) {
    * @param records
    */
   async function startAutomationProcess() {
-    if (rows.length === 0) {
-      processNotification({title:'No Bulk Automations', message:'Enter some web site urls in order to collect them', type:'info'})
+
+    const automations = await getLocalItem(BULK_AUTOMATION);
+    automations.forEach(a => {
+      if(!a.active && !a.ranOn){
+        a.active = true;
+        a.description = 'Queued to run'
+      }
+    })
+
+    const filtered = automations.filter(r => !r.ranOn && r.active);
+    if(filtered.length === 0) {
+      processNotification({
+        title:'No New Bulk Automations',
+        message:'Enter some new web site urls in order to collect them, all your automations have already run.',
+        type:'info'
+      });
       return;
     }
-    await Configuration.setConfigurationValue(
-      'automationBulkCollectionModel',
-      true
-    );
-    let retry = 0;
-    let success = false;
-    do{
-      try{
-        port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
-        success = true;
-        return;
-      }
-      catch(e){
-        debug(String(e), { cmd: PROCESS_QUEUE_AUTOMATION_URLS, method: 'startAutomationProcess' })
-        // reconnect
-        //port = chrome.runtime.connect({ name: RAPPORT });
-      }
-      finally {
-        retry++;
-      }
-    }
-    while(!success && retry < 3);
-    if(retry > 3) {
-      debug('Failed to start automation process', { method: 'startAutomationProcess' })
-    }
+
+    await setLocalItem(BULK_AUTOMATION, automations);
+    chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
+    processNotification({
+      title: 'Automation job(s) Queued',
+      message:
+        `${filtered.length} automation job(s) Queued. Don't Spam the button.`,
+      type: 'success',
+    });
   }
+
 
   const getRecord = (rowData) => {
     let record = {};
@@ -120,7 +117,7 @@ export default function BulkAutomationTable(props) {
   const columns = [
     {
       name: UUID,
-      label: 'Uuid',
+      label: 'UUID',
       options: {
         display: 'excluded',
         filter: false,
@@ -154,11 +151,13 @@ export default function BulkAutomationTable(props) {
         },
       },
     },
-    { label: 'Unit', name: 'unit' },
-    { label: 'Value', name: 'value' },
-    { label: '# Screenshots', name: 'screenShotsCollected' },
+    { label: 'STATUS', name: 'status' },
+    { label: 'UNIT', name: 'unit' },
+    { label: 'VALUE', name: 'value' },
+    { label: '# SCREENSHOTS', name: 'screenShotsCollected' },
+
     {
-      label: 'Keep Tab Open',
+      label: 'KEEP TAB OPEN',
       name: 'keepTabOpen',
       options: {
         display: true,
@@ -196,7 +195,7 @@ export default function BulkAutomationTable(props) {
     },
     {
       name: 'ranOn',
-      label: 'Ran On',
+      label: 'RAN ON',
       options: {
         filter: false,
         sort: true,
@@ -212,7 +211,7 @@ export default function BulkAutomationTable(props) {
     },
     {
       name: 'CompletedOn',
-      label: 'Completed',
+      label: 'COMPLETED',
       options: {
         filter: false,
         sort: true,
@@ -228,7 +227,7 @@ export default function BulkAutomationTable(props) {
     },
     {
       name: 'description',
-      label: 'Info',
+      label: 'INFO',
       options: {
         filter: false,
         sort: false,
@@ -239,7 +238,7 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
-      label: 'Options',
+      label: 'OPTIONS',
       name: 'options',
       options: {
         display: true,
@@ -247,53 +246,25 @@ export default function BulkAutomationTable(props) {
         sort: false,
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
+
           return (
             <Tooltip title={'Re run the automation on this url'}>
               <IconButton
                 onClick={async () => {
-                  record.ranOn = null;
-                  record.completedOn = null;
-                  const automationQueue =
-                    (await updateRecord(BULK_AUTOMATION, UUID, record)) ?? [];
-                  automationQueue.forEach((a) => (a.active = false));
-                  const automation = automationQueue.find(
-                    (a) => a.uuid === record.uuid
-                  );
-                  automation.active = true;
-                  automation.ranOn = null;
-                  automation.description = 'User Restarted Automation';
+                  let copy = {...record};
+                  copy.active = true;
+                  copy.ranOn = null;
+                  copy.status = 'queued';
+                  copy.completedOn = null;
+                  copy.description = 'Manually run'
+                  setRows(await updateRecord(BULK_AUTOMATION, UUID, copy));
+                  chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
                   processNotification({
                     title: 'Restarting Automation',
                     message:
-                      "Automation job is restarting. Don't Spam the button.",
+                      "Automation job is restarting, and may take a couple seconds. Don't Spam the button!",
                     type: 'success',
                   });
-                  // only the active automation is run, bulk automation must be off
-                  await Configuration.setConfigurationValue(
-                    'automationBulkCollectionModel',
-                    false
-                  );
-                  // sync to storage
-                  await setLocalItem(BULK_AUTOMATION, automationQueue);
-                  let retry = 0;
-                  do{
-                    try{
-                      port.postMessage({ cmd: PROCESS_QUEUE_AUTOMATION_URLS });
-                      return;
-                    }
-                    catch(e){
-                      debug(String(e), { cmd: PROCESS_QUEUE_AUTOMATION_URLS, method: 'customBodyRender' })
-                    }
-                    finally {
-                      retry++;
-                      // reconnect
-                      port = chrome.runtime.connect({ name: RAPPORT });
-                    }
-                  }
-                  while(retry < 3);
-                  if(retry > 3){
-                    processNotification({title: 'Failed Automation', message: 'Refresh this page to start the automations, '})
-                  }
                 }}
               >
                 <DirectionsRunIcon />

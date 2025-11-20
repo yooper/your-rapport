@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import HelperPopover from '../HelperPopover';
 import Button from '@mui/material/Button';
+import { Configuration } from '../../models/schemas/Configuration';
 
 export default function BrowserSettingsForm(props) {
   const [config, setConfig] = useState(null);
@@ -18,6 +19,7 @@ export default function BrowserSettingsForm(props) {
     async function fetchData() {
       showLoader();
       setIsLoading(true);
+      setConfig(await Configuration.getConfiguration())
       hideLoader();
       setIsLoading(false);
     }
@@ -65,6 +67,26 @@ export default function BrowserSettingsForm(props) {
                     message={'Highlight the selectors that exist on the page.'}
                   />
                   Highlight Selectors
+                </div>
+              }
+              labelPlacement="end"
+              color={'primary'}
+              checked={false}
+              onChange={handleSwitchChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControlLabel
+              value={'debugMessagesEnabled' in config ? config['debugMessagesEnabled'] : false}
+              id={'debugMessagesEnabled'}
+              name={'debugMessagesEnabled'}
+              control={<Switch color="primary" />}
+              label={
+                <div>
+                  <HelperPopover
+                    message={'Enable debug logging in the console.'}
+                  />
+                  Enable Debug Logging
                 </div>
               }
               labelPlacement="end"

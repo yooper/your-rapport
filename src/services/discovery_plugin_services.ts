@@ -2,7 +2,7 @@ import Mustache from 'mustache';
 import { createTab, processNotification } from '../utilities/loaders';
 import { getUser } from '../models/schemas/User';
 import { DiscoveryPlugin } from '../models/schemas/DiscoveryPlugin';
-import { ApiKey, IRapport, NotificationPayload } from '../types';
+import { ApiKey, IRapport } from '../types';
 import { base64ToFile, downloadBase64Image, downloadJsonData, safeJsonParse } from '../utilities/transformers';
 import { printPdfReport } from '../utilities/print_service';
 import { db } from '../models/db/dexieDb';
@@ -15,7 +15,6 @@ import { getJobQueue} from '../pages/Background/index'
 /**
  * Receives the discovery plugin and record. The selectorValue is the value of the selector that was selected by the end user.
  * Throws an error if the user lacks access to discovery plugins.
- * TODO: Add support for API / Configuration variables
  */
 export async function discoveryPluginRunner(
   discoveryPlugin: DiscoveryPlugin,
@@ -41,11 +40,10 @@ export async function discoveryPluginRunner(
 
   Mustache.escape = (text: string) => text;
 
-
-  // restrict what values can be used in the template
   const apiKeysObj = apiKeys.reduce(
     (obj, item) => Object.assign(obj, { [item.key]: item.value }), {});
 
+  // TODO: refactor the way vars are flattened
   const url = Mustache.render(discoveryPlugin.url,{...discoveryPlugin, ...rapport, ...apiKeysObj});
 
   switch (discoveryPlugin.action) {

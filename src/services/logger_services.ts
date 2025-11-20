@@ -2,7 +2,7 @@ import { Configuration } from '../models/schemas/Configuration';
 
 /**
  * Logs a message and optional data object if debug mode is enabled.
- *
+ * TODO: persist logs
  * @param message - Message to log (string or any value)
  * @param data - Optional additional data object to log
  * @param includeTrace : boolean
@@ -16,7 +16,7 @@ export async function debug(
     const value: boolean = await Configuration.getConfigurationValue<boolean>(
       'debugMessagesEnabled',
       true
-    );
+    ) ?? false;
     if (value && includeTrace) {
       console.trace(message, data);
     } else if (value) {

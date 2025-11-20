@@ -4,6 +4,7 @@ import {
   sha256,
   sha256FromBlob,
 } from '../../utilities/transformers';
+import { CaptureMessage } from '../../datasources/browser_capture';
 
 export class Rapport {
   constructor({
@@ -55,34 +56,35 @@ export class Rapport {
   }
 
   /**
-   * TODO: fix naming convention on screenShot, make screenshot throughout the code base.
    * @param tab
-   * @param text
-   * @param screenShot
+   * @param pageInfo
+   * @param screenshot
    * @param selectors
    * @returns {Promise<Rapport>}
    */
-  static async createFromTab(tab, text, screenShot, selectors) {
+  static async createFromTab(tab, pageInfo, screenshot, selectors, deepSave) {
     const uuid = crypto.randomUUID();
     const createdOn = Date.now();
-    const hash = await sha256(screenShot);
-    const domain = new URL(tab.url).hostname;
+    const hash = await sha256(screenshot);
+    const domain = new URL(pageInfo.url).hostname;
+    const text =
+      (pageInfo.title?.toLowerCase() ?? '') + ' ' + Rapport.getText(pageInfo, false);
     const matchedSelectors = findAllMatches(text, selectors, 1);
 
     return new Rapport({
       uuid,
-      title: tab.title,
-      url: tab.url,
+      title: pageInfo.title,
+      url: pageInfo.url,
       domain,
       text,
-      screenshot: screenShot,
+      screenshot: screenshot,
       createdOn,
       updatedOn: createdOn,
       createdOnLocalTime: new Date().toLocaleString(),
       hash,
       createdBy: 'TODO-CREATE', // Requires auth system
       updatedBy: 'TODO-UPDATE', // Requires auth system
-      length: screenShot.length,
+      length: screenshot.length,
       attributes: { tab },
       selectors: matchedSelectors,
       tags: [], // Placeholder for future tagging
@@ -132,4 +134,24 @@ export class Rapport {
       isImportant: false
     });
   }
+
+  /**
+   * Return the text to be used in the search
+   */
+  static getText(pageInfo, deepSave){
+    if (deepSave) {
+      // If deepSave is true, prefer full page text supplied by caller
+      return (pageInfo.text ?? '').toLowerCase();
+    }
+    // Otherwise prefer the visible text (normalized/split)
+    return Rapport.splitCamelCase(pageInfo.visibleText ?? '').toLowerCase();
+  }
+
+  static splitCamelCase(input){
+    return input
+      .replace(/([a-z])([A-Z])/g, '$1 $2') // lower → upper: add space
+      .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // "HTMLParser" → "HTML Parser"
+      .trim();
+  }
+
 }

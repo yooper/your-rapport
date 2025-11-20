@@ -27,10 +27,6 @@ type IconName = "HelpOutlineIcon" | "InfoOutlinedIcon" | "VisibilityOutlinedIcon
 
 type RecordType = Record<string, unknown>;
 
-interface ApiResponse<T extends RecordType = RecordType> {
-  Records: T[];
-}
-
 interface GenericTableDialogProps<T extends RecordType = RecordType> {
   url?: string | Promise<string> | null;
   selectedRecord?: Record<string, any>;

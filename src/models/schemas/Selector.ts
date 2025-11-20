@@ -13,7 +13,7 @@ import {
   UUID,
 } from '../../services/constants';
 import { Configuration } from './Configuration';
-import { ISelector } from '../../types';
+import { IRapport, ISelector } from '../../types';
 import { db } from '../db/dexieDb';
 import { findAllMatches } from '../../utilities/transformers';
 import { DiscoveryPluginSchema } from '../validators/DiscoveryPlugin.validator';
@@ -51,6 +51,7 @@ export class Selector implements ISelector {
     await db.selector.add(selector);
     const records: any[] = (await getLocalItem(RAPPORT)) ?? [];
     await Selector.findAndAssignMatches(records, [selector]);
+    await setLocalItem(RAPPORT, records);
     await Configuration.setConfigurationValue(UPDATED_ON, Date.now());
   }
 
@@ -87,19 +88,19 @@ export class Selector implements ISelector {
   static async findAndAssignMatches(
     records: any[],
     selectors: Selector[]
-  ): Promise<void> {
+  ): Promise<IRapport[]> {
     for (const record of records) {
       record.selectors = findAllMatches(
         record.text + (record.note ?? ''),
         selectors,
         1
       ).concat(record.selectors ?? []);
-      await updateRecord(RAPPORT, UUID, record);
     }
 
     const configuration = await getLocalItem(CONFIGURATION);
     configuration[UPDATED_ON] = Date.now().toString();
     await setLocalItem(CONFIGURATION, configuration);
+    return records;
   }
 
   static validate(input: unknown)

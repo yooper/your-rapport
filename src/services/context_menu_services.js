@@ -3,13 +3,11 @@ import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
 import {
   ACTIVATE_CAPTURE,
-  BULK_AUTOMATION,
   RAPPORT,
   UPDATED_ON,
   UUID,
 } from './constants';
-import { captureSingleScreenShot } from './collection_services';
-import { BulkAutomationUrl } from '../models/schemas/BulkAutomationUrl';
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
 import { addRecord } from '../models/db/local';
 import { selectCorrectLink } from '../utilities/transformers';
@@ -17,6 +15,8 @@ import { Rapport } from '../models/schemas/Rapport';
 import { fetchBlob } from './image_loading_services';
 import { applyBackgroundJobs } from './discovery_plugin_services';
 import { debug } from '../services/logger_services';
+import { capture } from '../datasources/browser_capture';
+import { waitForPageInfo } from '../backgrounds/automation-runner';
 
 /**
  * Add the selectors as menu items
@@ -102,13 +102,14 @@ export async function initializeContextMenus() {
         break;
       case 'deepSave':
         ExtensionPin.setTemporaryPin('SAVG');
-        captureSingleScreenShot(true).then();
+        waitForPageInfo(tab.id).then(pageInfo => {
+          capture(tab, pageInfo, true);
+        });
         break;
       case 'autocollectPage':
-        captureSingleScreenShot().then(() => {
-          ExtensionPin.setTemporaryPin('SAVG');
-          chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE });
-        });
+        // start the autoscroll
+        chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
+          .then(response => {debug(ACTIVATE_CAPTURE+':', response);})
         break;
       case 'addBulkAutomationUrl':
         (async () => {
@@ -120,27 +121,13 @@ export async function initializeContextMenus() {
             'automationValueDefault',
             100
           );
-          const keepTabOpenDefault = await Configuration.getConfigurationValue(
-            'automationKeepTabOpenDefault',
-            true
-          );
+
           const urlLink = selectCorrectLink({
             linkUrl: info.linkUrl,
             frameUrl: info.frameUrl,
             pageUrl: info.pageUrl,
           });
-          await addRecord(BULK_AUTOMATION, UUID, {
-            uuid: crypto.randomUUID(),
-            url: urlLink,
-            createdOn: Date.now(),
-            completedOn: null,
-            ranOn: null,
-            unit: unitDefault,
-            value: valueDefault,
-            keepTabOpen: keepTabOpenDefault,
-            screenShotsCollected: 0,
-            isDeepSave: false
-          });
+          await BulkAutomationUrl.createBulkAutomationJob(urlLink, unitDefault, valueDefault);
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;
