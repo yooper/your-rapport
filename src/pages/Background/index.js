@@ -15,7 +15,7 @@ import {
   AUTO_COLLECT_STARTING,
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB,
-  ENQUEUE_BULK_AUTOMATION_URL, PAGE_INFO
+  ENQUEUE_BULK_AUTOMATION_URL, PAGE_INFO, UUID,
 } from '../../services/constants';
 
 import { debug } from '../../services/logger_services';
@@ -24,6 +24,7 @@ import { debug } from '../../services/logger_services';
 import { JobQueue } from '../../models/schemas/JobQueue';
 
 import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
+import { addRecord } from '../../models/db/local';
 
 /**
  * Initialize services when the extension is installed / activated
@@ -100,31 +101,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  */
 // For a single request:
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-  if (sender.id !== 'gdnhlhadhgnhaenfcphpeakdghkccfoo') {
-    return; // deny access to all extensions, except the Who Am I
-  }
+  debug('onMessageExternal', {message, sender});
+
   try {
     (async () => {
-      const response = await chrome.tabs.sendMessage(sender.tab.id, { cmd: PAGE_INFO });
-      const { pageInfo } = response
       switch (message.cmd) {
         case 'singleCollect':
         case 'deepSave':
           await createTab(message.url);
+          const activateTab = await getActiveTab();
+          await sleep(3000);
+          const response = await chrome.tabs.sendMessage(activateTab.id, { cmd: PAGE_INFO });
+          const { pageInfo } = response
           // wait for page contents to load
           // TODO: make this configurable or dynamic based on the domain
-          await sleep(3000);
-          await capture(sender.tab, pageInfo, true)
-          sendResponse({ completed: true })
+          await capture(activateTab, pageInfo, true);
+          sendResponse({completed: true})
           break;
         case AUTO_COLLECT_STARTING:
-        case 'autoScrollCollect':
-          chrome.tabs.sendMessage(sender.tab.id, { cmd: ACTIVATE_CAPTURE })
+        case 'autoscrollCollect':
+          await createTab(message.url);
+          await sleep(3000);
+          sendResponse({completed: true})
+          chrome.tabs.sendMessage((await getActiveTab()).id, { cmd: ACTIVATE_CAPTURE })
             .then(response => {
               debug(ACTIVATE_CAPTURE + ':', response);
             })
           break;
         case ENQUEUE_BULK_AUTOMATION_URL:
+        case 'enqueueBulkAutomation':
           const unitDefault = await Configuration.getConfigurationValue(
             'automationUnitDefault',
             'count'
@@ -133,14 +138,19 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
             'automationValueDefault',
             100
           );
-          await BulkAutomationUrl.createBulkAutomationJob(message.url, unitDefault, valueDefault);
+          const record = await BulkAutomationUrl.createBulkAutomationJob(message.url, unitDefault, valueDefault);
+          await addRecord(BULK_AUTOMATION, UUID, record);
           break;
-
+        case 'ping':
+          sendResponse({completed: true});
+        default:
+          return false;
       }
     })()
-    return true;
+    return false;
   } catch (e) {
-    debug('onMessageExternal', { message, sender })
+
+    debug('onMessageExternal:failure', { message, sender })
   }
 })
 

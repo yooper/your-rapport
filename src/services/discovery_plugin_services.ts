@@ -10,6 +10,7 @@ import { debug } from './logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { updateRecord } from '../models/db/local';
 import { getJobQueue} from '../pages/Background/index'
+import { RAPPORT, UUID } from './constants';
 
 
 /**
@@ -133,7 +134,7 @@ async function _processFetch(
       // add the artifact
       await db.artifact.add(artifact)
       rapport.artifacts.push(Artifact.getAttachment(artifact));
-      await updateRecord('rapport', 'uuid', rapport);
+      await updateRecord(RAPPORT, UUID, rapport);
       return; // finish processing
     }
 
@@ -141,6 +142,13 @@ async function _processFetch(
     else if (response.status >= 400 && response.status < 500) {
       const text = await response.text();
       const parsed = safeJsonParse<any>(text);
+
+      // add error artifact
+      const artifact = await Artifact.create(new Blob([text], { type: 'text/plain' }), rapport.uuid, url, 'text/plain');
+      await db.artifact.add(artifact)
+      rapport.artifacts.push(Artifact.getAttachment(artifact));
+      await updateRecord(RAPPORT, UUID, rapport);
+
       if (parsed.ok && parsed.value && typeof parsed.value === 'object') {
         processNotification({
           title: `HTTP 400 Error from ${discoveryPlugin.label ?? 'Plugin'}`,
@@ -162,7 +170,9 @@ async function _processFetch(
       Message: text || `HTTP ${response.status}`,
       Type: 'danger',
     });
-  } catch (error: any) {
+  }
+  catch (error: any) {
+    await debug(String(error))
     let message: string = error?.message || String(error);
     if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
       message = `The service provider at ${url} is unreachable, misconfigured, or your plugin is not set up correctly.`;

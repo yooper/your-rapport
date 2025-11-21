@@ -38,8 +38,7 @@
     "tabs",
     "webNavigation",
     "pageCapture",
-    "alarms",
-    "scripting"
+    "alarms"
   ],
   "commands": {
     "deepSave": {
