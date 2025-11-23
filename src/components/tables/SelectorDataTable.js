@@ -4,7 +4,12 @@ import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
 import SelectorFormDialog from '../dialogs/SelectorFormDialog';
 import { hideLoader, showLoader } from '../../utilities/loaders';
-import { BULK_AUTOMATION, RAPPORT, SELECTOR, UPDATED_ON } from '../../services/constants';
+import {
+  BULK_AUTOMATION,
+  RAPPORT,
+  SELECTOR,
+  UPDATED_ON,
+} from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
 import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
@@ -28,18 +33,16 @@ export default function SelectorDataTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-
-      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
+      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON);
       const pageCachedOn = localStorage.getItem(SELECTOR) ?? null;
 
-      if(updatedOn !== pageCachedOn){
+      if (updatedOn !== pageCachedOn) {
         await fetchData(); // check for new data every 10 seconds.
         localStorage.setItem(UPDATED_ON, updatedOn);
         localStorage.setItem(SELECTOR, updatedOn);
       }
     }, 10000); // wait 10 seconds before re-renders
     return () => clearInterval(intervalId);
-
   }, []);
 
   const columns = [
@@ -77,9 +80,7 @@ export default function SelectorDataTable(props) {
         names.push(rows[idx].name);
       }
 
-      await Selector.delete()
-      await db.selector.bulkDelete(names);
-
+      await Selector.delete(names);
       setRows(await db.selector.toArray());
       setIsLoading(false);
       hideLoader();

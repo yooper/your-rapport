@@ -16,9 +16,15 @@ import BrowserSettingsForm from '../forms/BrowserSettingsForm';
 import PackageManagerDataTable from '../tables/PackageManagerDataTable';
 import SelectorDataTable from '../tables/SelectorDataTable';
 import DiscoveryPluginDataTable from '../tables/DiscoveryPluginDataTable';
-import { DISCOVERY_PLUGIN } from '../../services/constants';
 import TagDataTable from '../tables/TagDataTable';
 import TagIcon from '@mui/icons-material/Tag';
+import ApiKeyDataTable from '../tables/ApiKeyDataTable';
+import ApiIcon from '@mui/icons-material/Api';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import IconButton from '@mui/material/IconButton';
+import { Tooltip } from '@mui/material';
+import { createTab } from '../../utilities/loaders';
+
 
 export default function OptionsLayout() {
   const urlParams = new URL(window.location.href).searchParams;
@@ -26,34 +32,42 @@ export default function OptionsLayout() {
   const [selectedComponent, setSelectedComponent] = useState(
     urlParams.get('view') ?? 'browser'
   );
-
   const componentMap = [
+    {
+      label: 'Api Key',
+      key: 'apiKey',
+      message: 'Manage your local api keys that integrate with your third party plugins.',
+      url: 'https://github.com/yooper/your-rapport/wiki/Api-Key-Management'
+    },
     {
       label: 'Browser Settings',
       key: 'browser',
       message: 'Modify browser specific settings',
+      url: 'https://github.com/yooper/your-rapport/wiki/Your-Rapport-Browser-Settings'
     },
     {
       label: 'Discovery Plugins',
-      key: DISCOVERY_PLUGIN,
-      message:
-        'Connect or enrich your data to other service providers. Autolinks data repositories to your selectors.',
+      key: 'discoveryPlugin',
+      message: 'Connect or enrich your data to other service providers. Autolinks data repositories to your selectors.',
+      url: 'https://github.com/yooper/your-rapport/wiki/Discovery-Plugins-Tutorial'
     },
     {
       label: 'Package Management',
-      key: 'package_management',
-      message:
-        'Packages enhance and extend Your Rapport functionality. When you install a package it becomes a discovery plugin. Discovery plugins help you search for selectors.',
+      key: 'packageManagement',
+      message: 'Packages enhance and extend Your Rapport functionality. When you install a package it becomes a discovery plugin. Discovery plugins help you search for selectors.',
+      url: 'https://github.com/osint-liar/public-packages'
     },
     {
       label: 'Selectors',
       key: 'selector',
-      message: 'Create or Delete selectors',
+      message: 'Manage your selectors through creation and deletion.',
+      url: 'https://github.com/yooper/your-rapport/wiki/Your-Rapport-Selectors'
     },
     {
       label: 'Tags',
       key: 'tag',
-      message: 'Annotate your data with tags',
+      message: 'Manage your tags used for annotating data',
+      url: 'https://github.com/yooper/your-rapport/wiki/Your-Rapport-Tag-Management'
     },
   ];
 
@@ -72,7 +86,18 @@ export default function OptionsLayout() {
                   <ListItemIcon>
                     <IconMapper icon={component.key} />
                   </ListItemIcon>
-                  <HelperPopover message={component.message} />
+                  <IconButton>
+                    <Tooltip title={'Click to learn more..'}>
+                      <OpenInNewIcon onClick={(e) => {
+                        e.stopPropagation();
+                        // open a tab to the wiki page for this subject
+                        createTab(component.url);
+                      }}/>
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton>
+                    <HelperPopover message={component.message} />
+                  </IconButton>
                   &nbsp;
                   <ListItemText primary={component.label} />
                 </ListItemButton>
@@ -90,11 +115,13 @@ export default function OptionsLayout() {
 
 function IconMapper(props) {
   switch (props.icon) {
+    case 'apiKey':
+      return <ApiIcon />
     case 'browser':
       return <WebIcon />;
-    case DISCOVERY_PLUGIN:
+    case 'discoveryPlugin':
       return <ExtensionIcon />;
-    case 'package_management':
+    case 'packageManagement':
       return <ListAltIcon />;
     case 'selector':
       return <LocalOfferIcon />;
@@ -107,11 +134,13 @@ function IconMapper(props) {
 
 function Renderer(props) {
   switch (props.selectedComponent) {
+    case 'apiKey':
+      return <ApiKeyDataTable />;
     case 'browser':
       return <BrowserSettingsForm />;
-    case DISCOVERY_PLUGIN:
+    case 'discoveryPlugin':
       return <DiscoveryPluginDataTable />;
-    case 'package_management':
+    case 'packageManagement':
       return <PackageManagerDataTable />;
     case 'selector':
       return <SelectorDataTable />;

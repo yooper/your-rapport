@@ -38,7 +38,7 @@ export async function getLocalItem(key) {
  * @param key
  * @param idFieldName
  * @param record
- * @returns {Promise<void>}
+ * @returns {Promise<Record[]>}
  */
 export async function updateRecord(key, idFieldName, record) {
   let records = (await getLocalItem(key)) ?? [];
@@ -59,10 +59,10 @@ export async function updateBulkRecords(key, idFieldName, updatedRecords) {
   }
 
   const updatesById = new Map(
-    updatedRecords.map(record => [record[idFieldName], record])
+    updatedRecords.map((record) => [record[idFieldName], record])
   );
 
-  const mergedRecords = localRecords.map(record => {
+  const mergedRecords = localRecords.map((record) => {
     const update = updatesById.get(record[idFieldName]);
     return update ? { ...record, ...update } : record;
   });
@@ -90,11 +90,15 @@ export async function addRecord(key, idFieldName, record) {
   }
 }
 
-
-export async function addBulkRecords(key, idFieldName, records, chunkSize = 50){
+export async function addBulkRecords(
+  key,
+  idFieldName,
+  records,
+  chunkSize = 50
+) {
   let localRecords = (await getLocalItem(key)) ?? [];
-  const existingIds = new Set(localRecords.map(r => r[idFieldName]));
-  const newRecords = records.filter(r => !existingIds.has(r[idFieldName]));
+  const existingIds = new Set(localRecords.map((r) => r[idFieldName]));
+  const newRecords = records.filter((r) => !existingIds.has(r[idFieldName]));
   if (newRecords.length === 0) {
     return; // Nothing to add
   }
@@ -113,8 +117,8 @@ export async function addBulkRecords(key, idFieldName, records, chunkSize = 50){
  * @returns {Promise<*[]>}
  */
 export async function deleteRecord(key, idFieldName, record) {
-  let records = await getLocalItem(key) ?? [];
-  if(records.length === 0){
+  let records = (await getLocalItem(key)) ?? [];
+  if (records.length === 0) {
     return [];
   }
 
@@ -126,7 +130,6 @@ export async function deleteRecord(key, idFieldName, record) {
   return filtered;
 }
 
-
 /**
  * delete a single record in the collection
  * @param key
@@ -135,14 +138,12 @@ export async function deleteRecord(key, idFieldName, record) {
  * @returns {Promise<*[]>}
  */
 export async function deleteBulkRecords(key, idFieldName, records) {
-  let localRecords = await getLocalItem(key) ?? [];
+  let localRecords = (await getLocalItem(key)) ?? [];
   if (localRecords.length === 0 || records.length === 0) {
     return localRecords;
   }
-  const idsToDelete = new Set(records.map(r => r[idFieldName]));
-  const filtered = localRecords.filter(
-    (r) => !idsToDelete.has(r[idFieldName])
-  );
+  const idsToDelete = new Set(records.map((r) => r[idFieldName]));
+  const filtered = localRecords.filter((r) => !idsToDelete.has(r[idFieldName]));
 
   if (filtered.length !== localRecords.length) {
     await setLocalItem(key, filtered);
@@ -150,10 +151,9 @@ export async function deleteBulkRecords(key, idFieldName, records) {
   return filtered;
 }
 
-
 export async function upsertBulkRecords(key, idFieldName, updatedRecords) {
   let localRecords = (await getLocalItem(key)) ?? [];
-  const existingMap = new Map(localRecords.map(r => [r[idFieldName], r]));
+  const existingMap = new Map(localRecords.map((r) => [r[idFieldName], r]));
 
   // Apply updates or insert new records
   for (const updated of updatedRecords) {

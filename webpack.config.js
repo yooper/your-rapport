@@ -40,7 +40,7 @@ var options = {
   entry: {
     background: path.join(__dirname, 'src', 'pages', 'Background', 'index.js'),
     search: path.join(__dirname, 'src', 'pages', 'Search', 'index.js'),
-    contentScript: path.join(__dirname, 'src', 'pages', 'Content', 'index.js'),
+    contentScript: path.join(__dirname, 'src', 'pages', 'Content', 'index.ts'),
     options: path.join(__dirname, 'src', 'pages', 'Options', 'index.js'),
     popup: path.join(__dirname, 'src', 'pages', 'Popup', 'index.js'),
     login: path.join(__dirname, 'src', 'pages', 'Login', 'index.js'),

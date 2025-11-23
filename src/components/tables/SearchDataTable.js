@@ -2,18 +2,23 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import MUIDataTable from 'mui-datatables';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
-import { createTab, hideLoader, showLoader } from '../../utilities/loaders';
+import { hideLoader, showLoader } from '../../utilities/loaders';
 import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
-import SearchTableOptionMenu from '../menus/SearchTableOptionMenu';
 import PreviewImageDialog from '../dialogs/PreviewImageDialog';
 import UploadDataDialog from '../dialogs/UploadDataDialog';
 import { downloadJsonData } from '../../utilities/transformers';
 import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
-import { Badge, Tooltip } from '@mui/material';
+import { Avatar, Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
-import { DISCOVERY_PLUGIN, RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../../services/constants';
+import SettingsIcon from '@mui/icons-material/Settings';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import {
+  RAPPORT,
+  UPDATED_ON,
+  UUID,
+} from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
@@ -22,8 +27,12 @@ import VerticalGenericTableDialog from '../dialogs/VerticalGenericTableDialog';
 import { Artifact } from '../../models/schemas/Artifact';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
 import TagIcon from '@mui/icons-material/Tag';
-import LanguageIcon from '@mui/icons-material/Language';
-
+import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
+import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
+import IconButton from '@mui/material/IconButton';
+import AttachmentIcon from '@mui/icons-material/Attachment';
+import GenericTableDialog from '../dialogs/GenericTableDialog';
+import SelectorFormDialogV2 from '../dialogs/SelectorFormDialogV2';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -31,23 +40,30 @@ export default function SearchDataTable(props) {
   const [selectors, setSelectors] = useState(null);
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
+  const [updatedOn, setUpdatedOn] = useState(new Date().getTime());
+  const attachmentHeaders = ['view', 'uuid', 'mimeType', 'size', 'url']
+
+
+  /**
+   * Load all the data into the UI
+   * @returns {Promise<void>}
+   */
+  const fetchData = async () => {
+      showLoader();
+      setIsLoading(true);
+      const start = performance.now();
+      setSelectors(await db.selector.toArray());
+      setTags(await db.tag.toArray());
+      setDiscoveryPlugins((await db.discoveryPlugin.toArray()) ?? []);
+      const screenshots = (await getLocalItem(RAPPORT)) ?? [];
+      const elapsed = performance.now() - start;
+      debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
+      setRows(screenshots);
+      setIsLoading(false);
+      hideLoader();
+    }
 
   useEffect(() => {
-      async function fetchData() {
-        showLoader();
-        setIsLoading(true);
-        const start = performance.now()
-        setSelectors(await db.selector.toArray());
-        setTags(await db.tag.toArray());
-        setDiscoveryPlugins(await getLocalItem(DISCOVERY_PLUGIN) ?? []);
-        const screenshots = await getLocalItem(RAPPORT) ?? [];
-        const elapsed = performance.now() - start;
-        debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-        setRows(screenshots);
-        setIsLoading(false);
-        hideLoader();
-      }
-
     fetchData();
 
     /**
@@ -55,18 +71,25 @@ export default function SearchDataTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-
-      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON)
-      const pageCachedOn = localStorage.getItem(UPDATED_ON) ?? null;
-
-      if(updatedOn != pageCachedOn){
-        await fetchData(); // check for new data every 10 seconds.
-        localStorage.setItem(UPDATED_ON, updatedOn);
+      const lastModified = await Configuration.getConfigurationValue(UPDATED_ON);
+      if (updatedOn < lastModified) {
+        setUpdatedOn(lastModified)
+        showLoader()
+        const rapports = (await getLocalItem(RAPPORT)) ?? [];
+        setRows(rapports);
+        hideLoader()
       }
-    }, 3000); // wait 5 seconds before re-renders
+    }, 5000); // wait 5 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
 
+  /**
+   * Wrapper around fetch data, meant to be passed into other components
+   * @returns {Promise<void>}
+   */
+  const refreshRows = async() =>{
+    fetchData();
+  }
 
   const columns = [
     {
@@ -80,8 +103,7 @@ export default function SearchDataTable(props) {
           const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
           const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
-          const [hasMhtmlArtifact, setHasMhtmlArtifact] = useState(record.artifacts?.length > 0)
-
+          const [openAttributeViewer, setOpenAttributeViewer] = useState(false);
           return (
             <>
               <img
@@ -95,34 +117,55 @@ export default function SearchDataTable(props) {
               />
               <div>
                 <Box>
-                    <Badge badgeContent={0} color={"primary"}>
-                        <VerticalGenericTableDialog
-                            selectedRecord={record}
-                            title={`Data Integrity Attributes`}
-                            iconType={'InfoOutlinedIcon'}
-                            approvedFields={
-                                ['url', 'domain', 'hash', 'hashAlgorithm', 'createdBy', 'createdOn', 'updatedBy', 'updatedOn', 'size']}
+                  <Badge badgeContent={0} color={'primary'}>
+                    <IconButton>
+                    <VerticalGenericTableDialog
+                      selectedRecord={record}
+                      title={`Data Integrity Attributes`}
+                      iconType={'InfoOutlinedIcon'}
+                      approvedFields={[
+                        'url',
+                        'domain',
+                        'hash',
+                        'hashAlgorithm',
+                        'createdBy',
+                        'createdOn',
+                        'updatedBy',
+                        'updatedOn',
+                        'size',
+                      ]}
+                    />
+                    </IconButton>
+                  </Badge>
+
+                  <Badge>
+                    <Tooltip title={'View the attributes of this capture.'}>
+                      <IconButton>
+                      <SettingsIcon
+                        onClick={() => {
+                          setOpenAttributeViewer(true);
+                        }}
+                      />
+                      </IconButton>
+                    </Tooltip>
+                  </Badge>
+                  <Badge badgeContent={record.artifacts?.length ?? 0} color={'primary'} >
+                    <Tooltip title={'See the attachments'}>
+                      <IconButton disabled={record.artifacts?.length===0}>
+                        <GenericTableDialog
+                          title={'Associated Attachments'}
+                          iconType={'AttachmentIcon'}
+                          defaultHeaders={attachmentHeaders}
+                          defaultRecords={record.artifacts?.map(a => {
+                            return {
+                              ...a,
+                              'view': `chrome-extension://${chrome.runtime.id}/api.html?format=file&uuid=${a.uuid}`
+                            }
+                          })}
                         />
-                    </Badge>
-                    <Badge>
-                      <Tooltip title={'Add or modify tags'}>
-                        <TagIcon onClick={() => { setOpenAddTagDialog(true); }}/>
-                      </Tooltip>
-                    </Badge>
-                  { hasMhtmlArtifact ?
-                    <Badge>
-                      <Tooltip title={'Download the mhtml file for this Rapport.'}>
-                        <LanguageIcon onClick={() => {
-                          if (record.artifacts.length > 0) {
-                            Artifact.downloadArtifact(record.artifacts[0], `your.rapport.${record.artifacts[0].id}.mhtml`);
-                          } else {
-                            createTab('https://github.com/yooper/your-rapport/issues/16');
-                            debug('Mhtml file not available for download when auto scroll capture is run.');
-                          }
-                        }} />
-                      </Tooltip>
-                    </Badge> : <span></span>
-                  }
+                      </IconButton>
+                    </Tooltip>
+                  </Badge>
                 </Box>
               </div>
               <PreviewImageDialog
@@ -130,12 +173,10 @@ export default function SearchDataTable(props) {
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
               />
-              <AddTagsFormDialog
-                isOpen={openAddTagDialog}
-                setIsOpen={setOpenAddTagDialog}
+              <JsonAttributeViewerDialog
+                isOpen={openAttributeViewer}
+                setIsOpen={setOpenAttributeViewer}
                 record={record}
-                rows={rows}
-                setRows={setRows}
               />
             </>
           );
@@ -151,12 +192,12 @@ export default function SearchDataTable(props) {
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
-          let url = record.url;
+          let url = record.url ?? 'RECORD IS MALFORMED (DELETE IT)';
           if (url.length > 32) {
             url = record.url.substring(0, 32) + '...';
           }
 
-          let title = record.title;
+          let title = record.title ?? 'RECORD IS MALFORMED (DELETE IT)';
           if (title.length > 40) {
             title = title.substring(0, 40) + '...';
           }
@@ -188,11 +229,7 @@ export default function SearchDataTable(props) {
               </div>
               <div>
                 <span>
-                  <NotesDialog
-                    record={record}
-                    rows={rows}
-                    setRows={setRows}
-                  />
+                  <NotesDialog record={record} refreshRows={refreshRows} />
                 </span>
                 <span className={'page_title'}>Notes:</span>
                 <span> {record.note ?? ''}</span>
@@ -216,18 +253,40 @@ export default function SearchDataTable(props) {
             return !filters.some((filter) => tagsLabels.includes(filter));
           },
         },
-        customBodyRender: (value, tableMeta, updateValue) => {
-          const record = getRecord(tableMeta.rowData)
-          return value?.map((tag, index) => (
-              <DiscoveryPluginDialog
-                  key={`tag-${tag.name}-${record.uuid}`}
-                  plugins={[]}
-                  title={'tag'}
-                  record={record}
-                  uxType={'chip'}
-                  pluginValue={tag.name}
+        customBodyRenderLite: (dataIndex) => {
+          const record = rows[dataIndex];
+          const [open, setOpen] = useState(false);
+
+          const chips = record.tags?.map((tag, index) => (
+            <DiscoveryPluginDialog
+              key={`tag-${tag.name}-${record.uuid}`}
+              plugins={[]}
+              title={'tag'}
+              record={record}
+              uxType={'chip'}
+              selectorValue={tag.name}
+              refreshRows={refreshRows}
+            />
+          ));
+
+          return (
+            <>
+              <Tooltip title={'Add tags to your rapport'}>
+                <IconButton onClick={() => { setOpen(true)}}>
+                  <AddCircleOutlineIcon color={'primary'}/>
+                </IconButton>
+              </Tooltip>
+              {chips}
+              <AddTagsFormDialog
+                isOpen={open}
+                setIsOpen={setOpen}
+                record={record}
+                rows={rows}
+                setRows={setRows}
               />
-          ))
+            </>
+          )
+
         },
       },
     },
@@ -245,50 +304,90 @@ export default function SearchDataTable(props) {
             return !filters.some((filter) => selectorLabels.includes(filter));
           },
         },
-        customBodyRender: (value, tableMeta, updateValue) => {
-          const record = getRecord(tableMeta.rowData);
+        customBodyRenderLite: (dataIndex) => {
+          const record = rows[dataIndex];
+          const [open, setOpen] = useState(false);
+
           if (record.selectors?.length == 0) {
-            return <div></div>;
+            return (
+            <Tooltip title={'Add a new selector'}>
+              <IconButton onClick={() => { setOpen(true)}}>
+                <AddCircleOutlineIcon color={'primary'}/>
+                <SelectorFormDialogV2
+                  open={open}
+                  setOpen={setOpen}
+                  isloading={isLoading}
+                  setIsLoading={setIsLoading}
+                  refreshRows={refreshRows}
+                />
+              </IconButton>
+            </Tooltip>
+            )
           }
           // TODO add support for regex activated discovery plugins.
-          return record.selectors.map((selector, index) => (
+          const chips = record.selectors?.map((selector, index) => (
             <DiscoveryPluginDialog
               key={`selector-${selector.name}-${selector.selectorTypeName}-${record.uuid}`}
               plugins={discoveryPlugins.filter((plugin) => {
                 return plugin.pluginType === selector.selectorTypeName;
               })}
-              title={selector.selectorTypeName}
+              title={selector.selectorTypeName ?? ''}
               record={record}
               uxType={'chip'}
-              pluginValue={selector.name}
+              selectorValue={selector.name}
+              refreshRows={refreshRows}
             />
           ));
+          return (
+            <>
+              <Tooltip title={'Add a new selector'}>
+                <IconButton onClick={() =>{
+                  setOpen(true)
+                }}>
+                  <AddCircleOutlineIcon
+                    color={'primary'}
+                  />
+                </IconButton>
+              </Tooltip>
+              {chips}
+              <SelectorFormDialogV2
+                open={open}
+                setOpen={setOpen}
+                isloading={isLoading}
+                setIsLoading={setIsLoading}
+                refreshRows={refreshRows}
+              />
+            </>
+          )
         },
       },
     },
-      {
-        name: 'domain',
-        label: 'DOMAINS',
-        options: {
-          filterType: 'multiselect',
-          filter: true,
-          sort: true,
-          customBodyRender: (value, tableMeta, updateValue) => {
-            const record = getRecord(tableMeta.rowData)
+    {
+      name: 'domain',
+      label: 'DOMAINS',
+      options: {
+        filterType: 'multiselect',
+        filter: true,
+        sort: true,
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData);
 
-            return <DiscoveryPluginDialog
-                key={`domain-${value}-${record.uuid}`}
-                plugins={discoveryPlugins.filter((plugin) => {
-                  return plugin.pluginType === 'domain';
-                })}
-                title={'domain'}
-                record={record}
-                uxType={'chip'}
-                pluginValue={value}
+          return (
+            <DiscoveryPluginDialog
+              key={`domain-${value}-${record.uuid}`}
+              plugins={discoveryPlugins.filter((plugin) => {
+                return plugin.pluginType === 'domain';
+              })}
+              title={'domain'}
+              record={record}
+              uxType={'chip'}
+              selectorValue={value}
+              refreshRows={refreshRows}
             />
-          }
+          );
         },
       },
+    },
     {
       name: 'createdOn',
       label: 'COLLECTED ON',
@@ -312,7 +411,18 @@ export default function SearchDataTable(props) {
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
-          return <SearchTableOptionMenu record={record} rows={rows} setRows={setRows}/>;
+          const plugins = getIntegratedPlugins().filter(p => p.pluginType === 'content').concat(discoveryPlugins.filter(p => p.pluginType === 'content'));
+          return (
+            <DiscoveryPluginDialog
+              key={`content-${value}-${record.uuid}`}
+              plugins={plugins}
+              title={'content'}
+              record={record}
+              uxType={'appsIcon'}
+              pluginValue={''}
+              refreshRows={refreshRows}
+            />
+          );
         },
       },
     },
@@ -398,16 +508,18 @@ export default function SearchDataTable(props) {
     const deleteRecords = [];
     const deleteArtifacts = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
-      deleteRecords.push(rows[idx])
-      deleteArtifacts.push(...rows[idx].artifacts.map(a => a.id));
+      deleteArtifacts.push(rows[idx].artifacts.map((a) => a.uuid));
+      deleteRecords.push(rows[idx]);
     }
 
     await db.artifact.bulkDelete(deleteArtifacts);
     await deleteBulkRecords(RAPPORT, UUID, deleteRecords);
     setRows(await getLocalItem(RAPPORT));
     // update the configuration last
-    let configuration = Configuration.getConfiguration();
+    let configuration = await Configuration.getConfiguration();
     configuration.screenShotCount = rows.length;
+    configuration.updatedOn = new Date().getTime();
+    setUpdatedOn(configuration.updatedOn);
     await Configuration.setConfiguration(configuration);
     setIsLoading(false);
     hideLoader();
@@ -421,11 +533,14 @@ export default function SearchDataTable(props) {
       },
     },
     onDownload: (buildHead, buildBody, columns, data) => {
-        showLoader();
-        getLocalItem(RAPPORT).then((rapports) => {
-          downloadJsonData(rapports, 'your-rapport.json');
-          hideLoader();
-        });
+      showLoader();
+      getLocalItem(RAPPORT).then((rapports) => {
+        // set artifacts to an empty array,
+        // TODO: support exporting artifacts
+        rapports.forEach(r => r.artifacts = []);
+        downloadJsonData(rapports, 'your-rapport.json');
+        hideLoader();
+      });
       return false;
     },
     searchOpen: true,
@@ -457,20 +572,20 @@ export default function SearchDataTable(props) {
     customToolbar: () => {
       return (
         <>
-          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading}/>
+          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading} dataType={'rapports'}/>
         </>
       );
     },
     customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
-          <SearchDataTableToolbarSelect
-              selectedRows={selectedRows}
-              displayData={displayData}
-              columns={columns}
-              setSelectedRows={setSelectedRows}
-              rows={rows}
-              onRowsDelete={rowsDelete}
-          />
-      ),
+      <SearchDataTableToolbarSelect
+        selectedRows={selectedRows}
+        displayData={displayData}
+        columns={columns}
+        setSelectedRows={setSelectedRows}
+        rows={rows}
+        onRowsDelete={rowsDelete}
+      />
+    ),
   };
 
   if (isLoading) {

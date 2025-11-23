@@ -9,7 +9,7 @@ import { sha256FromBlob } from '../../utilities/transformers';
 
 export class Artifact implements IArtifact {
   createdOn: Date = new Date();
-  id!: string;
+  uuid!: string;
   rapportUuid!: string;
   size!: number;
   hash!: string;
@@ -24,36 +24,42 @@ export class Artifact implements IArtifact {
    */
   static getAttachment(artifact: IArtifact): Attachment {
     return {
-      id: artifact.id,
+      uuid: artifact.uuid,
       mimeType: artifact.mimeType,
       size: artifact.size,
-      url: artifact.url
+      url: artifact.url,
     };
   }
 
-
-  static async create(blob: Blob, rapportUuid: string, url: string, mimeType: string = ''): Promise<IArtifact> {
+  static async create(
+    blob: Blob,
+    rapportUuid: string,
+    url: string,
+    mimeType: string = ''
+  ): Promise<IArtifact> {
     // Compute a hash of the content for deduplication / integrity
     const hash = await sha256FromBlob(blob);
     const record: IArtifact = {
-      id: crypto.randomUUID(),
+      uuid: crypto.randomUUID(),
       rapportUuid,
       size: blob.size,
       hash,
       hashAlgorithm: 'SHA-256',
       mimeType: !blob.type ? mimeType : blob.type,
       data: blob,
-      url
-    }
-    debug('artifact saved', record)
+      url,
+    };
+    debug('artifact saved', record);
     return record;
   }
 
-
-  static async downloadArtifact(attachment: Attachment, fileName: string): Promise<void> {
-    const artifact = await db.artifact.get(attachment.id);
-    if(artifact === undefined){
-      debug(`Artifact record does not exist for ${attachment.id}`)
+  static async downloadArtifact(
+    attachment: Attachment,
+    fileName: string
+  ): Promise<void> {
+    const artifact = await db.artifact.get(attachment.uuid);
+    if (artifact === undefined) {
+      debug(`Artifact record does not exist for ${attachment.uuid}`);
       return;
     }
     const url = URL.createObjectURL(artifact.data);

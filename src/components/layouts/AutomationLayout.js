@@ -14,6 +14,10 @@ import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import BulkAutomationTable from '../tables/BulkAutomationDataTable';
 import { BULK_AUTOMATION } from '../../services/constants';
+import IconButton from '@mui/material/IconButton';
+import { Tooltip } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { createTab } from '../../utilities/loaders';
 
 export default function AutomationLayout() {
   const urlParams = new URL(window.location.href).searchParams;
@@ -23,21 +27,12 @@ export default function AutomationLayout() {
 
   const componentMap = [
     {
-      label: 'Bulk Automation',
+      label: 'Bulk Collect Automation',
       key: BULK_AUTOMATION,
       message:
         'Insert a list of urls that will be opened in a tab and collected',
-    },
-    {
-      label: 'Scheduled Automation',
-      key: 'scheduled_automation',
-      message: 'TODO: implement scheduling collection subsystem',
-    },
-    {
-      label: 'Selector Automation',
-      key: 'selector_automation',
-      message: 'TODO: Discover selectors on a live page',
-    },
+      url: 'https://github.com/yooper/your-rapport/wiki/Setting-Up-And-Running-Automations'
+    }
   ];
 
   return (
@@ -55,7 +50,18 @@ export default function AutomationLayout() {
                   <ListItemIcon>
                     <IconMapper icon={component.key} />
                   </ListItemIcon>
+                  <IconButton>
+                    <Tooltip title={'Click to learn more..'}>
+                      <OpenInNewIcon onClick={(e) => {
+                        e.stopPropagation();
+                        // open a tab to the wiki page for this subject
+                        createTab(component.url);
+                      }}/>
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton>
                   <HelperPopover message={component.message} />
+                  </IconButton>
                   &nbsp;
                   <ListItemText primary={component.label} />
                 </ListItemButton>

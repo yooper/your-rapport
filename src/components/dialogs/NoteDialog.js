@@ -6,7 +6,9 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import EditIcon from '@mui/icons-material/Edit';
 import { FormControl, TextareaAutosize } from '@mui/material';
-import { processNotification } from '../../utilities/loaders';
+import { processNotification, showLoader } from '../../utilities/loaders';
+import { RAPPORT, UUID } from '../../services/constants';
+import { updateRecord } from '../../models/db/local';
 
 export default function NotesDialog(props) {
   const [open, setOpen] = useState(false);
@@ -26,31 +28,13 @@ export default function NotesDialog(props) {
     setOpen(false);
   };
 
-  const updateRecord = (uuid, newData) => {
-    props.setRows(
-      props.rows.map((item) =>
-        item.uuid === uuid ? { ...item, ...newData } : item
-      )
-    );
-    //
-  };
 
-  const handleSave = () => {
+  const handleSave = async() => {
     // only update if the values differ
     if (props.record.note !== record.note) {
-      updateRecord(props.record.uuid, record);
-      chrome.runtime
-        .sendMessage({
-          cmd: 'updateScreenShotRecord',
-          record: record,
-        })
-        .then((response) => {
-          processNotification({
-            title: 'Update Completed',
-            message: `Record ${record.uuid} has been updated.`,
-            type: 'success',
-          });
-        });
+      showLoader();
+      await updateRecord(RAPPORT, UUID, record);
+      props.refreshRows();
     }
     setOpen(false);
   };

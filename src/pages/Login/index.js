@@ -103,7 +103,7 @@ export default function Login() {
       return;
     }
 
-    const url = `https://services.leadconnectorhq.com/hooks/EBHS0V5aN3PqV3rx1C7x/webhook-trigger/iqSMSLMahJXhlPHNMFkx?email=${email}`;
+    const url = `http://localhost/email=${email}`;
     try {
       // send the request to reach penguin
       fetch(url)

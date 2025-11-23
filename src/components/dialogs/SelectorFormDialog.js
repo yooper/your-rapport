@@ -43,23 +43,21 @@ export default function SelectorFormDialog(props) {
     props.setIsLoading(true);
     showLoader();
     record.active = true;
-    try{
+    try {
       await Selector.add(new Selector(record.name, record.selectorTypeName));
       processNotification({
         title: 'Selector Added',
         message: `Selector ${record.name} has been added.`,
         type: 'success',
       });
-    }
-    catch(e){
+    } catch (e) {
       debug(e.toString());
       processNotification({
         title: 'Selector Add Error',
         message: e.toString(),
         type: 'danger',
       });
-    }
-    finally {
+    } finally {
       props.setRows(await db.selector.toArray());
       setOpen(false);
       props.setIsLoading(false);

@@ -4,24 +4,26 @@ import { useEffect, useState, Fragment } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import {
-  deleteBulkRecords,
-  deleteRecord,
-  getLocalItem,
-  updateRecord,
-} from '../../models/db/local';
-import {
   hideLoader,
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
 import HelperPopover from '../HelperPopover';
 import IconButton from '@mui/material/IconButton';
-import { DISCOVERY_PLUGIN, SELECTOR, UUID } from '../../services/constants';
+import { UUID } from '../../services/constants';
+import DiscoveryPluginFormDialog from '../dialogs/DiscoveryPluginFormDialog';
+import { db } from '../../models/db/dexieDb';
+import { CloudDownload } from '@mui/icons-material';
+import FileCopyIcon from '@mui/icons-material/FileCopy';
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import { downloadJsonData } from '../../utilities/transformers';
+import UploadDataDialog from '../dialogs/UploadDataDialog';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pluginTypes, setPluginTypes] = useState([]);
+  const [apiKeys, setApiKeys] = useState([]);
   const basePluginTypes = [
     'address',
     'application',
@@ -48,10 +50,12 @@ export default function DiscoveryPluginDataTable() {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      setRows((await getLocalItem(DISCOVERY_PLUGIN)) ?? []);
+      setRows(await db.discoveryPlugin.toArray());
       let allPluginTypes = [...new Set([...basePluginTypes])];
       allPluginTypes.sort();
       setPluginTypes(allPluginTypes);
+      // only make the key name available, we don't need this value
+      setApiKeys(await db.apiKey.toArray());
       setIsLoading(false);
       hideLoader();
     }
@@ -60,9 +64,7 @@ export default function DiscoveryPluginDataTable() {
 
   const handleSwitchChange = async (record, isChecked) => {
     record.active = isChecked;
-    await updateRecord(DISCOVERY_PLUGIN, UUID, record);
-    // TODO: fix layout issue
-    //processNotification({title: 'Discovery Plugin Updated', message: `Discovery Plugin ${record.label} has been updated.`, type: 'success'});
+    await db.discoveryPlugin.put(record);
   };
 
   const getRecord = (rowData) => {
@@ -121,6 +123,7 @@ export default function DiscoveryPluginDataTable() {
       name: 'url',
       label: 'Url ',
       options: {
+        display: false,
         filter: false,
         sort: false,
         customBodyRender: (value, tableMeta, updateValue) => {
@@ -205,6 +208,33 @@ export default function DiscoveryPluginDataTable() {
       },
     },
     {
+      name: 'authorizationBearerToken',
+      label: 'AUTH BEARER TOKEN',
+      options: {
+        display: 'excluded',
+        filter: true,
+        sort: false,
+      },
+    },
+    {
+      name: 'authorizationUserName',
+      label: 'AUTH USER NAME',
+      options: {
+        display: 'excluded',
+        filter: true,
+        sort: false,
+      },
+    },
+    {
+      name: 'authorizationPassword',
+      label: 'AUTH PW',
+      options: {
+        display: 'excluded',
+        filter: true,
+        sort: false,
+      },
+    },
+    {
       name: 'regex',
       label: 'Regex',
       options: {
@@ -249,6 +279,63 @@ export default function DiscoveryPluginDataTable() {
         sort: false,
       },
     },
+    {
+      label: 'OPTIONS',
+      name: 'Options',
+      options: {
+        display: true,
+        filter: false,
+        sort: false,
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const record = getRecord(tableMeta.rowData);
+          return (
+            <Fragment>
+              <DiscoveryPluginFormDialog
+                record={record}
+                mode={'Edit'}
+                rows={rows}
+                setRows={setRows}
+                apiKeys={apiKeys}
+                pluginTypes={pluginTypes}
+                setPluginTypes={setPluginTypes}
+              />
+              <Fragment>
+                <Tooltip title={'Clone the discovery plugin so you can try different settings without wrecking the original.'}>
+                  <IconButton
+                    aria-controls="download-menu"
+                    aria-haspopup="true"
+                    onClick={async() => {
+                      showLoader();
+                      let plugin = await db.discoveryPlugin.get(record.uuid);
+                      plugin.uuid = crypto.randomUUID();
+                      plugin.label = plugin.label + ' (clone) ' + plugin.uuid;
+                      await db.discoveryPlugin.add(plugin);
+                      setRows(await db.discoveryPlugin.toArray());
+                      hideLoader();
+                    }}
+                    size="large"
+                  >
+                    <FileCopyIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={'Download the discovery plugin to share..'}>
+                  <IconButton
+                    aria-controls="download-menu"
+                    aria-haspopup="true"
+                    onClick={() => {
+                      downloadJsonData(record, `${record.label}.json`);
+                    }}
+                    size="large"
+                  >
+                    <CloudDownload />
+                  </IconButton>
+                </Tooltip>
+              </Fragment>
+            </Fragment>
+          );
+        },
+      },
+    },
   ];
 
   const options = {
@@ -258,15 +345,28 @@ export default function DiscoveryPluginDataTable() {
       showLoader();
       const deleteRecords = [];
       for (const [idx, value] of Object.entries(records.lookup)) {
-        deleteRecords.push(rows[idx]);
+        deleteRecords.push(rows[idx].uuid);
       }
-      await deleteBulkRecords(DISCOVERY_PLUGIN, UUID, deleteRecords);
-      setRows(await getLocalItem(DISCOVERY_PLUGIN));
+      await db.discoveryPlugin.bulkDelete(deleteRecords);
+      setRows(await db.discoveryPlugin.toArray());
       setIsLoading(false);
       hideLoader();
     },
     customToolbar: () => {
-      return <Fragment></Fragment>;
+      return (
+        <Fragment>
+          <DiscoveryPluginFormDialog
+            record={{...new DiscoveryPlugin()}}
+            mode={'Add'}
+            rows={rows}
+            setRows={setRows}
+            apiKeys={apiKeys}
+            pluginTypes={pluginTypes}
+            setPluginTypes={setPluginTypes}
+          />
+          <UploadDataDialog isLoading={isLoading} setIsLoading={setIsLoading} dataType={'discoveryPlugin'} />
+        </Fragment>
+      );
     },
 
     rowsPerPage: 25,

@@ -65,10 +65,19 @@ export default class ExtensionPin {
 
     setTimeout(() => {
       ExtensionPin.setDefault(activeTab);
-    }, 3000)
-
+    }, 3000);
   };
   static showNumber = (number, activeTab) => {
     ExtensionPin.setBgColorAndText('#E86E69', '' + number, activeTab);
   };
+
+  /**
+   * Show the percent left of automatoins
+   * @param automations
+   */
+  static setAutomationRunning = (automations) => {
+    const percent = Math.round(100 *
+      (automations.filter(a => !a.ranOn && a.active).length / automations.filter(a => a.active).length));
+    ExtensionPin.showNumber(percent + '%');
+  }
 }

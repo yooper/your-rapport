@@ -21,12 +21,9 @@ export default function TagDataTable(props) {
       hideLoader();
     }
     fetchData();
-
   }, []);
 
-  const columns = [
-    { label: 'Tag Name', name: 'name' }
-  ];
+  const columns = [{ label: 'Tag Name', name: 'name' }];
 
   const options = {
     searchAlwaysOpen: false,

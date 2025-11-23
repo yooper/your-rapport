@@ -13,7 +13,7 @@ import {
   TableHead,
   TableRow,
   Tooltip,
-  SvgIconTypeMap
+  SvgIconTypeMap,
 } from '@mui/material';
 import { OverridableComponent } from '@mui/material/OverridableComponent';
 
@@ -47,7 +47,6 @@ export default function VerticalGenericTableDialog({
   useEffect(() => {
     const result = anyProperty(selectedRecord, approvedFields);
   }, [selectedRecord, approvedFields]);
-
 
   const handleClose = (): void => {
     setOpen(false);
@@ -86,7 +85,7 @@ export default function VerticalGenericTableDialog({
     return cloned;
   }
 
-  const getIcon = (): OverridableComponent<SvgIconTypeMap<{}, "svg">> => {
+  const getIcon = (): OverridableComponent<SvgIconTypeMap<{}, 'svg'>> => {
     switch (iconType) {
       case 'HelpOutlineIcon':
         return HelpOutlineIcon;
@@ -169,5 +168,3 @@ export default function VerticalGenericTableDialog({
     </>
   );
 }
-
-

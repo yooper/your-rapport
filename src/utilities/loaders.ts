@@ -1,50 +1,81 @@
 import { Store } from 'react-notifications-component';
-import { convertKeysToCamelCase } from './transformers';
-import { addRecord } from '../models/db/local';
-import { DISCOVERY_PLUGIN, UUID } from '../services/constants';
 import { debug } from '../services/logger_services';
+import Package from '../models/schemas/Package';
+import { db } from '../models/db/dexieDb';
+import type { ThemeOptions } from '@mui/material/styles';
 
 /**
  * Show the loader...
  */
-export function showLoader() {
-  const loader = document.querySelector('.loader');
-  loader.classList.remove('loader--hide');
+export function showLoader(): void {
+  const loader = document.querySelector<HTMLElement>('.loader');
   const appContainer = document.getElementById('app-container');
-  appContainer.classList.add('component--hide');
+
+  if (loader) {
+    loader.classList.remove('loader--hide');
+  }
+  if (appContainer) {
+    appContainer.classList.add('component--hide');
+  }
 }
 
 /**
  * Hide the loader
  */
-export function hideLoader() {
-  const loader = document.querySelector('.loader');
-  loader.classList.add('loader--hide');
+export function hideLoader(): void {
+  const loader = document.querySelector<HTMLElement>('.loader');
   const appContainer = document.getElementById('app-container');
-  appContainer.classList.remove('component--hide');
+
+  if (loader) {
+    loader.classList.add('loader--hide');
+  }
+  if (appContainer) {
+    appContainer.classList.remove('component--hide');
+  }
 }
 
 /**
  * Used to display notifications to the user
- * @param data
  */
-export function processNotification(data, duration = 3000) {
+export type NotificationType =
+  | 'success'
+  | 'danger'
+  | 'info'
+  | 'default'
+  | 'warning'
+
+export interface NotificationData {
+  title: string;
+  message: string;
+  type: NotificationType;
+}
+
+export function processNotification(
+  data: NotificationData,
+  duration: number = 3000
+): void {
+  // TODO: handle notifications created in the service worker
+  if (typeof window === 'undefined') {
+    debug('background runner notification', data);
+    return;
+  }
+
   Store.addNotification({
     title: data.title,
     message: data.message,
     type: data.type,
     insert: 'top',
-    container: 'top-right',
+    container: 'top-left',
     animationIn: ['animate__animated', 'animate__fadeIn'],
     animationOut: ['animate__animated', 'animate__fadeOut'],
     dismiss: {
-      duration: data.type==='danger' ? (duration * 2): duration,
+      duration: data.type === 'danger' ? duration * 2 : duration,
       onScreen: true,
     },
   });
 }
 
-export function getDarkTheme() {
+export function getDarkTheme(): ThemeOptions {
   return {
     palette: {
       mode: 'dark',
@@ -54,6 +85,8 @@ export function getDarkTheme() {
       secondary: {
         main: '#619657',
       },
+      // custom key used in your app
+      // @ts-expect-error - non-standard palette key
       cancel: {
         main: '#E86E69',
       },
@@ -63,53 +96,49 @@ export function getDarkTheme() {
 
 /**
  * Opens a tab using the chrome api
- * @param url
- * @param onlyOneTabOpen
- * @returns {Promise<void>}
  */
-export async function createTab(url, onlyOneTabOpen = false) {
+export async function createTab(
+  url: string,
+  onlyOneTabOpen: boolean = false
+): Promise<void> {
   const openUrls = (await getAllTabUrls()) ?? [];
-  if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl == url)) {
-    debug('too many urls')
+  if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl === url)) {
+    debug('too many urls', {openUrls});
     return;
   }
-  await chrome.tabs.create({ url: url });
+  await chrome.tabs.create({ url });
 }
 
 /**
  * Returns the list of urls that are open
- * @returns {Promise<string[]>}
  */
-async function getAllTabUrls() {
+async function getAllTabUrls(): Promise<string[]> {
   const tabs = await chrome.tabs.query({ windowType: 'normal' });
   const urls = tabs
-    .map((tab) => {
-      return tab.url;
-    })
-    .filter((u) => u !== undefined);
+    .map((tab) => tab.url)
+    .filter((u): u is string => u !== undefined);
   return urls;
 }
 
-export async function getActiveTab() {
-  let queryOptions = { active: true, lastFocusedWindow: true };
-  // `tab` will either be a `tabs.Tab` instance or `undefined`.
-  let [tab] = await chrome.tabs.query(queryOptions);
+export async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
+  const queryOptions: chrome.tabs.QueryInfo = {
+    active: true,
+    lastFocusedWindow: true,
+  };
+  const [tab] = await chrome.tabs.query(queryOptions);
   return tab;
 }
 
 /**
  * Install a package, which installs the specific discovery plugin
- * @param record {Package}
- * */
-export async function installPackage(record) {
-  const response = await fetch(record.url);
-  const data = await response.json();
-  const dp = convertKeysToCamelCase(data);
-  // doesn't overwrite the existing record if it exists
-  await addRecord(DISCOVERY_PLUGIN, UUID, dp);
+ */
+export async function installPackage(
+  record: Package | { url: string }
+): Promise<void> {
+  await Package.install(record as any);
 }
 
-export function getSelectorTypeMap() {
+export function getSelectorTypeMap(): Record<string, string> {
   return {
     address: 'Address',
     associate: 'Associate',
@@ -131,42 +160,47 @@ export function getSelectorTypeMap() {
 
 /**
  * Hydrate the passed in instance with data object
- * @param instance
- * @param data
- * @returns {*}
  */
-export function hydrate(instance, data) {
-  for (const key in instance) {
-    if (instance.hasOwnProperty(key)) {
-      instance[key] = instance[key];
+export function hydrate<T extends object>(
+  instance: T,
+  data: Partial<T>
+): T {
+  for (const key in data) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      (instance as any)[key] = (data as any)[key];
     }
   }
   return instance;
 }
 
-export function sleep(ms) {
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function runWithMinDelay(taskFn) {
-  const start = performance.now(); // Start the timer
-  await taskFn(); // Run the task (can be sync or async)
+export async function runWithMinDelay(
+  taskFn: () => void | Promise<void>
+): Promise<void> {
+  const start = performance.now();
+  await taskFn();
   const elapsed = performance.now() - start;
   const remaining = 1500 - elapsed;
   if (remaining > 0) {
-    await new Promise(resolve => setTimeout(resolve, remaining));
+    await new Promise((resolve) => setTimeout(resolve, remaining));
   }
   debug(`Finished after ${Math.max(elapsed, 1000).toFixed(0)}ms`);
 }
 
-
 /**
  * Installs a set of default packages
- * @returns {Promise<void>}
  */
-export async function initializeDiscoveryPlugins() {
-  // install the default discovery plugins
-  const defaultDiscoveryPlugins = [
+export async function initializeDiscoveryPlugins(): Promise<void> {
+  const count = await db.discoveryPlugin.count();
+  if (count > 0) {
+    debug('Discovery plugins already initialized.');
+    return;
+  }
+
+  const defaultDiscoveryPlugins: string[] = [
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/sec-edgar.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/california/sos-business-search.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-name.json',
@@ -178,7 +212,6 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/github/gh-save-screenshot.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-text-username.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-title-username.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-url-username.json',
@@ -204,27 +237,22 @@ export async function initializeDiscoveryPlugins() {
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-archive.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-check.json',
     'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/domainiq.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/built-with.json'
-
+    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/built-with.json',
   ];
+
   for (const pluginUrl of defaultDiscoveryPlugins) {
-    try{
+    try {
       await installPackage({ url: pluginUrl });
-    }
-    catch(e){
-      debug(e)
+    } catch (e) {
+      debug(e);
     }
   }
 }
 
-
 /**
  * Check for the xpath
- * @param xpath
- * @returns {Node|null}
  */
-function getElementByXPath(xpath) {
-  // Evaluate the XPath against the document
+function getElementByXPath(xpath: string): Node | null {
   const result = document.evaluate(
     xpath,
     document,
@@ -232,6 +260,5 @@ function getElementByXPath(xpath) {
     XPathResult.FIRST_ORDERED_NODE_TYPE,
     null
   );
-  // Return the node if found
   return result?.singleNodeValue ?? null;
 }

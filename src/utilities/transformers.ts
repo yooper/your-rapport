@@ -3,6 +3,7 @@ import ExtensionPin from './ExtensionPin';
 import { SELECTOR } from '../services/constants';
 import { ActiveTab } from '../types';
 import { Selector } from '../models/schemas/Selector';
+import { db } from '../models/db/dexieDb';
 
 // Utility: Convert string to boolean
 export function stringToBoolean(str: string | null): boolean {
@@ -42,20 +43,25 @@ export async function sha256(message: string): Promise<string> {
 
 export async function sha256FromBlob(blob: Blob): Promise<string> {
   const arrayBuffer = await blob.arrayBuffer(); // Convert Blob to ArrayBuffer
-  const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer); // Hash the ArrayBuffer
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer); // Hash the ArrayBuffer
   const hashArray = Array.from(new Uint8Array(hashBuffer)); // Convert buffer to byte array
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); // Convert bytes to hex string
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join(''); // Convert bytes to hex string
   return hashHex;
 }
 
 // Utility: Download JSON data as file
-export function downloadJsonData(data: unknown, fileName: string = 'data.json'): void {
+export function downloadJsonData(
+  data: unknown,
+  fileName: string = 'data.json'
+): void {
   const jsonString = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = fileName;
+  link.download = sanitizeFileName(fileName);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -63,7 +69,10 @@ export function downloadJsonData(data: unknown, fileName: string = 'data.json'):
 }
 
 // Utility: Download base64-encoded image
-export function downloadBase64Image(base64Data: string, fileName: string): void {
+export function downloadBase64Image(
+  base64Data: string,
+  fileName: string
+): void {
   const link = document.createElement('a');
   link.download = fileName;
   link.href = base64Data;
@@ -115,23 +124,27 @@ export function base64ToFile(base64Data: string, fileName: string): File {
   return new File([buffer], fileName, { type: mimeType });
 }
 
-
-
 // Scans the page content of the tab and highlights matching selectors
 export async function scanPage(activeTab: ActiveTab): Promise<void> {
   if (!activeTab.id) return;
 
-  const response: { text: string } = await chrome.tabs.sendMessage(activeTab.id, {
-    cmd: 'getFullText',
-  });
+  const response: { text: string } = await chrome.tabs.sendMessage(
+    activeTab.id,
+    {
+      cmd: 'getFullText',
+    }
+  );
 
-  const selectors = findAllMatches(response.text, await getLocalItem(SELECTOR));
+  const selectors = findAllMatches(response.text, await db.selector.toArray());
   const totalCount = Math.min(
     selectors.reduce((sum: number, item: any) => sum + item.count, 0),
     99
   );
 
-  ExtensionPin.showNumber(`${Math.min(selectors.length, 9)}|${totalCount}`, activeTab.id);
+  ExtensionPin.showNumber(
+    `${Math.min(selectors.length, 9)}|${totalCount}`,
+    activeTab.id
+  );
 
   await chrome.tabs.sendMessage(activeTab.id, {
     cmd: 'markText',
@@ -147,7 +160,11 @@ export async function scanPage(activeTab: ActiveTab): Promise<void> {
  * @param limit
  */
 
-export function findAllMatches(text: string, selectors: Array<Selector>, limit: number = 100) {
+export function findAllMatches(
+  text: string,
+  selectors: Array<Selector>,
+  limit: number = 100
+) {
   const matches = [];
   for (const selector of selectors) {
     const value = selector.name;
@@ -185,10 +202,17 @@ export function findAllMatches(text: string, selectors: Array<Selector>, limit: 
   return matches;
 }
 
-export function anyProperty<T extends Record<string, any>>(obj: T, keys: string[]): boolean {
-  return keys.some(key => Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && obj[key] !== "");
+export function anyProperty<T extends Record<string, any>>(
+  obj: T,
+  keys: string[]
+): boolean {
+  return keys.some(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(obj, key) &&
+      obj[key] != null &&
+      obj[key] !== ''
+  );
 }
-
 
 interface LinkContext {
   linkUrl?: string;
@@ -205,30 +229,30 @@ export function selectCorrectLink({
   frameUrl,
   pageUrl,
 }: LinkContext): string | null {
-  const link = linkUrl?.trim() || "";
-  const frame = frameUrl?.trim() || "";
-  const page = pageUrl?.trim() || "";
+  const link = linkUrl?.trim() || '';
+  const frame = frameUrl?.trim() || '';
+  const page = pageUrl?.trim() || '';
 
   if (!link && !frame) return null;
 
   const BLOCKLIST = [
-    "taboola.com",
-    "doubleclick.net",
-    "facebook.com",
-    "outbrain.com",
-    "googlesyndication.com",
-    "googleadservices.com",
-    "clickserve",
-    "bit.ly",
-    "lnkd.in",
+    'taboola.com',
+    'doubleclick.net',
+    'facebook.com',
+    'outbrain.com',
+    'googlesyndication.com',
+    'googleadservices.com',
+    'clickserve',
+    'bit.ly',
+    'lnkd.in',
   ];
 
   /** Extracts a normalized root domain (handles subdomains) */
   const getDomain = (url: string): string | null => {
     try {
       const { hostname } = new URL(url);
-      const parts = hostname.split(".");
-      return parts.slice(-2).join("."); // simple heuristic: example.com, not subdomain.example.com
+      const parts = hostname.split('.');
+      return parts.slice(-2).join('.'); // simple heuristic: example.com, not subdomain.example.com
     } catch {
       return null;
     }
@@ -245,7 +269,7 @@ export function selectCorrectLink({
   const isRoot = (url: string): boolean => {
     try {
       const u = new URL(url);
-      return u.pathname === "/" && !u.search && !u.hash;
+      return u.pathname === '/' && !u.search && !u.hash;
     } catch {
       return false;
     }
@@ -253,7 +277,7 @@ export function selectCorrectLink({
 
   const pathDepth = (url: string): number => {
     try {
-      return new URL(url).pathname.split("/").filter(Boolean).length;
+      return new URL(url).pathname.split('/').filter(Boolean).length;
     } catch {
       return 0;
     }
@@ -265,16 +289,13 @@ export function selectCorrectLink({
 
   if (link && !isRoot(link) && !isBlocked(link)) {
     return link;
-  }
-  else if (isBlocked(link) && frame && !isRoot(frame)) {
+  } else if (isBlocked(link) && frame && !isRoot(frame)) {
     return frame;
-  }
-  else if (frame && !isRoot(frame)){
-    return frame
+  } else if (frame && !isRoot(frame)) {
+    return frame;
   }
   return link || frame;
 }
-
 
 /**
  * Converts a Blob (e.g., image file) into a Base64-encoded data URL.
@@ -297,4 +318,69 @@ export function blobToBase64Image(blob: Blob): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
+}
+
+// Sorts in place by the given key. Returns the same (now sorted) array.
+export function sort_by_key<T, K extends keyof T>(
+  array: T[] | null | undefined,
+  key: K
+): T[] {
+  if (!array || array.length === 0) return [];
+  if (array.length === 1) return array;
+
+  return array.sort((a, b) => {
+    const x = a[key];
+    const y = b[key];
+
+    // Handle undefined / null consistently: place them after defined values
+    const xUndef = x === undefined || x === null;
+    const yUndef = y === undefined || y === null;
+    if (xUndef && !yUndef) return 1;
+    if (!xUndef && yUndef) return -1;
+    if (xUndef && yUndef) return 0;
+
+    // Compare numbers, strings, booleans, Dates; fallback to string compare
+    const xv =
+      x instanceof Date
+        ? x.getTime()
+        : typeof x === 'boolean'
+        ? Number(x)
+        : (x as unknown as string | number);
+    const yv =
+      y instanceof Date
+        ? y.getTime()
+        : typeof y === 'boolean'
+        ? Number(y)
+        : (y as unknown as string | number);
+
+    if (xv < yv) return -1;
+    if (xv > yv) return 1;
+    return 0;
+  });
+}
+
+/**
+ * Replaces characters not allowed in filenames on common filesystems and trims/normalizes edge cases.
+ * @param fileName Input filename (untrusted user input is okay)
+ * @returns A sanitized filename safe for most filesystems
+ */
+export function sanitizeFileName(fileName: string): string {
+  let sanitized = fileName.trim();
+  // Replace invalid characters:  <>:"/\|?*  and ASCII control chars 0x00–0x1F
+  const invalidCharsRegex = /[<>:"/\\|?*\x00-\x1F]/g;
+  sanitized = sanitized.replace(invalidCharsRegex, "_");
+
+  if (sanitized.endsWith(".")) {
+    sanitized = sanitized.slice(0, -1);
+  }
+  return sanitized;
+}
+
+
+export function safeJsonParse<T = unknown>(text: string): { ok: true; value: T } | { ok: false; error: Error } {
+  try {
+    return { ok: true, value: JSON.parse(text) as T };
+  } catch (err) {
+    return { ok: false, error: err as Error };
+  }
 }

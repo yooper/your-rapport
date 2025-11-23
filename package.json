@@ -1,12 +1,12 @@
 {
   "name": "your-rapport",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "A chrome extension for saving screenshots and making them searchable.",
   "license": "Commercial",
   "scripts": {
     "build": "node utils/build.js",
     "start": "node utils/webserver.js",
-    "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
+    "prettier": "prettier --write src/**/*.{js,jsx,ts,tsx,json,css,scss,md}"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -26,7 +26,9 @@
     "react-notifications-component": "^4.0.1",
     "react18-json-view": "^0.2.9",
     "styled-components": "^6.1.0",
-    "validator": "^13.15.0"
+    "validator": "^13.15.0",
+    "view-json-react": "^1.1.2",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",

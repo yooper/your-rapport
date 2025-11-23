@@ -4,6 +4,7 @@ import { db } from '../models/db/dexieDb';
 /**
  * This is a proof of concept for interacting with the extensions data and
  * allowing for automated test cases to be built more readily
+ * TODO: add ACLs
  */
 export async function processApiRequest(): Promise<APIResponse> {
   const params = new URLSearchParams(window.location.search);
@@ -17,14 +18,19 @@ export async function processApiRequest(): Promise<APIResponse> {
   }
 
   const table = (db as any)[tableName];
-  if (!table || typeof table !== 'object' || typeof table.toArray !== 'function') {
+  if (
+    !table ||
+    typeof table !== 'object' ||
+    typeof table.toArray !== 'function'
+  ) {
     return { success: false, error: `Invalid table name: ${tableName}` };
   }
 
   try {
     switch (action) {
       case 'create': {
-        if (!rawData) return { success: false, error: 'Missing data for create' };
+        if (!rawData)
+          return { success: false, error: 'Missing data for create' };
         const obj = JSON.parse(rawData);
         const newId = await table.add(obj);
         return { success: true, data: { id: newId } };
@@ -41,7 +47,8 @@ export async function processApiRequest(): Promise<APIResponse> {
       }
 
       case 'update': {
-        if (!id || !rawData) return { success: false, error: 'Missing id or data for update' };
+        if (!id || !rawData)
+          return { success: false, error: 'Missing id or data for update' };
         const updated = JSON.parse(rawData);
         await table.update(id, updated);
         return { success: true, data: { id, updated } };
