@@ -29,29 +29,33 @@ export function getVisibleText() {
   const outputTexts = [];
   const visibleElements = findAllVisibleElements();
 
-  visibleElements.forEach((element) => {
+  for( let idx = 0; idx < visibleElements.length; idx++ ) {
+    const element = visibleElements[idx];
     const tag = element.tagName.toUpperCase();
+
     if (
       nonTextHtmlTags[tag] === false ||
       isNonStandardTag(element) ||
       !isElementVisible(element)
     ) {
-      return;
+      continue;
     }
 
     const text = element.innerText?.trim();
-    if (!text || text.length === 0) return;
-
-    // Normalize whitespace and remove repeated inner spaces
-    const cleaned = text.replace(/\s+/g, ' ').trim();
-
-    // Avoid adding if this exact cleaned text is already seen
-    if (!seenText.has(cleaned)) {
-      seenText.add(cleaned);
-      outputTexts.push(cleaned);
+    if (!text || text.length === 0){
+      continue;
     }
-  });
-  return outputTexts.join(' || ');
+
+    const modifiedText = text.replace(/\s+/g, ' ').trim().toLowerCase();
+    const tokens = modifiedText.split(" ");
+    for(const token of tokens){
+      if (!seenText.has(token.trim())) {
+        seenText.add(token.trim());
+      }
+    }
+  }
+  // return the tokens
+  return Array.from(seenText).join(' || ');
 }
 
 /**

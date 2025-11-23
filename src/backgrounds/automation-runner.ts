@@ -1,11 +1,12 @@
 // src/background/automation-runner.ts
-import { takeNext, complete, fail, recoverExpiredLeases } from './automation-queue';
+import { takeNext, complete, fail, recoverExpiredLeases, getQueue } from './automation-queue';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
 import { updateRecord, getLocalItem } from '../models/db/local'
 import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, PAGE_INITIALIZED, UUID } from '../services/constants';
 import { IBulkAutomationRecord } from '../types';
 import { sleep } from '../utilities/loaders';
+import  ExtensionPin from '../utilities/ExtensionPin';
 
 const IDLE_MS = 6000;   // page considered stuck if no progress for this long
 const OVERLAP_PX = 80;
@@ -46,14 +47,17 @@ async function processQueue() {
     if (!job){
       return;
     }
-
+    ExtensionPin.setAutomationRunning(await getQueue());
     job.ranOn = new Date().getTime()
     await updateRecord(BULK_AUTOMATION, UUID, job);
     let tabId: number | null = null;
     try {
       const tab = await chrome.tabs.create({ url: job.url, active: false });
 
-      if (!tab.id) throw new Error('failed to open tab');
+      if (!tab.id) {
+        await debug('failed to open tab', job)
+        throw new Error('failed to open tab');
+      }
       tabId = tab.id;
 
       // Wait for load or DNS failure (ERR_NAME_NOT_RESOLVED)

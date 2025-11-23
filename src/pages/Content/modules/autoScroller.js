@@ -54,19 +54,18 @@ export function autoScroller(message) {
   } else {
     // stop the script from running
     state = STATE_STOPPED;
+  }
+
+  if (state === STATE_STOPPED) {
     debug('Autoscroller stopped', message);
     processAutomation('Automation stopped')
     return;
   }
 
-  if (state === STATE_STOPPED) {
-    debug('hard stop', { message });
-  }
-
   const autoScroll = () => {
 
     if (state !== STATE_ACTIVE) {
-      debug('capture stopped');
+      debug('Autoscroller stopped', message);
       processAutomation('Automation stopped')
       return;
     }

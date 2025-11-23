@@ -15,6 +15,7 @@ import {
   AUTO_COLLECT_STARTING,
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB,
+  NO_VISIBLE_TEXT,
   ENQUEUE_BULK_AUTOMATION_URL, PAGE_INFO, UUID,
 } from '../../services/constants';
 
@@ -90,6 +91,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
       await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
+      sendResponse({ completed: true });
+    })();
+    return true;
+  }
+  if (message.cmd === CAPTURE_VISIBLE_TAB) {
+    (async () => {
+      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
+      sendResponse({ completed: true });
+    })();
+    return true;
+  }
+  // TODO: Add better error handling
+  if (message.cmd === NO_VISIBLE_TEXT) {
+    (async () => {
       sendResponse({ completed: true });
     })();
     return true;

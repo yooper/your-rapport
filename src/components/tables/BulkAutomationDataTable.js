@@ -150,10 +150,33 @@ export default function BulkAutomationTable(props) {
       },
     },
     { label: 'STATUS', name: 'status' },
-    { label: 'UNIT', name: 'unit' },
-    { label: 'VALUE', name: 'value' },
-    { label: '# SCREENSHOTS', name: 'screenShotsCollected' },
-
+    {
+      name: 'unit',
+      label: 'UNIT',
+      options: {
+        display: false,
+        filter: false,
+        sort: false,
+      },
+    },
+    {
+      name: 'value',
+      label: 'VALUE',
+      options: {
+        display: false,
+        filter: false,
+        sort: false,
+      },
+    },
+    {
+      name: 'screenShotsCollected',
+      label: '# SCREENSHOTS',
+      options: {
+        display: false,
+        filter: false,
+        sort: false,
+      },
+    },
     {
       label: 'KEEP TAB OPEN',
       name: 'keepTabOpen',
@@ -169,7 +192,7 @@ export default function BulkAutomationTable(props) {
           return (
             <FormControlLabel
               control={
-                <Switch color="primary" color="primary" checked={value} />
+                <Switch color="primary" checked={value} />
               }
               label={
                 <div>

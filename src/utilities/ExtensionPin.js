@@ -70,4 +70,10 @@ export default class ExtensionPin {
   static showNumber = (number, activeTab) => {
     ExtensionPin.setBgColorAndText('#E86E69', '' + number, activeTab);
   };
+
+  static setAutomationRunning = (automations) => {
+    const percent = Math.round(100 *
+      (automations.filter(a => !a.ranOn && a.active).length / automations.filter(a => a.active && !a.completedOn).length));
+    ExtensionPin.showNumber(percent + '%');
+  }
 }
