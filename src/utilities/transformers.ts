@@ -1,6 +1,6 @@
 import { getLocalItem } from '../models/db/local';
 import ExtensionPin from './ExtensionPin';
-import { SELECTOR } from '../services/constants';
+import { PAGE_INFO, SELECTOR } from '../services/constants';
 import { ActiveTab } from '../types';
 import { Selector } from '../models/schemas/Selector';
 import { db } from '../models/db/dexieDb';
@@ -128,14 +128,10 @@ export function base64ToFile(base64Data: string, fileName: string): File {
 export async function scanPage(activeTab: ActiveTab): Promise<void> {
   if (!activeTab.id) return;
 
-  const response: { text: string } = await chrome.tabs.sendMessage(
-    activeTab.id,
-    {
-      cmd: 'getFullText',
-    }
-  );
+  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO });
+  const { pageInfo } = response
 
-  const selectors = findAllMatches(response.text, await db.selector.toArray());
+  const selectors = findAllMatches(pageInfo.text.toLowerCase(), await db.selector.toArray());
   const totalCount = Math.min(
     selectors.reduce((sum: number, item: any) => sum + item.count, 0),
     99

@@ -66,6 +66,8 @@ chrome.commands.onCommand.addListener(async(command) => {
         .then(response => {debug(ACTIVATE_CAPTURE+':', response);
         })
       return true;
+    case 'openDashboard':
+      await createTab(`chrome-extension://${chrome.runtime.id}/search.html`);
       break;
     default:
       break;

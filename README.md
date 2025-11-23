@@ -14,6 +14,8 @@ This enables us to continue development and support for this product.
 
 Please consider supporting this project with a [pro license](https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00).
 
+Check out the wiki for more in depth information. 
+
 ### Getting Started 
 After installing the Chrome extension from https://chromewebstore.google.com/detail/your-rapport/clkaalonjdkliiaadkgodlfbiipidjmn, 
 "Your Rapport" will automatically be ready to collect.
