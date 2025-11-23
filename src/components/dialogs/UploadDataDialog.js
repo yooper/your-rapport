@@ -92,6 +92,7 @@ export default function UploadDataDialog(props) {
           let configuration = await Configuration.getConfiguration();
           // get/set the record count
           configuration.recordCount = configuration?.recordCount ?? 0;
+          // TODO: validate the rapports being imported
           const newRecords = JSON.parse(e.target.result);
           // TODO: use a background job to rebuild the selectors.
 

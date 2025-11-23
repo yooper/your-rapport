@@ -172,7 +172,7 @@ function BasicTable() {
       const baseUrl = currentUrl.origin + currentUrl.pathname;
       debug(`base url is ${baseUrl}`);
       const rapports = await getLocalItem(RAPPORT);
-      const found = rapports.find((r) => r.url.startsWith(baseUrl));
+      const found = rapports.find((r) => r.url?.startsWith(baseUrl));
       if (found) {
         debug(`found last captured on ${found.url}`);
         setCapturedOn(found.createdOnLocalTime);

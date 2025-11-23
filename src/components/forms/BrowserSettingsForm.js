@@ -72,6 +72,7 @@ export default function BrowserSettingsForm(props) {
             />
           </Grid>
           <Grid item xs={12}>
+
             <FormControlLabel
               id={'debugMessagesEnabled'}
               name={'debugMessagesEnabled'}

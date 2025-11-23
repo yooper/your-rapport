@@ -73,35 +73,39 @@ function SearchDataTableToolbarSelect(props) {
     <Fragment>
       <span style={{ justifyContent: 'right' }}>
         <Tooltip title={'Merge multiple screenshots and download the image.'}>
-          <IconButton>
-            <BurstModeIcon
-              onClick={async () => {
-                showLoader();
-                const orderedIndex = selectedRows.data.map(
-                  (sr) => sr.dataIndex
-                );
-                const orderedRapports = [];
-                for (let idx of orderedIndex) {
-                  orderedRapports.push(rows[idx]);
-                }
-                const dataUri = await mergeImagesVertically(orderedRapports);
-                await downloadBase64Image(
-                  dataUri,
-                  'your_rapport_merged_images.png'
-                );
-                hideLoader();
-              }}
-            />
-          </IconButton>
+          <span>
+            <IconButton>
+              <BurstModeIcon
+                onClick={async () => {
+                  showLoader();
+                  const orderedIndex = selectedRows.data.map(
+                    (sr) => sr.dataIndex
+                  );
+                  const orderedRapports = [];
+                  for (let idx of orderedIndex) {
+                    orderedRapports.push(rows[idx]);
+                  }
+                  const dataUri = await mergeImagesVertically(orderedRapports);
+                  await downloadBase64Image(
+                    dataUri,
+                    'your_rapport_merged_images.png'
+                  );
+                  hideLoader();
+                }}
+              />
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title={'Delete'}>
-          <IconButton>
-            <DeleteIcon
-              onClick={() => {
-                props.onRowsDelete(selectedRows, displayData);
-              }}
-            />
-          </IconButton>
+          <span>
+            <IconButton>
+              <DeleteIcon
+                onClick={() => {
+                  props.onRowsDelete(selectedRows, displayData);
+                }}
+              />
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip
           title={'Export Selected Rapports in a JSON file to share or backup.'}
@@ -109,11 +113,13 @@ function SearchDataTableToolbarSelect(props) {
           <IconButton>
             <CloudDownloadIcon
               onClick={async () => {
-                const rapports = getRapportRecords(
+                const rapports = await getRapportRecords(
                   selectedRows,
                   displayData,
                   columns
                 );
+                // TODO: support exporting artifacts.
+                rapports.forEach(r => r.artifacts = []);
                 downloadJsonData(rapports, 'your-rapports.json');
               }}
             />

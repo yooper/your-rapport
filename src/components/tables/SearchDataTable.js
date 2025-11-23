@@ -2,7 +2,7 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import MUIDataTable from 'mui-datatables';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
-import { createTab, hideLoader, showLoader } from '../../utilities/loaders';
+import { hideLoader, showLoader } from '../../utilities/loaders';
 import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
 import PreviewImageDialog from '../dialogs/PreviewImageDialog';
@@ -149,14 +149,14 @@ export default function SearchDataTable(props) {
                       </IconButton>
                     </Tooltip>
                   </Badge>
-                  <Badge badgeContent={record.artifacts.length} color={'primary'} >
+                  <Badge badgeContent={record.artifacts?.length ?? 0} color={'primary'} >
                     <Tooltip title={'See the attachments'}>
-                      <IconButton disabled={record.artifacts.length===0}>
+                      <IconButton disabled={record.artifacts?.length===0}>
                         <GenericTableDialog
                           title={'Associated Attachments'}
                           iconType={'AttachmentIcon'}
                           defaultHeaders={attachmentHeaders}
-                          defaultRecords={record.artifacts.map(a => {
+                          defaultRecords={record.artifacts?.map(a => {
                             return {
                               ...a,
                               'view': `chrome-extension://${chrome.runtime.id}/api.html?format=file&uuid=${a.uuid}`
@@ -192,12 +192,12 @@ export default function SearchDataTable(props) {
         searchable: true,
         customBodyRender: (value, tableMeta, updateValue) => {
           const record = getRecord(tableMeta.rowData);
-          let url = record.url;
+          let url = record.url ?? 'RECORD IS MALFORMED (DELETE IT)';
           if (url.length > 32) {
             url = record.url.substring(0, 32) + '...';
           }
 
-          let title = record.title;
+          let title = record.title ?? 'RECORD IS MALFORMED (DELETE IT)';
           if (title.length > 40) {
             title = title.substring(0, 40) + '...';
           }
@@ -229,7 +229,7 @@ export default function SearchDataTable(props) {
               </div>
               <div>
                 <span>
-                  <NotesDialog record={record} rows={rows} setRows={setRows} />
+                  <NotesDialog record={record} refreshRows={refreshRows} />
                 </span>
                 <span className={'page_title'}>Notes:</span>
                 <span> {record.note ?? ''}</span>
@@ -325,7 +325,7 @@ export default function SearchDataTable(props) {
             )
           }
           // TODO add support for regex activated discovery plugins.
-          const chips = record.selectors.map((selector, index) => (
+          const chips = record.selectors?.map((selector, index) => (
             <DiscoveryPluginDialog
               key={`selector-${selector.name}-${selector.selectorTypeName}-${record.uuid}`}
               plugins={discoveryPlugins.filter((plugin) => {
