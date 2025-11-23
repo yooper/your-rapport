@@ -42,7 +42,9 @@ export default function SearchTableOptionMenu(props) {
   };
 
   const handleDownloadRecord = () => {
-    downloadJsonData(record, `your.rapport.${record.uuid}.json`);
+    const copy = {...record,...{ artifacts:[] }}
+    // TODO: support exporting attributes
+    downloadJsonData(copy, `your.rapport.${record.uuid}.json`);
     handleClose(null);
   };
 

@@ -24,6 +24,7 @@ import {
   UUID,
 } from '../../services/constants';
 import { debug } from '../../services/logger_services';
+import ExtensionPin from '../../utilities/ExtensionPin';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
@@ -80,6 +81,7 @@ export default function BulkAutomationTable(props) {
     }
 
     await setLocalItem(BULK_AUTOMATION, automations);
+    await ExtensionPin.setAutomationRunning(automations);
     chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
     processNotification({
       title: 'Automation job(s) Queued',
@@ -278,6 +280,7 @@ export default function BulkAutomationTable(props) {
                   copy.status = 'queued';
                   copy.completedOn = null;
                   copy.description = 'Manually run'
+                  await ExtensionPin.setAutomationRunning([copy]);
                   setRows(await updateRecord(BULK_AUTOMATION, UUID, copy));
                   chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
                   processNotification({

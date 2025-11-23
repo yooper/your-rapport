@@ -12,6 +12,7 @@ export interface IConfiguration {
   automationDeepSaveEnabled: boolean;
   debugMessagesEnabled: boolean;
   highlightSelectorsEnabled: boolean;
+  updatedOn: number|null;
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -28,7 +29,8 @@ export class Configuration {
       automationDeepSaveEnabled: false,
       automationKeepTabOpenDefault: true,
       debugMessagesEnabled: false,
-      highlightSelectorsEnabled: false
+      highlightSelectorsEnabled: false,
+      updatedOn: null
     };
   }
 

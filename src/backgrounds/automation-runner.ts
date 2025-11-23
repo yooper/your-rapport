@@ -97,6 +97,7 @@ async function processQueue() {
             break;
           }
           job.screenShotsCollected = refreshedJob.screenShotsCollected
+          ExtensionPin.setAutomationRunning(await getQueue());
           await sleep(3000);
         }
         while(['running', 'queued'].includes(job.status));

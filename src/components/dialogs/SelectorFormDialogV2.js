@@ -73,6 +73,7 @@ export default function SelectorFormDialogV2(props) {
       });
     } finally {
       setOpen(false);
+      props.setOpen(false);
       props.setIsLoading(false);
       refreshRows()
       hideLoader();

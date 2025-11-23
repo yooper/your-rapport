@@ -26,7 +26,6 @@ export function getVisibleText() {
   };
 
   const seenText = new Set();
-  const outputTexts = [];
   const visibleElements = findAllVisibleElements();
 
   for( let idx = 0; idx < visibleElements.length; idx++ ) {
@@ -55,7 +54,7 @@ export function getVisibleText() {
     }
   }
   // return the tokens
-  return Array.from(seenText).join(' || ');
+  return Array.from(seenText).join(' | ');
 }
 
 /**

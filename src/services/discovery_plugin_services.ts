@@ -407,7 +407,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       description: 'Download a JSON file that has all the metadata. Great for sharing with others.',
       onClick: (record: IRapport) =>
       {
-        downloadJsonData(record, `your.rapport.${record.uuid}.json`);
+        downloadJsonData(record, `your.rapport.dp.${record.uuid}.json`);
       }
     }),
     new DiscoveryPlugin({

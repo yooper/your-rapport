@@ -40,7 +40,7 @@ export default function SearchDataTable(props) {
   const [selectors, setSelectors] = useState(null);
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
-  const [updatedOn, setUpdatedOn] = useState(null)
+  const [updatedOn, setUpdatedOn] = useState(new Date().getTime());
   const attachmentHeaders = ['view', 'uuid', 'mimeType', 'size', 'url']
 
 
@@ -72,11 +72,11 @@ export default function SearchDataTable(props) {
      */
     const intervalId = setInterval(async () => {
       const lastModified = await Configuration.getConfigurationValue(UPDATED_ON);
-      if (updatedOn !== lastModified) {
+      if (updatedOn < lastModified) {
         setUpdatedOn(lastModified)
         showLoader()
-        const screenshots = (await getLocalItem(RAPPORT)) ?? [];
-        setRows(screenshots);
+        const rapports = (await getLocalItem(RAPPORT)) ?? [];
+        setRows(rapports);
         hideLoader()
       }
     }, 5000); // wait 5 seconds before re-renders
@@ -104,7 +104,6 @@ export default function SearchDataTable(props) {
           const [isOpen, setIsOpen] = useState(false);
           const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
           const [openAttributeViewer, setOpenAttributeViewer] = useState(false);
-          const mhtmlAttachment = record.artifacts.find(a => a.mimeType === 'multipart/related')
           return (
             <>
               <img
@@ -517,8 +516,10 @@ export default function SearchDataTable(props) {
     await deleteBulkRecords(RAPPORT, UUID, deleteRecords);
     setRows(await getLocalItem(RAPPORT));
     // update the configuration last
-    let configuration = Configuration.getConfiguration();
+    let configuration = await Configuration.getConfiguration();
     configuration.screenShotCount = rows.length;
+    configuration.updatedOn = new Date().getTime();
+    setUpdatedOn(configuration.updatedOn);
     await Configuration.setConfiguration(configuration);
     setIsLoading(false);
     hideLoader();
@@ -534,6 +535,9 @@ export default function SearchDataTable(props) {
     onDownload: (buildHead, buildBody, columns, data) => {
       showLoader();
       getLocalItem(RAPPORT).then((rapports) => {
+        // set artifacts to an empty array,
+        // TODO: support exporting artifacts
+        rapports.forEach(r => r.artifacts = []);
         downloadJsonData(rapports, 'your-rapport.json');
         hideLoader();
       });

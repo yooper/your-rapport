@@ -46,6 +46,8 @@ import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { Selector } from '../../models/schemas/Selector';
 import HelperPopover from '../HelperPopover';
 import { IRapport } from '../../types';
+import { addRecord } from '../../models/db/local';
+import { BULK_AUTOMATION, UUID } from '../../services/constants';
 
 
 interface DiscoveryPluginDialogProps {
@@ -288,14 +290,14 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
                             </IconButton>
                             <Tooltip title={'Queue item into the bulk automation collection'}>
                               <IconButton disabled={!plugin.url || plugin.action !== 'CreateTab'}>
-                                <AddToQueueIcon onClick={() => {
+                                <AddToQueueIcon onClick={async() => {
                                   // TODO: disable plugin click after the item has been queued
                                   // assign the plugin value
                                   const dp = {...plugin,...{selectorValue: selectorValue}}
                                   const url = Mustache.render(dp.url, dp);
-                                    BulkAutomationUrl.queueUrl(url).then(() => {
-                                      processNotification({title: 'Url queued', message: 'The discovery plugin url has been placed in the automation queue', type:'info'})
-                                    })
+                                  const automation = BulkAutomationUrl.createBulkAutomationJob(url, 'count', 100);
+                                  await addRecord(BULK_AUTOMATION, UUID, automation)
+                                  processNotification({title: 'Url queued', message: 'The discovery plugin url has been placed in the automation queue', type:'info'});
                                 }}/>
                               </IconButton>
                             </Tooltip>
