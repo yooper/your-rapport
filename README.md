@@ -25,7 +25,7 @@ There are several options for collecting a screenshot of a web page:
  * `Ctrl+Shift+S` collects a single screenshot and deep copy which is an mhtml file
  * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
- * `Ctrl+Alt+A` quick scan the web page for selectors and show the counts on the extension pin. 
+ * `Ctrl+Shift+Q` quick scan the web page for selectors and show the counts on the extension pin. 
  * Click the "Your Rapport" pin in your extension tab and select the action you want performed.  
 
 Your Rapport is an open source commercial tool for the following reasons:
