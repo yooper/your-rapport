@@ -8,10 +8,24 @@ import { createTab } from '../utilities/loaders';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
+import PersonIcon from '@mui/icons-material/Person';
+import PersonOffIcon from '@mui/icons-material/PersonOff';
+import { useEffect } from 'react';
+import { getUser, User } from '../models/schemas/User';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+  const [auth, setAuth] = React.useState(true);
+
+  useEffect(() => {
+    async function fetchData(){
+      const user = await getUser();
+      setAuth(user && user.verify() ? true : false);
+    }
+    fetchData();
+  }, []);
+
 
   const menuItems = [
     { name: 'support', label: 'Support This App($3 per month)', url: 'https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00', title:'Help support this app and make this menu item disappear.' },
@@ -71,6 +85,32 @@ export default function TopAppBar() {
           <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
             Your Rapport
           </Typography>
+          <div>
+
+          </div>
+          {auth ? (
+            <Tooltip title={'Thank you for your support, all pro features are enabled.'}>
+              <IconButton
+                size="large"
+                aria-label="User has been authenticated. Pro options enabled."
+                color="inherit"
+                onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
+              >
+                <PersonIcon />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip title={'User is not authenticated, pro options are not available.'}>
+              <IconButton
+                size="large"
+                aria-label="User has not been authenticated. Pro features are unavailable."
+                color="inherit"
+                onClick={() => createTab(`chrome-extension://${chrome.runtime.id}/login.html`)}
+              >
+                <PersonOffIcon />
+              </IconButton>
+            </Tooltip>
+          )}
         </Toolbar>
       </AppBar>
     </Box>

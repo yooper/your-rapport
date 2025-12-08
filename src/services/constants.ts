@@ -51,6 +51,8 @@ export const AUTO_COLLECT_SCROLLBAR_STOPPED = 'autoCollectScrollbarStopped' as c
 export const AUTO_COLLECT_MAX_SCREENSHOTS = 'autoCollectMaxScreenshots' as const;
 
 
+
+
 export type CommandName =
   | typeof ACTIVATE_CAPTURE
   | typeof ACTIVATE_AUTOMATION

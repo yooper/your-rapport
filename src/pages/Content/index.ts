@@ -127,5 +127,21 @@ chrome.runtime.onMessage.addListener((msg: any, sender, sendResponse) => {
 });
 
 
+const signInHandler = (): void => {
+  const links = document.querySelectorAll<HTMLAnchorElement>('.yr-sign-in-link');
+  links.forEach((link) => {
+    link.addEventListener('click', async(e: MouseEvent) => {
+      e.preventDefault();
+      const url = link.href;
+      const response = await chrome.runtime.sendMessage({ cmd: 'createTab', url });
+    });
+  });
+};
+
+// special case for doing authentication
+if (window.location.hostname === "bakerstreet.llc") {
+    signInHandler();
+}
+
 
 

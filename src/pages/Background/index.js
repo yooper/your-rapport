@@ -47,7 +47,7 @@ export function getJobQueue(){
  * Add in support for short-cut keys
  */
 chrome.commands.onCommand.addListener(async(command) => {
-  debug(`Command ${command} received`)
+  await debug(`Command ${command} received`)
 
   const activeTab = await getActiveTab()
   const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO });
@@ -87,6 +87,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return true;
   }
+
+  /**
+   * Used by the authentication process
+   */
+  if (message.cmd === 'createTab'){
+    (async () => {
+      await createTab(message.url);
+      sendResponse({ completed: true });
+    })();
+    return true;
+  }
+
   /**
    * Tell the content script the save was successful
    */
@@ -123,7 +135,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
   try {
     (async () => {
       switch (message.cmd) {
-        case 'singleCollect':
+        case 'singleCollect': // TODO: Deprecated remove after 1/1/26
         case 'deepSave':
           await createTab(message.url);
           const activateTab = await getActiveTab();
@@ -136,7 +148,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           sendResponse({completed: true})
           break;
         case AUTO_COLLECT_STARTING:
-        case 'autoscrollCollect':
+        case 'autoscrollCollect': // TODO: Deprecated remove after 1/1/26
           await createTab(message.url);
           await sleep(3000);
           sendResponse({completed: true})
