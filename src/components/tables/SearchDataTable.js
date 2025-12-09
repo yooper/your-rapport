@@ -24,9 +24,7 @@ import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
 import { db } from '../../models/db/dexieDb';
 import VerticalGenericTableDialog from '../dialogs/VerticalGenericTableDialog';
-import { Artifact } from '../../models/schemas/Artifact';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
-import TagIcon from '@mui/icons-material/Tag';
 import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
 import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import IconButton from '@mui/material/IconButton';
@@ -72,7 +70,7 @@ export default function SearchDataTable(props) {
      */
     const intervalId = setInterval(async () => {
       const lastModified = await Configuration.getConfigurationValue(UPDATED_ON);
-      if (updatedOn < lastModified) {
+      if (rows.length !== (await getLocalItem(RAPPORT)).length) {
         setUpdatedOn(lastModified)
         showLoader()
         const rapports = (await getLocalItem(RAPPORT)) ?? [];
@@ -102,7 +100,6 @@ export default function SearchDataTable(props) {
         customBodyRenderLite: (dataIndex) => {
           const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
-          const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
           const [openAttributeViewer, setOpenAttributeViewer] = useState(false);
           return (
             <>

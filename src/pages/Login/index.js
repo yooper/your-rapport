@@ -20,7 +20,7 @@ import { ReactNotifications } from 'react-notifications-component';
 import Mustache from 'mustache/mustache.mjs';
 import 'react-notifications-component/dist/theme.css';
 import Divider from '@mui/material/Divider';
-import { User } from '../../models/schemas/User';
+import { getUser, User } from '../../models/schemas/User';
 import { createTab, getDarkTheme, processNotification } from '../../utilities/loaders';
 import { createTheme, Tooltip } from '@mui/material';
 
@@ -83,6 +83,11 @@ export default function Login() {
               type: 'danger'
             })
         }
+      }
+      else if(urlParams.has('logout')){
+        const user = await getUser();
+        await user.delete();
+        window.location.replace(`chrome-extension://${chrome.runtime.id}/login.html`);
       }
     }
     fetchAccessToken();

@@ -34,7 +34,20 @@ export default function TopAppBar() {
     { name: 'options', label: 'Configurations', url: '/options.html', title:'Configure settings, add Api Keys, Tags, Selectors, install Discovery Plugins and more' },
     { name: 'discoveryPlugin', label: 'Discovery Plugins', url: '/options.html?view=discoveryPlugin', title:'Adjust which discovery plugins are active or set to run automatically.' },
     { name: 'documentation', label: 'Documentation', url: 'https://github.com/yooper/your-rapport/wiki', title:'Adjust which discovery plugins are active or set to run automatically.' },
+    { name: 'logOut', label: 'Log Out', url: '/login.html?logout=true', title:'Log out of the application.' },
   ];
+
+  const getMenuItems = async() => {
+    const user = await getUser();
+
+    if(!user){
+      menuItems.filter(m => m.name !== 'logOut')
+    }
+    else{
+      menuItems.filter(m => m.name !== 'support')
+    }
+
+  }
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -67,7 +80,7 @@ export default function TopAppBar() {
             open={open}
             onClose={handleClose}
           >
-          {menuItems &&
+          {getMenuItems() &&
             menuItems.map((menuItem) => (
             <Tooltip title={menuItem.title}>
               <MenuItem

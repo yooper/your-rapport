@@ -13,6 +13,7 @@ import { getLocalItem } from '../../../models/db/local';
 import BurstModeIcon from '@mui/icons-material/BurstMode';
 import { mergeImagesVertically } from '../../../services/image_loading_services';
 import { hideLoader, showLoader } from '../../../utilities/loaders';
+import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 
 const defaultToolbarSelectStyles = (theme) => ({
   root: {
@@ -107,6 +108,33 @@ function SearchDataTableToolbarSelect(props) {
             </IconButton>
           </span>
         </Tooltip>
+
+        <Tooltip
+          title={'Export selected rapports into a formatted file that can easily be ingested into AI for summarization'}
+        >
+          <IconButton>
+            <TextSnippetIcon
+              onClick={async () => {
+                const rapports = await getRapportRecords(
+                  selectedRows,
+                  displayData,
+                  columns
+                );
+                rapports.forEach(r => r.artifacts = []);
+                downloadJsonData(rapports.map(r => {
+                  return {
+                    text: r.text,
+                    url: r.url,
+                    domain: r.domain,
+                    selectors: r.selectors,
+                    tags: r.tags
+                  }
+                }), 'your-rapport-ai.json');
+              }}
+            />
+          </IconButton>
+        </Tooltip>
+
         <Tooltip
           title={'Export Selected Rapports in a JSON file to share or backup.'}
         >
