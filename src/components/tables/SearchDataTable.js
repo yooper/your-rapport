@@ -393,7 +393,7 @@ export default function SearchDataTable(props) {
         sort: true,
         searchable: false,
         customBodyRenderLite: (dataIndex) => {
-          const date = new Date(parseInt(rows[dataIndex].createdOn));
+          const date = new Date(parseInt(rows[dataIndex].createdOn) * 1000);
           return <div>{date.toLocaleString()}</div>;
         },
       },
