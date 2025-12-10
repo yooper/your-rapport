@@ -57,8 +57,6 @@ export class Configuration {
   ): Promise<IConfiguration> {
     const instance = { CONFIGURATION: JSON.stringify(configuration) };
     await chrome.storage.local.set(instance);
-    // TODO: fix this..
-    await setLocalItem(CONFIGURATION, configuration);
     return configuration;
   }
 
