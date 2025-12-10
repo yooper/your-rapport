@@ -1,6 +1,6 @@
 import {
   blobToBase64Image,
-  findAllMatches,
+  findAllMatches, getUtcNow,
   sha256,
   sha256FromBlob,
 } from '../../utilities/transformers';
@@ -64,7 +64,7 @@ export class Rapport {
    */
   static async createFromTab(tab, pageInfo, screenshot, selectors, deepSave) {
     const uuid = crypto.randomUUID();
-    const createdOn = Date.now();
+    const createdOn = getUtcNow();
     const hash = await sha256(screenshot);
     const domain = new URL(pageInfo.url).hostname;
     const text =
@@ -107,7 +107,7 @@ export class Rapport {
    */
   static async createFromBlob(blob, url, title, selectors) {
     const uuid = crypto.randomUUID();
-    const createdOn = Date.now();
+    const createdOn = getUtcNow();
     const hash = await sha256FromBlob(blob);
     const domain = new URL(url).hostname;
     const text = '';

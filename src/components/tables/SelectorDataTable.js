@@ -5,8 +5,6 @@ import MUIDataTable from 'mui-datatables';
 import SelectorFormDialog from '../dialogs/SelectorFormDialog';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import {
-  BULK_AUTOMATION,
-  RAPPORT,
   SELECTOR,
   UPDATED_ON,
 } from '../../services/constants';

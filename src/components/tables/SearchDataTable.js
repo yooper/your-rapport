@@ -7,7 +7,7 @@ import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
 import PreviewImageDialog from '../dialogs/PreviewImageDialog';
 import UploadDataDialog from '../dialogs/UploadDataDialog';
-import { downloadJsonData } from '../../utilities/transformers';
+import { downloadJsonData, getUtcNow } from '../../utilities/transformers';
 import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
 import { Avatar, Badge, Tooltip } from '@mui/material';
@@ -38,7 +38,7 @@ export default function SearchDataTable(props) {
   const [selectors, setSelectors] = useState(null);
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
-  const [updatedOn, setUpdatedOn] = useState(new Date().getTime());
+  let lastModified = localStorage.getItem('lastModified') ? parseInt(localStorage.getItem('lastModified')) : getUtcNow();
   const attachmentHeaders = ['view', 'uuid', 'mimeType', 'size', 'url']
 
 
@@ -69,9 +69,9 @@ export default function SearchDataTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-      const lastModified = await Configuration.getConfigurationValue(UPDATED_ON);
-      if (rows.length !== (await getLocalItem(RAPPORT)).length) {
-        setUpdatedOn(lastModified)
+      const configuration = await Configuration.getConfiguration();
+      if (lastModified < configuration.updatedOn) {
+        lastModified = configuration.updatedOn;
         showLoader()
         const rapports = (await getLocalItem(RAPPORT)) ?? [];
         setRows(rapports);
@@ -515,8 +515,8 @@ export default function SearchDataTable(props) {
     // update the configuration last
     let configuration = await Configuration.getConfiguration();
     configuration.screenShotCount = rows.length;
-    configuration.updatedOn = new Date().getTime();
-    setUpdatedOn(configuration.updatedOn);
+    configuration.updatedOn = getUtcNow();
+    lastModified = getUtcNow();
     await Configuration.setConfiguration(configuration);
     setIsLoading(false);
     hideLoader();

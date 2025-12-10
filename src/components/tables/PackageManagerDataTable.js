@@ -13,7 +13,6 @@ import IconButton from '@mui/material/IconButton';
 import HelperPopover from '../HelperPopover';
 import { DISCOVERY_PLUGIN, UUID } from '../../services/constants';
 import { db } from '../../models/db/dexieDb';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 
 // TODO add bulk install packages
 export default function PackageManagerDataTable(props) {

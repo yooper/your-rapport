@@ -17,6 +17,7 @@ import { Configuration } from '../../models/schemas/Configuration';
 import { RAPPORT, UPDATED_ON } from '../../services/constants';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { db } from '../../models/db/dexieDb';
+import { getUtcNow } from '../../utilities/transformers';
 
 /**
  * TODO: Add support for extracting selectors from incoming records
@@ -102,7 +103,7 @@ export default function UploadDataDialog(props) {
           configuration.screenShotCount = rapports.length;
           await setLocalItem(RAPPORT, rapports.concat(newRecords));
           // update the configuration last
-          configuration[UPDATED_ON] = Date.now();
+          configuration.updatedOn = getUtcNow();
           await Configuration.setConfiguration(configuration);
         }
       }

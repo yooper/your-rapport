@@ -2,11 +2,12 @@ import { addRecord } from '../models/db/local';
 import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';
-import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
+import { RAPPORT, UUID } from '../services/constants';
 import { db } from '../models/db/dexieDb';
 import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { applyBackgroundJobs } from '../services/discovery_plugin_services';
+import { getUtcNow } from '../utilities/transformers';
 
 // ----- Types ---------------------------------------------------------------
 
@@ -35,9 +36,6 @@ export async function capture(
     ExtensionPin.setDefaultNotSaved(tab);
 
     let configuration = await Configuration.getConfiguration();
-    // get/set the record count
-    configuration.screenShotCount = configuration?.screenShotCount ?? 0;
-
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
 
@@ -53,14 +51,6 @@ export async function capture(
       deepSave
     );
 
-    // sequence id
-    //record.sequenceId = 'sequence' in page ? (message.sequence ?? 0) : 0;
-
-    // bulk automation id
-    //record.bulkAutomationUuid =
-    //  'automation' in message && message.automation
-    //    ? message.automation.uuid
-    //    : null;
 
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
@@ -101,7 +91,7 @@ export async function capture(
     });
 
     // update the configuration last saved on metadata
-    configuration[UPDATED_ON] = Date.now();
+    configuration.updatedOn = getUtcNow();
     configuration.screenShotCount++;
 
     await Configuration.setConfiguration(configuration);

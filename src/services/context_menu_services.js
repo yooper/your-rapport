@@ -4,13 +4,12 @@ import ExtensionPin from '../utilities/ExtensionPin';
 import {
   ACTIVATE_CAPTURE, BULK_AUTOMATION,
   RAPPORT,
-  UPDATED_ON,
   UUID,
 } from './constants';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
 import { addRecord } from '../models/db/local';
-import { selectCorrectLink } from '../utilities/transformers';
+import { getUtcNow, selectCorrectLink } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
 import { fetchBlob } from './image_loading_services';
 import { applyBackgroundJobs } from './discovery_plugin_services';
@@ -94,7 +93,7 @@ export async function initializeContextMenus() {
           let configuration = await Configuration.getConfiguration();
           // get/set the record count
           configuration.screenShotCount = configuration?.screenShotCount ?? 0;
-          configuration[UPDATED_ON] = Date.now();
+          configuration.updatedOn = getUtcNow();
           configuration.screenShotCount++;
           await Configuration.setConfiguration(configuration);
           ExtensionPin.setDefaultSaved(tab);

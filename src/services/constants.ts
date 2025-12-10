@@ -21,7 +21,7 @@ export type StorageKey =
 /**
  * Common field names used in objects
  */
-export const UPDATED_ON = 'updated_on' as const;
+export const UPDATED_ON = 'updatedOn' as const;
 export const UUID = 'uuid' as const;
 
 /**

@@ -1,5 +1,6 @@
 import { getLocalItem, setLocalItem } from '../db/local';
 import { CONFIGURATION } from '../../services/constants';
+import { getUtcNow } from '../../utilities/transformers';
 
 // Shape of the configuration store
 export interface IConfiguration {
@@ -12,7 +13,8 @@ export interface IConfiguration {
   automationDeepSaveEnabled: boolean;
   debugMessagesEnabled: boolean;
   highlightSelectorsEnabled: boolean;
-  updatedOn: number|null;
+  screenShotCount: number;
+  updatedOn: number;
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -30,7 +32,8 @@ export class Configuration {
       automationKeepTabOpenDefault: true,
       debugMessagesEnabled: false,
       highlightSelectorsEnabled: false,
-      updatedOn: null
+      screenShotCount: 0,
+      updatedOn: getUtcNow()
     };
   }
 
