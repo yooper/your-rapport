@@ -10,10 +10,8 @@ import { useState } from 'react';
 import ExtensionIcon from '@mui/icons-material/Extension';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import WebIcon from '@mui/icons-material/Web';
-import ListAltIcon from '@mui/icons-material/ListAlt';
 import HelperPopover from '../HelperPopover';
 import BrowserSettingsForm from '../forms/BrowserSettingsForm';
-import PackageManagerDataTable from '../tables/PackageManagerDataTable';
 import SelectorDataTable from '../tables/SelectorDataTable';
 import DiscoveryPluginDataTable from '../tables/DiscoveryPluginDataTable';
 import TagDataTable from '../tables/TagDataTable';
@@ -50,12 +48,6 @@ export default function OptionsLayout() {
       key: 'discoveryPlugin',
       message: 'Connect or enrich your data to other service providers. Autolinks data repositories to your selectors.',
       url: 'https://github.com/yooper/your-rapport/wiki/Discovery-Plugins-Tutorial'
-    },
-    {
-      label: 'Package Management',
-      key: 'packageManagement',
-      message: 'Packages enhance and extend Your Rapport functionality. When you install a package it becomes a discovery plugin. Discovery plugins help you search for selectors.',
-      url: 'https://github.com/osint-liar/public-packages'
     },
     {
       label: 'Selectors',
@@ -121,8 +113,6 @@ function IconMapper(props) {
       return <WebIcon />;
     case 'discoveryPlugin':
       return <ExtensionIcon />;
-    case 'packageManagement':
-      return <ListAltIcon />;
     case 'selector':
       return <LocalOfferIcon />;
     case 'tag':
@@ -140,8 +130,6 @@ function Renderer(props) {
       return <BrowserSettingsForm />;
     case 'discoveryPlugin':
       return <DiscoveryPluginDataTable />;
-    case 'packageManagement':
-      return <PackageManagerDataTable />;
     case 'selector':
       return <SelectorDataTable />;
     case 'tag':
