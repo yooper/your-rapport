@@ -26,7 +26,7 @@ export async function discoveryPluginRunner(
 
   if (!user?.isAccessible?.('discoveryPlugin', rapport, discoveryPlugin)) {
     // TODO: notify user feature is only available in the pro model
-    throw new Error('Pro License Required');
+    //throw new Error('Pro License Required');
   }
 
   // assign the plugin value

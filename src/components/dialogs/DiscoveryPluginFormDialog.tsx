@@ -31,6 +31,11 @@ interface DiscoveryPluginFormDialogProps {
   setPluginTypes: (types: string[]) => void;
 }
 
+/**
+ * This is for adding / editing discovery plugins
+ * @param props
+ * @constructor
+ */
 const DiscoveryPluginFormDialog: React.FC<DiscoveryPluginFormDialogProps> = (
   props
 ) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import FieldMappingForm from '../forms/discovery-plugins/FieldMappingForm';
 import DiscoveryPluginAdvancedForm from '../forms/discovery-plugins/DiscoveryPluginAdvancedForm';
 import DiscoveryPluginAuthenticationForm from '../forms/discovery-plugins/DiscoveryPluginAuthenticationForm';
@@ -13,7 +13,7 @@ import DescriptionForm from '../forms/discovery-plugins/DescriptionForm';
 import { DiscoveryPluginLayoutProps } from '../../types';
 
 
-const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
+const SearchDiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
   record,
   setRecord,
   apiKeys,
@@ -21,6 +21,11 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
   setPluginTypes,
 }) => {
   const [value, setValue] = React.useState(0);
+
+
+  useEffect(() => {
+
+  }, [])
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -40,7 +45,7 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         variant="fullWidth"
         value={value}
         onChange={handleChange}
-        aria-label="Discovery Plugins"
+        aria-label="Discovery Plugin Search"
         sx={{
           borderRight: 1,
           borderColor: 'divider',

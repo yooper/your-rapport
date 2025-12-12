@@ -243,7 +243,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
           <form>
             <div>
               <Typography variant="h5">
-
                 {selectorValue}
                   <Tooltip title={'Copy the selected selector value into your clip board'}>
                   <CopyToClipboardIcon
@@ -252,6 +251,8 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
                   />
                 </Tooltip>
               </Typography>
+
+
 
               <List dense>
                 <ListItem
