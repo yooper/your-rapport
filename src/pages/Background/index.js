@@ -26,6 +26,7 @@ import { JobQueue } from '../../models/schemas/JobQueue';
 
 import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
 import { addRecord } from '../../models/db/local';
+import { fetchPackages } from '../../models/schemas/Package';
 
 /**
  * Initialize services when the extension is installed / activated
@@ -33,6 +34,8 @@ import { addRecord } from '../../models/db/local';
 await initializeContextMenus();
 await initializeDiscoveryPlugins();
 initializeAutomationRunner();
+// upon startup update or install discovery plugins
+await fetchPackages();
 
 
 let _jobQueue = null;

@@ -130,7 +130,7 @@ export async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
 }
 
 /**
- * Install a package, which installs the specific discovery plugin
+ * Install a single package, which installs the specific discovery plugin
  */
 export async function installPackage(
   record: Package | { url: string }
