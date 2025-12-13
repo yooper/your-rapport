@@ -9,7 +9,7 @@
     "default_title": "Your Rapport is a screenshot tool with auto scroll capabilities. Right click, select Collect or Ctrl+Shift+S to save. Ctrl+Shift+Z for auto scrolling captures. Ctrl+Shift+X open the dashboard.",
     "default_popup": "popup.html"
   },
-  "version": "0.15.1",
+  "version": "0.15.2",
   "icons": {
     "128": "icon-128.png",
     "48": "icon-48.png",
@@ -38,30 +38,31 @@
     "tabs",
     "webNavigation",
     "pageCapture",
-    "alarms"
+    "alarms",
+    "commands"
   ],
   "commands": {
     "deepSave": {
       "suggested_key": {
-        "default": "Ctrl+Shift+S"
+        "default": "Alt+S"
       },
       "description": "Save a single web page page screenshot"
     },
     "initAutoScroll": {
       "suggested_key": {
-        "default": "Ctrl+Shift+Z"
+        "default": "Alt+A"
       },
       "description": "Starts and stops auto scroll collection process."
     },
     "initScanPage": {
       "suggested_key": {
-        "default": "Ctrl+Shift+Q"
+        "default": "Alt+Q"
       },
       "description": "Scan the current web page for known selectors."
     },
     "openDashboard": {
       "suggested_key": {
-        "default": "Ctrl+Shift+X"
+        "default": "Alt+X"
       },
       "description": "Open Dashboard"
     }
