@@ -22,10 +22,10 @@ After installing the Chrome extension from https://chromewebstore.google.com/det
 
 There are several options for collecting a screenshot of a web page:
  * `Mouse - Right Click` and select the **Autoscroll Collect** menu option with the "Your Rapport" logo
- * `Ctrl+Shift+S` collects a single screenshot and deep copy which is an mhtml file
- * `Ctrl+Shift+Z` autoscroll and collect multiple screenshots, or stop the autoscroll.
- * `Ctrl+Shift+X` opens up the dashboard where you can search, print, share, or delete your collection. 
- * `Ctrl+Shift+Q` quick scan the web page for selectors and show the counts on the extension pin. 
+ * `Alt+S` collects a single screenshot and deep copy which is an mhtml file
+ * `Alt+A` autoscroll and collect multiple screenshots, or stop the autoscroll.
+ * `Alt+X` opens up the dashboard where you can search, print, share, or delete your collection. 
+ * `Alt+Q` quick scan the web page for selectors and show the counts on the extension pin. 
  * Click the "Your Rapport" pin in your extension tab and select the action you want performed.  
 
 Your Rapport is an open source commercial tool for the following reasons:
