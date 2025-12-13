@@ -38,30 +38,31 @@
     "tabs",
     "webNavigation",
     "pageCapture",
-    "alarms"
+    "alarms",
+    "commands"
   ],
   "commands": {
     "deepSave": {
       "suggested_key": {
-        "default": "Ctrl+Shift+S"
+        "default": "Alt+S"
       },
       "description": "Save a single web page page screenshot"
     },
     "initAutoScroll": {
       "suggested_key": {
-        "default": "Ctrl+Shift+Z"
+        "default": "Alt+A"
       },
       "description": "Starts and stops auto scroll collection process."
     },
     "initScanPage": {
       "suggested_key": {
-        "default": "Ctrl+Shift+Q"
+        "default": "Alt+Q"
       },
       "description": "Scan the current web page for known selectors."
     },
     "openDashboard": {
       "suggested_key": {
-        "default": "Ctrl+Shift+X"
+        "default": "Alt+X"
       },
       "description": "Open Dashboard"
     }

@@ -15,6 +15,7 @@
     "@mui/icons-material": "^5.14.14",
     "@mui/material": "^5.14.14",
     "@mui/styled-engine-sc": "^6.0.0-alpha.2",
+    "cheerio": "^1.1.2",
     "dexie": "^4.2.0",
     "dexie-cloud-addon": "^4.2.0",
     "dexie-react-hooks": "^4.2.0",
