@@ -2,7 +2,6 @@ import { capture } from '../../datasources/browser_capture';
 import {
   createTab,
   getActiveTab,
-  initializeDiscoveryPlugins,
   sleep,
 } from '../../utilities/loaders';
 import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl'
@@ -32,7 +31,6 @@ import { fetchPackages } from '../../models/schemas/Package';
  * Initialize services when the extension is installed / activated
  */
 await initializeContextMenus();
-await initializeDiscoveryPlugins();
 initializeAutomationRunner();
 // upon startup update or install discovery plugins
 await fetchPackages();
@@ -81,16 +79,15 @@ chrome.commands.onCommand.addListener(async(command) => {
  * This functions as the public api that other parts of the app message with
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.cmd === 'deepSave') {
     (async () => {
-      const response = await chrome.tabs.sendMessage(sender.tab.id, { cmd: PAGE_INFO });
-      const { pageInfo } = response
-      await capture(sender.tab, pageInfo, true);
-      sendResponse({completed: true, deepSave: true, pageInfo})
-    })();
-    return true;
-  }
-
+      if (message.cmd === 'deepSave') {
+          const response = await chrome.tabs.sendMessage(sender.tab.id, { cmd: PAGE_INFO });
+          const { pageInfo } = response
+          await capture(sender.tab, pageInfo, true);
+          sendResponse({completed: true, deepSave: true, pageInfo})
+        return true;
+      }
+      })();
   /**
    * Used by the authentication process
    */

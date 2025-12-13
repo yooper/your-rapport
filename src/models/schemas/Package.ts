@@ -63,7 +63,11 @@ export class Package {
   static async bulkUpsert(discoveryPlugins: DiscoveryPlugin[]){
     const results = await bulkFetchWithLimit(discoveryPlugins, { concurrency: 10 });
     const plugins = results.filter(r => r.ok).map(f => f.data)
-    plugins.forEach(p => p.pluginType === 'BackgroundRunner' ? p.active = false : p.active = true);
+    plugins.forEach(p => {
+      if(p.pluginType === 'BackgroundRunner'){
+        p.active = false;
+      }
+    });
     await debug(`${plugins.length} need to be installed or updated`, plugins);
     await db.discoveryPlugin.bulkPut(plugins);
   }
@@ -157,7 +161,12 @@ export async function fetchPackages() {
     else{
       // no updated available
       data = [];
+      debug('no packages to update or install');
+      return;
     }
+
+    // update package cache hash
+    await Configuration.setConfiguration(configuration);
 
     // convert the data to camelCase and filter legacy middleware
     const externalPackages = data.filter(

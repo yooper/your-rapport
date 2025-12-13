@@ -61,8 +61,7 @@ export async function capture(
       do {
         try {
           const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({tabId: tab.id});
-
-          const artifact = await Artifact.create(
+          const mhtmlArtifact = await Artifact.create(
             blob,
             record.uuid,
             record.url,
@@ -70,9 +69,19 @@ export async function capture(
           );
 
           // persist artifact (Dexie)
-          await db.artifact.add(artifact);
+          await db.artifact.add(mhtmlArtifact);
           // attach reference to record
-          record.artifacts.push(Artifact.getAttachment(artifact));
+          record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
+
+
+          const htmlArtifact = await Artifact.create(
+            new Blob([pageInfo.html], { type: 'text/html' }),
+            record.uuid,
+            record.url,
+            'text/html'
+          );
+          record.artifacts.push(Artifact.getAttachment(htmlArtifact));
+
           isSaved = true;
         } catch (e) {
           await debug(String(e));

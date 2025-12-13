@@ -191,65 +191,6 @@ export async function runWithMinDelay(
 }
 
 /**
- * Installs a set of default packages
- */
-export async function initializeDiscoveryPlugins(): Promise<void> {
-  const count = await db.discoveryPlugin.count();
-  if (count > 0) {
-    debug('Discovery plugins already initialized.');
-    return;
-  }
-
-  const defaultDiscoveryPlugins: string[] = [
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/sec-edgar.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/california/sos-business-search.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/illinois/il-sos-biz-search-by-org.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/michigan/lara-by-org-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/ohio/oh-business-search-by-org.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/countries/us/wisconsin/wi-corporate-by-org-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-address.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/fast-people-search/fps-phone.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-text-username.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-title-username.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/google/google-in-url-username.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/ngos/open-corporates/oc-search-by-org.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/caller-id.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/experian-phone-verification.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/ipqs-phone-validator.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/phone-validator.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/phones/reverse-phone-checker.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/whats-my-name.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/usernames/who-am-i.json',
-    // domain tools
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/url-scan-io.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/dnslytics.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/censys.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/robtex.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/securitytrails.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/shodan.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/threatminer.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/viewdns.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/virustotal.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-archive.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/web-check.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/domainiq.json',
-    'https://raw.githubusercontent.com/osint-liar/public-packages/develop/discovery-plugins/domains/built-with.json',
-  ];
-
-  for (const pluginUrl of defaultDiscoveryPlugins) {
-    try {
-      await installPackage({ url: pluginUrl });
-    } catch (e) {
-      debug(e);
-    }
-  }
-}
-
-/**
  * Check for the xpath
  */
 function getElementByXPath(xpath: string): Node | null {
