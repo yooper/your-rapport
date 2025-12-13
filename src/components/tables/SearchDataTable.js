@@ -259,7 +259,7 @@ export default function SearchDataTable(props) {
               key={`tag-${tag.name}-${record.uuid}`}
               plugins={[]}
               title={'tag'}
-              record={record}
+              rapport={record}
               uxType={'chip'}
               selectorValue={tag.name}
               refreshRows={refreshRows}
@@ -329,7 +329,7 @@ export default function SearchDataTable(props) {
                 return plugin.pluginType === selector.selectorTypeName;
               })}
               title={selector.selectorTypeName ?? ''}
-              record={record}
+              rapport={record}
               uxType={'chip'}
               selectorValue={selector.name}
               refreshRows={refreshRows}
@@ -376,7 +376,7 @@ export default function SearchDataTable(props) {
                 return plugin.pluginType === 'domain';
               })}
               title={'domain'}
-              record={record}
+              rapport={record}
               uxType={'chip'}
               selectorValue={value}
               refreshRows={refreshRows}
@@ -414,7 +414,7 @@ export default function SearchDataTable(props) {
               key={`content-${value}-${record.uuid}`}
               plugins={plugins}
               title={'content'}
-              record={record}
+              rapport={record}
               uxType={'appsIcon'}
               pluginValue={''}
               refreshRows={refreshRows}
