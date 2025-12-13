@@ -79,15 +79,33 @@ chrome.commands.onCommand.addListener(async(command) => {
  * This functions as the public api that other parts of the app message with
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.cmd === 'deepSave') {
+  (async () => {
+    try {
+      const activeTab = await getActiveTab();
+      const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO' });
+      await capture(activeTab, pageInfo, true);
+      sendResponse({ completed: true, deepSave: true, pageInfo });
+    } catch (e) {
+      await debug('deep save failed.')
+      sendResponse({
+        completed: false,
+        deepSave: true,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  })();
+    return true; // keep the message channel open for async sendResponse
+  }
+  else if(message.cmd === AUTO_COLLECT_STARTING) {
     (async () => {
-      if (message.cmd === 'deepSave') {
-          const response = await chrome.tabs.sendMessage(sender.tab.id, { cmd: PAGE_INFO });
-          const { pageInfo } = response
-          await capture(sender.tab, pageInfo, true);
-          sendResponse({completed: true, deepSave: true, pageInfo})
-        return true;
-      }
-      })();
+      const tab = await getActiveTab();
+      await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
+      sendResponse({ completed: true, deepSave: false });
+    })();
+    return true;
+  }
+
   /**
    * Used by the authentication process
    */
@@ -99,16 +117,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+
   /**
    * Tell the content script the save was successful
    */
-  if (message.cmd === CAPTURE_VISIBLE_TAB) {
-    (async () => {
-      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
-      sendResponse({ completed: true });
-    })();
-    return true;
-  }
   if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
       await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);

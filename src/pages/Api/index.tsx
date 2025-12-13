@@ -1,11 +1,171 @@
-// src/index.tsx
-import React, { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
-import { APIResponse, IArtifact, Props } from '../../types';
-import { processApiRequest } from '../../services/api_services';
-import { db } from '../../models/db/dexieDb';
-import { Artifact } from '../../models/schemas/Artifact';
+import React, { useEffect, useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+
+import Editor from "@monaco-editor/react";
+
+import { APIResponse, Props } from "../../types";
+import { processApiRequest } from "../../services/api_services";
+import { db } from "../../models/db/dexieDb";
+import { Artifact } from "../../models/schemas/Artifact";
+
+type ViewMode = "json" | "artifact";
+type MonacoTheme = "vs-dark" | "vs-light" | "hc-black" | "hc-light";
+
+const THEME_OPTIONS: Array<{ label: string; value: MonacoTheme }> = [
+  { label: "Dark", value: "vs-dark" },
+  { label: "Light", value: "vs-light" },
+  { label: "High Contrast Dark", value: "hc-black" },
+  { label: "High Contrast Light", value: "hc-light" },
+];
+
+const LANGUAGE_OPTIONS: Array<{ label: string; value: string }> = [
+  { label: "Auto", value: "auto" },
+  { label: "Plain text", value: "plaintext" },
+  { label: "JSON", value: "json" },
+  { label: "HTML", value: "html" },
+  { label: "CSS", value: "css" },
+  { label: "JavaScript", value: "javascript" },
+  { label: "TypeScript", value: "typescript" },
+  { label: "Markdown", value: "markdown" },
+  { label: "XML", value: "xml" },
+];
+
+function useLocalStorageState<T>(key: string, initial: T) {
+  const [value, setValue] = useState<T>(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as T) : initial;
+    } catch {
+      return initial;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // ignore
+    }
+  }, [key, value]);
+
+  return [value, setValue] as const;
+}
+
+function guessLanguage(mime: string, url?: string | null): string {
+  const m = (mime || "").toLowerCase();
+  const u = (url || "").toLowerCase();
+
+  if (m === "application/json" || u.endsWith(".json")) return "json";
+  if (m === "text/html" || u.endsWith(".html") || u.endsWith(".htm")) return "html";
+  if (m === "text/css" || u.endsWith(".css")) return "css";
+  if (
+    m === "text/javascript" ||
+    m === "application/javascript" ||
+    u.endsWith(".js")
+  )
+    return "javascript";
+  if (
+    m === "text/typescript" ||
+    u.endsWith(".ts") ||
+    u.endsWith(".tsx")
+  )
+    return "typescript";
+  if (m === "text/xml" || m === "application/xml" || u.endsWith(".xml")) return "xml";
+  if (m === "text/markdown" || u.endsWith(".md")) return "markdown";
+  return "plaintext";
+}
+
+function formatJsonSafely(value: unknown, pretty = 2): string {
+  try {
+    return JSON.stringify(value, null, pretty);
+  } catch {
+    return String(value);
+  }
+}
+
+const MonacoViewer: React.FC<{
+  value: string;
+  defaultLanguage?: string;
+  height?: string | number;
+  className?: string;
+  storageKeyPrefix?: string;
+}> = ({
+  value,
+  defaultLanguage = "plaintext",
+  height = "70vh",
+  className,
+  storageKeyPrefix = "your-rapport-monaco",
+}) => {
+  const [theme, setTheme] = useLocalStorageState<MonacoTheme>(
+    `${storageKeyPrefix}:theme`,
+    "vs-dark"
+  );
+  const [languageChoice, setLanguageChoice] = useLocalStorageState<string>(
+    `${storageKeyPrefix}:language`,
+    "auto"
+  );
+
+  const language = languageChoice === "auto" ? defaultLanguage : languageChoice;
+
+  return (
+    <div className={className} style={{ width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+          marginBottom: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ opacity: 0.8 }}>Language</span>
+          <select
+            value={languageChoice}
+            onChange={(e) => setLanguageChoice(e.target.value)}
+          >
+            {LANGUAGE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ opacity: 0.8 }}>Theme</span>
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as MonacoTheme)}
+          >
+            {THEME_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div style={{ width: "100%", height }}>
+        <Editor
+          value={value}
+          language={language}
+          theme={theme}
+          options={{
+            readOnly: true,
+            minimap: { enabled: false },
+            wordWrap: "on",
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            fontSize: 13,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
 
 const ApiRequestViewer: React.FC<Props> = ({
   autoRun = true,
@@ -15,16 +175,15 @@ const ApiRequestViewer: React.FC<Props> = ({
   const [result, setResult] = useState<APIResponse | Artifact | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Runs the api requests
   const run = async () => {
-      try {
-        const res = await processApiRequest();
-        setResult(res as APIResponse);
-        setError(null);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        setError(msg);
-      }
+    try {
+      const res = await processApiRequest();
+      setResult(res as APIResponse);
+      setError(null);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+    }
   };
 
   useEffect(() => {
@@ -34,183 +193,224 @@ const ApiRequestViewer: React.FC<Props> = ({
 
   const payload = error
     ? { success: false, error }
-    : result ?? { success: false, error: 'No result yet.' };
+    : result ?? { success: false, error: "No result yet." };
 
-    return (
-      <pre className={className} aria-live="polite">
-        {JSON.stringify(payload, null, pretty)}
-      </pre>
-    );
+  const text = useMemo(() => formatJsonSafely(payload, pretty), [payload, pretty]);
+
+  return (
+    <MonacoViewer
+      className={className}
+      value={text}
+      defaultLanguage="json"
+      height="80vh"
+      storageKeyPrefix="your-rapport-api"
+    />
+  );
 };
 
-const container = document.getElementById('app-container');
-if (!container) {
-  throw new Error('Missing root element with id="app-container".');
-}
+const ArtifactLoader: React.FC<{ uuid: string }> = ({ uuid }) => {
+  const [artifact, setArtifact] = useState<Artifact | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-const root = createRoot(container as HTMLElement);
-const params = new URLSearchParams(window.location.search);
+  useEffect(() => {
+    let cancelled = false;
 
-const format = params.get('format') ?? 'json';
+    (async () => {
+      try {
+        const a = (await db.artifact.get(uuid)) ?? null;
+        if (!cancelled) setArtifact(a);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      }
+    })();
 
-if(format === 'json'){
-  root.render(
-    <React.StrictMode>
-      <ApiRequestViewer autoRun />
-    </React.StrictMode>
+    return () => {
+      cancelled = true;
+    };
+  }, [uuid]);
+
+  if (error) return <div className="text-red-600">Failed to load artifact: {error}</div>;
+  if (!artifact) return <div>Loading artifact…</div>;
+
+  return <ArtifactViewer artifact={artifact} sandboxHtml preferPdfEmbed />;
+};
+
+const SandboxedHtmlFrame: React.FC<{ blob: Blob; title: string }> = ({ blob, title }) => {
+  const [html, setHtml] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const t = await blob.text();
+        if (!cancelled) setHtml(t);
+      } catch {
+        if (!cancelled) setHtml("<p>Failed to load HTML</p>");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [blob]);
+
+  return (
+    <iframe
+      title={title}
+      width="100%"
+      height="700px"
+      sandbox="allow-forms allow-popups allow-pointer-lock allow-same-origin"
+      srcDoc={html}
+    />
   );
-}
-else{
-  async function fetchData(container: HTMLElement){
-    const artifact = await db.artifact.get(params.get('uuid') ?? 'not available') ?? null;
-    if(artifact){
-      await renderArtifact(artifact, container);
-    }
-  }
-  fetchData(container)
-}
+};
 
+const ArtifactViewer: React.FC<{
+  artifact: Artifact;
+  sandboxHtml?: boolean;
+  preferPdfEmbed?: boolean;
+}> = ({ artifact, sandboxHtml = true, preferPdfEmbed = true }) => {
+  const mime = (artifact?.mimeType || "").toLowerCase();
 
-
-/**
- * Render a provided Artifact (already fetched) into the container.
- */
-export async function renderArtifact(
-  artifact: Artifact,
-  container: HTMLElement,
-  {
-    sandboxHtml = true,       // render text/html via sandboxed iframe.srcdoc
-    preferPdfEmbed = true     // use <embed> for PDFs; set false to use <iframe>
-  }: { sandboxHtml?: boolean; preferPdfEmbed?: boolean } = {}
-): Promise<() => void> {
-  // Cleanup previous content and any lingering object URLs
-  cleanupContainer(container);
-
-  // Decide how to display based on MIME
-  const mime = artifact.mimeType.toLowerCase();
-  const url = URL.createObjectURL(artifact.data);
-  const disposables: Array<() => void> = [() => URL.revokeObjectURL(url)];
-
-  // Clear + base styles
-  container.innerHTML = "";
-  container.style.display = "block";
-
-  const append = (el: HTMLElement) => container.appendChild(el);
-
-  try {
-    if (mime.startsWith("image/")) {
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = artifact.url ?? "image artifact";
-      img.style.maxWidth = "100%";
-      img.style.height = "auto";
-      append(img);
-    } else if (mime.startsWith("video/")) {
-      const video = document.createElement("video");
-      video.controls = true;
-      video.src = url;
-      video.style.width = "100%";
-      append(video);
-      disposables.push(() => {
-        video.pause();
-        video.src = "";
-      });
-    } else if (mime.startsWith("audio/")) {
-      const audio = document.createElement("audio");
-      audio.controls = true;
-      audio.src = url;
-      append(audio);
-      disposables.push(() => {
-        audio.pause();
-        audio.src = "";
-      });
-    } else if (mime === "application/pdf") {
-      if (preferPdfEmbed) {
-        const embed = document.createElement("embed");
-        embed.src = url;
-        embed.type = "application/pdf";
-        embed.width = "100%";
-        embed.height = "600px";
-        append(embed);
-      } else {
-        const iframe = document.createElement("iframe");
-        iframe.src = url;
-        iframe.width = "100%";
-        iframe.height = "600px";
-        iframe.setAttribute("title", artifact.url ?? "PDF");
-        append(iframe);
+  const objectUrl = useMemo(() => URL.createObjectURL(artifact.data), [artifact.data]);
+  useEffect(() => {
+    return () => {
+      try {
+        URL.revokeObjectURL(objectUrl);
+      } catch {
+        // ignore
       }
-    } else if (mime === "text/html") {
-      if (sandboxHtml) {
-        // Safer: use srcdoc + sandbox (no scripts, no same-origin)
-        const html = await artifact.data.text();
-        const iframe = document.createElement("iframe");
-        iframe.setAttribute("sandbox", "allow-forms allow-popups allow-pointer-lock allow-same-origin");
-        iframe.width = "100%";
-        iframe.height = "600px";
-        // Use srcdoc for accurate inline rendering
-        // If you need sanitization, run through DOMPurify before assignment.
-        (iframe as any).srcdoc = html;
-        append(iframe);
-      } else {
-        // Direct blob URL (less safe)
-        const iframe = document.createElement("iframe");
-        iframe.src = url;
-        iframe.width = "100%";
-        iframe.height = "600px";
-        append(iframe);
+    };
+  }, [objectUrl]);
+
+  // Read texty artifacts for Monaco
+  const [text, setText] = useState<string | null>(null);
+  const [textErr, setTextErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const isTexty =
+      mime.startsWith("text/") ||
+      mime === "application/json" ||
+      mime === "application/xml";
+
+    if (!isTexty) return;
+
+    (async () => {
+      try {
+        const t = await artifact.data.text();
+        if (!cancelled) setText(t);
+      } catch (e) {
+        if (!cancelled) setTextErr(e instanceof Error ? e.message : String(e));
       }
-    } else if (mime.startsWith("text/") || mime === "application/json") {
-      const text = await artifact.data.text();
-      const pre = document.createElement("pre");
-      pre.style.whiteSpace = "pre-wrap";
-      pre.style.wordBreak = "break-word";
-      pre.textContent = text;
-      append(pre);
-    } else {
-      // Fallback: try iframe; if it fails the browser may download it.
-      const iframe = document.createElement("iframe");
-      iframe.src = url;
-      iframe.width = "100%";
-      iframe.height = "600px";
-      append(iframe);
+    })();
 
-      // Provide a download link as a guaranteed fallback
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = artifact.url ?? "download";
-      a.textContent = "Download file";
-      a.style.display = "inline-block";
-      a.style.marginTop = "8px";
-      append(a);
-    }
-  } catch (e) {
-    container.innerHTML = `<div class="text-red-600">Failed to render: ${(e as Error).message}</div>`;
+    return () => {
+      cancelled = true;
+    };
+  }, [artifact.data, mime]);
+
+  // Images
+  if (mime.startsWith("image/")) {
+    return (
+      <img
+        src={objectUrl}
+        alt={artifact.url ?? "image artifact"}
+        style={{ maxWidth: "100%", height: "auto" }}
+      />
+    );
   }
 
-  // Return disposer to clean up
-  const disposer = () => {
-    cleanupContainer(container);
-    for (const d of disposables) try { d(); } catch {}
-  };
-  // Store disposer on the container so future calls can auto-clean
-  (container as any).__artifactDisposer = disposer;
-  return disposer;
-}
-
-function cleanupContainer(container: HTMLElement) {
-  const prev = (container as any).__artifactDisposer as (() => void) | undefined;
-  if (prev) {
-    try { prev(); } catch {}
-    (container as any).__artifactDisposer = undefined;
+  // Video
+  if (mime.startsWith("video/")) {
+    return <video controls src={objectUrl} style={{ width: "100%" }} />;
   }
-  // Pause media before clearing to free resources
-  container.querySelectorAll("video,audio").forEach((m) => {
-    try {
-      (m as HTMLMediaElement).pause();
-      (m as HTMLMediaElement).src = "";
-    } catch {}
-  });
-  container.innerHTML = "";
-}
 
+  // Audio
+  if (mime.startsWith("audio/")) {
+    return <audio controls src={objectUrl} style={{ width: "100%" }} />;
+  }
+
+  // PDF
+  if (mime === "application/pdf") {
+    return preferPdfEmbed ? (
+      <embed src={objectUrl} type="application/pdf" width="100%" height="700px" />
+    ) : (
+      <iframe src={objectUrl} width="100%" height="700px" title={artifact.url ?? "PDF"} />
+    );
+  }
+
+  // HTML
+  if (mime === "text/html") {
+    return sandboxHtml ? (
+      <SandboxedHtmlFrame blob={artifact.data} title={artifact.url ?? "HTML"} />
+    ) : (
+      <iframe src={objectUrl} width="100%" height="700px" title={artifact.url ?? "HTML"} />
+    );
+  }
+
+  // Text / JSON / XML => Monaco
+  if (mime.startsWith("text/") || mime === "application/json" || mime === "application/xml") {
+    if (textErr) return <div className="text-red-600">Failed to read text: {textErr}</div>;
+    if (text == null) return <div>Loading text…</div>;
+
+    const lang = guessLanguage(mime, artifact.url);
+
+    const value =
+      lang === "json"
+        ? (() => {
+            try {
+              return JSON.stringify(JSON.parse(text), null, 2);
+            } catch {
+              return text; // keep raw if invalid json
+            }
+          })()
+        : text;
+
+    return (
+      <MonacoViewer
+        value={value}
+        defaultLanguage={lang}
+        height="80vh"
+        storageKeyPrefix="your-rapport-artifact"
+      />
+    );
+  }
+
+  // Fallback
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <iframe src={objectUrl} width="100%" height="700px" title={artifact.url ?? "File"} />
+      <a href={objectUrl} download={artifact.url ?? "download"}>
+        Download file
+      </a>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  const params = new URLSearchParams(window.location.search);
+  const format = (params.get("format") ?? "json").toLowerCase();
+  const uuid = params.get("uuid") ?? "";
+
+  const mode: ViewMode = format === "json" ? "json" : "artifact";
+
+  if (mode === "json") {
+    return (
+      <React.StrictMode>
+        <ApiRequestViewer autoRun />
+      </React.StrictMode>
+    );
+  }
+
+  if (!uuid) {
+    return <div className="text-red-600">Missing uuid query param.</div>;
+  }
+
+  return <ArtifactLoader uuid={uuid} />;
+};
+
+const container = document.getElementById("app-container");
+if (!container) throw new Error('Missing root element with id="app-container".');
+
+createRoot(container).render(<App />);

@@ -55,33 +55,33 @@ function LargeButtonGrid() {
   const buttons = [
     {
       title: 'Deep Save',
-      toolTipTitle: `Collect a single screen shot and all the content of the web page. Press Crtl+Shift+S to take a deep save..`,
+      toolTipTitle: `Collect a single screen shot and all the content of the web page. Press Alt+S to take a deep save..`,
       onClick: () => {
-        chrome.runtime.sendMessage({ cmd: 'deepSave' }).then(() => {
+        chrome.runtime.sendMessage({ cmd: 'deepSave' }).then(response => {
           processNotification({
             title: 'Deep Save Collected',
-            message: `A deep save has been collected. You can press Crtl+Shift+S to collect a deep save.`,
+            message: `A deep save has been collected. You can press Alt+S to collect a deep save.`,
             type: 'success',
           });
-        })
+        });
       }
     },
     {
       title: 'Dashboard',
-      toolTipTitle: `Search by free text and filters, export, and import your data from Your Rapport. Ctrl+Shift+X to open the dashboard.`,
+      toolTipTitle: `Search by free text and filters, export, and import your data from Your Rapport. Alt+X to open the dashboard.`,
       onClick: async () =>
         await chrome.tabs.create({ url: chrome.runtime.getURL('search.html') }),
     },
     {
       title: 'Autoscroll Collect',
-      toolTipTitle: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
+      toolTipTitle: `Autoscroll collect has started. Press this button, again or press Alt+Z to stop autoscroll. It will stop when it hits the bottom.`,
       onClick: () => {
         (async () => {
           const tab = await getActiveTab();
           await chrome.runtime.sendMessage({ cmd: AUTO_COLLECT_STARTING });
           processNotification({
             title: 'Autoscroll Collect Started',
-            message: `Autoscroll collect has started. Press this button, again or press Crtl+Shift+Z to stop autoscroll. It will stop when it hits the bottom.`,
+            message: `Autoscroll collect has started. Press this button, again or press Alt+Z to stop autoscroll. It will stop when it hits the bottom.`,
             type: 'success',
           });
         })();
