@@ -34,7 +34,6 @@ export async function capture(
 ): Promise<void> {
   try {
     ExtensionPin.setDefaultNotSaved(tab);
-
     let configuration = await Configuration.getConfiguration();
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
@@ -81,8 +80,8 @@ export async function capture(
             'text/html'
           );
           record.artifacts.push(Artifact.getAttachment(htmlArtifact));
-
           isSaved = true;
+
         } catch (e) {
           await debug(String(e));
         } finally {

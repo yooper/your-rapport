@@ -1,16 +1,10 @@
 import {
-  addRecord,
-  deleteRecord,
+
   getLocalItem,
   setLocalItem,
-  updateRecord,
 } from '../db/local';
 import {
-  CONFIGURATION,
   RAPPORT,
-  SELECTOR,
-  UPDATED_ON,
-  UUID,
 } from '../../services/constants';
 import { Configuration } from './Configuration';
 import { IRapport, ISelector } from '../../types';

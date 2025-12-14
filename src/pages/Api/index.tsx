@@ -1,3 +1,4 @@
+// src/index.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -59,18 +60,8 @@ function guessLanguage(mime: string, url?: string | null): string {
   if (m === "application/json" || u.endsWith(".json")) return "json";
   if (m === "text/html" || u.endsWith(".html") || u.endsWith(".htm")) return "html";
   if (m === "text/css" || u.endsWith(".css")) return "css";
-  if (
-    m === "text/javascript" ||
-    m === "application/javascript" ||
-    u.endsWith(".js")
-  )
-    return "javascript";
-  if (
-    m === "text/typescript" ||
-    u.endsWith(".ts") ||
-    u.endsWith(".tsx")
-  )
-    return "typescript";
+  if (m === "text/javascript" || m === "application/javascript" || u.endsWith(".js")) return "javascript";
+  if (m === "text/typescript" || u.endsWith(".ts") || u.endsWith(".tsx")) return "typescript";
   if (m === "text/xml" || m === "application/xml" || u.endsWith(".xml")) return "xml";
   if (m === "text/markdown" || u.endsWith(".md")) return "markdown";
   return "plaintext";
@@ -82,6 +73,58 @@ function formatJsonSafely(value: unknown, pretty = 2): string {
   } catch {
     return String(value);
   }
+}
+
+/**
+ * Dexie/serialization can return data as Blob, ArrayBuffer, Uint8Array, or string.
+ * Normalize to a Blob so URL.createObjectURL and .text() work reliably.
+ */
+function normalizeToBlob(data: unknown, mime?: string): Blob {
+  const type = (mime || "").toLowerCase() || "application/octet-stream";
+
+  if (data instanceof Blob) return data;
+  if (data instanceof ArrayBuffer) return new Blob([data], { type });
+  if (data instanceof Uint8Array) return new Blob([data], { type });
+  if (typeof data === "string") {
+    const t = type.startsWith("text/") ? type : "text/plain";
+    return new Blob([data], { type: t });
+  }
+
+  // last resort (avoid crash)
+  return new Blob([String(data ?? "")], { type: "text/plain" });
+}
+
+function isTextBased(mime: string, url?: string | null): boolean {
+  const m = (mime || "").toLowerCase();
+  const u = (url || "").toLowerCase();
+
+  if (m.startsWith("text/")) return true;
+
+  // common “texty” application mimes
+  if (
+    m === "application/json" ||
+    m === "application/xml" ||
+    m === "application/xhtml+xml" ||
+    m === "application/javascript" ||
+    m === "application/x-javascript" ||
+    m === "application/typescript"
+  ) {
+    return true;
+  }
+
+  // extension fallback if mime is missing/wrong
+  return (
+    u.endsWith(".json") ||
+    u.endsWith(".xml") ||
+    u.endsWith(".html") ||
+    u.endsWith(".htm") ||
+    u.endsWith(".md") ||
+    u.endsWith(".txt") ||
+    u.endsWith(".css") ||
+    u.endsWith(".js") ||
+    u.endsWith(".ts") ||
+    u.endsWith(".tsx")
+  );
 }
 
 const MonacoViewer: React.FC<{
@@ -135,10 +178,7 @@ const MonacoViewer: React.FC<{
 
         <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{ opacity: 0.8 }}>Theme</span>
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value as MonacoTheme)}
-          >
+          <select value={theme} onChange={(e) => setTheme(e.target.value as MonacoTheme)}>
             {THEME_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -167,11 +207,7 @@ const MonacoViewer: React.FC<{
   );
 };
 
-const ApiRequestViewer: React.FC<Props> = ({
-  autoRun = true,
-  pretty = 2,
-  className,
-}) => {
+const ApiRequestViewer: React.FC<Props> = ({ autoRun = true, pretty = 2, className }) => {
   const [result, setResult] = useState<APIResponse | Artifact | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -232,73 +268,37 @@ const ArtifactLoader: React.FC<{ uuid: string }> = ({ uuid }) => {
   if (error) return <div className="text-red-600">Failed to load artifact: {error}</div>;
   if (!artifact) return <div>Loading artifact…</div>;
 
-  return <ArtifactViewer artifact={artifact} sandboxHtml preferPdfEmbed />;
-};
-
-const SandboxedHtmlFrame: React.FC<{ blob: Blob; title: string }> = ({ blob, title }) => {
-  const [html, setHtml] = useState<string>("");
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const t = await blob.text();
-        if (!cancelled) setHtml(t);
-      } catch {
-        if (!cancelled) setHtml("<p>Failed to load HTML</p>");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [blob]);
-
-  return (
-    <iframe
-      title={title}
-      width="100%"
-      height="700px"
-      sandbox="allow-forms allow-popups allow-pointer-lock allow-same-origin"
-      srcDoc={html}
-    />
-  );
+  return <ArtifactViewer artifact={artifact} preferPdfEmbed />;
 };
 
 const ArtifactViewer: React.FC<{
   artifact: Artifact;
-  sandboxHtml?: boolean;
   preferPdfEmbed?: boolean;
-}> = ({ artifact, sandboxHtml = true, preferPdfEmbed = true }) => {
+}> = ({ artifact, preferPdfEmbed = true }) => {
   const mime = (artifact?.mimeType || "").toLowerCase();
+  const blob = useMemo(() => normalizeToBlob(artifact.data, mime), [artifact.data, mime]);
 
-  const objectUrl = useMemo(() => URL.createObjectURL(artifact.data), [artifact.data]);
-  useEffect(() => {
-    return () => {
-      try {
-        URL.revokeObjectURL(objectUrl);
-      } catch {
-        // ignore
-      }
-    };
-  }, [objectUrl]);
+  const textBased = useMemo(
+    () => isTextBased(mime || blob.type, artifact.url),
+    [mime, blob.type, artifact.url]
+  );
 
-  // Read texty artifacts for Monaco
+  // Read text (for Monaco) if text-based
   const [text, setText] = useState<string | null>(null);
   const [textErr, setTextErr] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    const isTexty =
-      mime.startsWith("text/") ||
-      mime === "application/json" ||
-      mime === "application/xml";
-
-    if (!isTexty) return;
+    if (!textBased) {
+      setText(null);
+      setTextErr(null);
+      return;
+    }
 
     (async () => {
       try {
-        const t = await artifact.data.text();
+        const t = await blob.text();
         if (!cancelled) setText(t);
       } catch (e) {
         if (!cancelled) setTextErr(e instanceof Error ? e.message : String(e));
@@ -308,53 +308,14 @@ const ArtifactViewer: React.FC<{
     return () => {
       cancelled = true;
     };
-  }, [artifact.data, mime]);
+  }, [blob, textBased]);
 
-  // Images
-  if (mime.startsWith("image/")) {
-    return (
-      <img
-        src={objectUrl}
-        alt={artifact.url ?? "image artifact"}
-        style={{ maxWidth: "100%", height: "auto" }}
-      />
-    );
-  }
-
-  // Video
-  if (mime.startsWith("video/")) {
-    return <video controls src={objectUrl} style={{ width: "100%" }} />;
-  }
-
-  // Audio
-  if (mime.startsWith("audio/")) {
-    return <audio controls src={objectUrl} style={{ width: "100%" }} />;
-  }
-
-  // PDF
-  if (mime === "application/pdf") {
-    return preferPdfEmbed ? (
-      <embed src={objectUrl} type="application/pdf" width="100%" height="700px" />
-    ) : (
-      <iframe src={objectUrl} width="100%" height="700px" title={artifact.url ?? "PDF"} />
-    );
-  }
-
-  // HTML
-  if (mime === "text/html") {
-    return sandboxHtml ? (
-      <SandboxedHtmlFrame blob={artifact.data} title={artifact.url ?? "HTML"} />
-    ) : (
-      <iframe src={objectUrl} width="100%" height="700px" title={artifact.url ?? "HTML"} />
-    );
-  }
-
-  // Text / JSON / XML => Monaco
-  if (mime.startsWith("text/") || mime === "application/json" || mime === "application/xml") {
+  // ✅ ALL TEXT-BASED artifacts (including HTML) render in Monaco
+  if (textBased) {
     if (textErr) return <div className="text-red-600">Failed to read text: {textErr}</div>;
     if (text == null) return <div>Loading text…</div>;
 
-    const lang = guessLanguage(mime, artifact.url);
+    const lang = guessLanguage(mime || blob.type, artifact.url);
 
     const value =
       lang === "json"
@@ -362,7 +323,7 @@ const ArtifactViewer: React.FC<{
             try {
               return JSON.stringify(JSON.parse(text), null, 2);
             } catch {
-              return text; // keep raw if invalid json
+              return text;
             }
           })()
         : text;
@@ -374,6 +335,50 @@ const ArtifactViewer: React.FC<{
         height="80vh"
         storageKeyPrefix="your-rapport-artifact"
       />
+    );
+  }
+
+  // Binary viewers below need an object URL
+  const objectUrl = useMemo(() => URL.createObjectURL(blob), [blob]);
+  useEffect(() => {
+    return () => {
+      try {
+        URL.revokeObjectURL(objectUrl);
+      } catch {
+        // ignore
+      }
+    };
+  }, [objectUrl]);
+
+  const effectiveType = (mime || blob.type).toLowerCase();
+
+  // Images
+  if (effectiveType.startsWith("image/")) {
+    return (
+      <img
+        src={objectUrl}
+        alt={artifact.url ?? "image artifact"}
+        style={{ maxWidth: "100%", height: "auto" }}
+      />
+    );
+  }
+
+  // Video
+  if (effectiveType.startsWith("video/")) {
+    return <video controls src={objectUrl} style={{ width: "100%" }} />;
+  }
+
+  // Audio
+  if (effectiveType.startsWith("audio/")) {
+    return <audio controls src={objectUrl} style={{ width: "100%" }} />;
+  }
+
+  // PDF
+  if (effectiveType === "application/pdf") {
+    return preferPdfEmbed ? (
+      <embed src={objectUrl} type="application/pdf" width="100%" height="700px" />
+    ) : (
+      <iframe src={objectUrl} width="100%" height="700px" title={artifact.url ?? "PDF"} />
     );
   }
 

@@ -28,5 +28,9 @@ db.version(3).stores({
   apiKey: '&key',
   discoveryPlugin: 'uuid, &label, pluginType'
 });
+db.version(4).stores({
+  rapport: '&uuid, updatedOn, domain, isImportant'
+});
+
 
 export { db };

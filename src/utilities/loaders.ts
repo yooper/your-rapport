@@ -141,20 +141,14 @@ export async function installPackage(
 export function getSelectorTypeMap(): Record<string, string> {
   return {
     address: 'Address',
-    associate: 'Associate',
     crypto: 'Crypto Address',
-    dob: 'Date of Birth',
     date: 'Date',
     email: 'Email',
-    event: 'Event',
-    family: 'Family',
     keyword: 'Keyword',
     name: 'Name',
-    occupation: 'Occupation',
     organization: 'Organization',
     phone: 'Phone',
-    religion: 'Religion',
-    username: 'Username',
+    username: 'Username'
   };
 }
 
