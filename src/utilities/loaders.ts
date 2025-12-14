@@ -145,8 +145,8 @@ export function getSelectorTypeMap(): Record<string, string> {
     date: 'Date',
     email: 'Email',
     keyword: 'Keyword',
-    name: 'Name',
-    organization: 'Organization',
+    name: "Person's Name",
+    organization: "Organization's Name",
     phone: 'Phone',
     username: 'Username'
   };

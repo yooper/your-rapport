@@ -78,11 +78,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
         <AttachFileIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
-    associate: (
-      <Avatar>
-        <PersonIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
     bitcoin: (
       <Avatar>
         <CurrencyBitcoinIcon sx={{ fontSize: 'small' }} />
@@ -94,11 +89,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
       </Avatar>
     ),
     date: (
-      <Avatar>
-        <CalendarMonth />
-      </Avatar>
-    ),
-    dob: (
       <Avatar>
         <CalendarMonth />
       </Avatar>
@@ -118,16 +108,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
         <CurrencyBitcoinIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
-    event: (
-      <Avatar>
-        <EventIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
-    family: (
-      <Avatar>
-        <PersonIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
     keyword: (
       <Avatar>
         <PatternIcon sx={{ fontSize: 'small' }} />
@@ -138,11 +118,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
         <PersonIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
-    occupation: (
-      <Avatar>
-        <WorkIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
     organization: (
       <Avatar>
         <BusinessIcon sx={{ fontSize: 'small' }} />
@@ -151,11 +126,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
     phone: (
       <Avatar>
         <SmartphoneIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
-    religion: (
-      <Avatar>
-        <ChurchIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
     username: (
@@ -244,33 +214,11 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
                 {selectorValue}
                   <Tooltip title={'Copy the selected selector value into your clip board'}>
                   <CopyToClipboardIcon
-                    rapport={{ pluginName: selectorValue }}
-                    copyFieldName={'pluginName'}
+                    record={{ selectorValue: selectorValue }}
+                    copyFieldName={'selectorValue'}
                   />
                 </Tooltip>
               </Typography>
-
-
-
-              <List dense>
-                <ListItem
-                  dense
-                  key={`plugin-${selectorValue}-open-all`}
-                  className="clickable"
-                  onClick={() => {
-                    plugins.forEach((plugin) =>
-                      !['Download', 'Live Page'].includes(plugin.label)
-                        ? discoveryPluginRunner(plugin, rapport, selectorValue)
-                        : null
-                    );
-                  }}
-                >
-                  <ListItemIcon>
-                    <OpenInNewIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Open All" />
-                </ListItem>
-              </List>
 
               <SearchDiscoveryPluginLayout
                 groupNames={groupNames}
