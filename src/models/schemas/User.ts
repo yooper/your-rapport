@@ -1,5 +1,6 @@
 import { DiscoveryPlugin } from './DiscoveryPlugin';
 import { IRapport } from '../../types';
+import { getUtcNow } from '../../utilities/transformers';
 
 export interface UserData {
   accessToken: string;
@@ -42,7 +43,7 @@ export class User {
     if(!this.accessToken) {
       return false;
     }
-    const unixEpochInSeconds: number = Math.floor(Date.now() / 1000);
+    const unixEpochInSeconds: number = getUtcNow();
     if(this.verifiedOn && this.verifiedOn + 3600 * 24 * 7 > unixEpochInSeconds){
       return true;
     }

@@ -275,7 +275,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
               <SearchDiscoveryPluginLayout
                 groupNames={groupNames}
                 plugins={plugins}
-                selectorValue={''}
+                selectorValue={selectorValue}
                 rapport={rapport}/>
 
             </div>

@@ -9,6 +9,7 @@ import { FormControl, TextareaAutosize } from '@mui/material';
 import { processNotification, showLoader } from '../../utilities/loaders';
 import { RAPPORT, UUID } from '../../services/constants';
 import { updateRecord } from '../../models/db/local';
+import { getUtcNow } from '../../utilities/transformers';
 
 export default function NotesDialog(props) {
   const [open, setOpen] = useState(false);
@@ -67,7 +68,7 @@ export default function NotesDialog(props) {
               setRecord((prevState) => ({
                 ...prevState,
                 note: e.target.value,
-                updatedOn: Date.now(),
+                updatedOn: getUtcNow()
               }))
             }
           />

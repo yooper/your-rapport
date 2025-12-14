@@ -69,7 +69,7 @@ export function downloadJsonData(
 }
 
 export function getUtcNow() : number{
-  return Math.floor(Math.floor(Date.now() / 1000));
+  return Math.floor(Date.now() / 1000);
 }
 
 // Utility: Download base64-encoded image

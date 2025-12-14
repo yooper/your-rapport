@@ -12,7 +12,6 @@ export interface IConfiguration {
   automationDeepSaveEnabled: boolean;
   debugMessagesEnabled: boolean;
   highlightSelectorsEnabled: boolean;
-  packageCache: string;
   packageCacheEnabled: boolean;
   packageCacheHash: string;
   screenShotCount: number;

@@ -15,38 +15,18 @@ import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ListItemIcon } from '@mui/material';
 import { db } from '../../models/db/dexieDb';
-import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
 import { IRapport } from '../../types';
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import { discoveryPluginRunner } from '../../services/discovery_plugin_services';
+import { DirectionsRun } from '@mui/icons-material';
 
-export type DiscoveryPlugin = {
-  uuid: string;
 
-  groupName?: string | null;
-
-  label?: string | null;
-  labels?: string[] | null;
-  description?: string | null;
-
-  url?: string | null;
-
-  // These names vary across implementations; we’ll support common ones.
-  action?: string | null; // e.g. "createTab"
-  method?: string | null; // e.g. "GET"
-  httpMethod?: string | null; // e.g. "GET"
-  request?: { method?: string | null } | null; // e.g. { method: "GET" }
-};
 
 type SearchDiscoveryPluginLayoutProps = {
   groupNames: string[];
   plugins: DiscoveryPlugin[];
   rapport: IRapport,
   selectorValue: string
-
-  /**
-   * Wire this to your BulkAutomationUrl enqueue logic.
-   * It will only be called when the plugin qualifies (createTab + GET).
-   */
-  onQueueAutomation?: (plugin: DiscoveryPlugin) => void;
 };
 
 export default function SearchDiscoveryPluginLayout({
@@ -54,13 +34,10 @@ export default function SearchDiscoveryPluginLayout({
   plugins,
   rapport,
   selectorValue,
-  onQueueAutomation,
 }: SearchDiscoveryPluginLayoutProps) {
   const [value, setValue] = React.useState<number>(0);
   const [query, setQuery] = React.useState<string>('');
-  const [queuedPluginUuids, setQueuedPluginUuids] = React.useState<Set<string>>(
-    () => new Set()
-  );
+
 
   React.useEffect(() => {
     setValue((v) => Math.min(v, Math.max(groupNames.length - 1, 0)));
@@ -72,8 +49,7 @@ export default function SearchDiscoveryPluginLayout({
     if (!normalizedQuery) return plugins;
 
     return plugins.filter((p) => {
-      const labelText =
-        (p.label ?? '') + ' ' + (Array.isArray(p.labels) ? p.labels.join(' ') : '');
+      const labelText = p.label;
       const haystack = `${labelText} ${p.description ?? ''} ${p.url ?? ''}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
@@ -90,6 +66,7 @@ export default function SearchDiscoveryPluginLayout({
     return counts;
   }, [filteredPlugins, groupNames]);
 
+
   const pluginsForSelectedGroup = React.useMemo(() => {
     const groupName = groupNames[value];
     if (!groupName) return [];
@@ -98,28 +75,8 @@ export default function SearchDiscoveryPluginLayout({
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => setValue(newValue);
 
-  const getHttpMethod = (p: DiscoveryPlugin): string =>
-    (p.httpMethod ?? p.method ?? p.request?.method ?? '').toString().trim().toLowerCase();
-
   const isAutomationEligible = (p: DiscoveryPlugin): boolean => {
-    const action = (p.action ?? '').toString().trim().toLowerCase();
-    const method = getHttpMethod(p);
-    return action === 'createtab' && method === 'get';
-  };
-
-  const openInSeparateWindow = (url: string) => {
-    // Chrome extension case
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const c: any = (globalThis as any).chrome;
-      if (c?.windows?.create) {
-        c.windows.create({ url, focused: true, type: 'normal' });
-        return;
-      }
-    } catch {
-      // fall back below
-    }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    return false;
   };
 
   const handleQueueAutomation = async(p: DiscoveryPlugin) => {
@@ -148,15 +105,19 @@ export default function SearchDiscoveryPluginLayout({
       <Box sx={{ display: 'flex', flexGrow: 1, minHeight: 500 }}>
         <Tabs
           orientation="vertical"
-          variant="fullWidth"
+          variant="scrollable"
           value={value}
+          scrollButtons="auto"
           onChange={handleChange}
           aria-label="Discovery Plugin Search"
           sx={{
             borderRight: 1,
+
             borderColor: 'divider',
             height: '100%',
             minWidth: 260,
+            maxHeight: '100%',
+            overflowY: 'auto'
           }}
         >
           {groupNames.map((groupName, index) => (
@@ -180,11 +141,10 @@ export default function SearchDiscoveryPluginLayout({
           ) : (
             <List dense>
             {pluginsForSelectedGroup.map((p) => {
-              const primary = p.label ?? (p.labels?.[0] ?? p.uuid);
+              const primary = p.label;
               const secondary = p.description ?? p.url ?? '';
-              const url = p.url ?? '';
+              const url = p.url;
               const eligible = isAutomationEligible(p);
-              const queued = queuedPluginUuids.has(p.uuid);
 
               return (
                 <ListItem key={p.uuid} divider alignItems="flex-start">
@@ -192,12 +152,12 @@ export default function SearchDiscoveryPluginLayout({
                     <Stack direction="row" spacing={0.5}>
                       {/* Queue automation icon (only if eligible) */}
                       {eligible && (
-                        <Tooltip title={queued ? 'Queued for automation' : 'Queue for automation'}>
+                        <Tooltip title={false ? 'Queued for automation' : 'Queue for automation'}>
                           <span>
                             <IconButton
+                              disabled={true}
                               size="small"
                               onClick={() => handleQueueAutomation(p)}
-                              disabled={queued}
                               aria-label="queue for automation"
                             >
                               <PlaylistAddIcon fontSize="small" />
@@ -207,22 +167,25 @@ export default function SearchDiscoveryPluginLayout({
                       )}
 
                       {/* Open in separate window icon */}
-                      <Tooltip title={url ? 'Open in new window' : 'No URL'}>
+                      <Tooltip title={'Run the discovery plugin on the selector value or record'}>
                         <span>
                           <IconButton
                             size="small"
-                            onClick={() => url && openInSeparateWindow(url)}
+                            onClick={() => discoveryPluginRunner(p, rapport, selectorValue)}
                             disabled={!url}
                             aria-label="open in new window"
                           >
-                            <OpenInNewIcon fontSize="small" />
+                            {
+                              ['CreateTab','SubmitForm'].includes(p.pluginType) ? <OpenInNewIcon fontSize="small" /> : <DirectionsRun fontSize="small" />
+                            }
+
                           </IconButton>
                         </span>
                       </Tooltip>
                     </Stack>
                   </ListItemIcon>
 
-                  <ListItemText primary={primary} secondary={secondary} />
+                  <ListItemText primary={primary} secondary={secondary} onClick={() => discoveryPluginRunner(p, rapport, selectorValue)} />
                 </ListItem>
               );
             })}

@@ -4,8 +4,7 @@ import { useEffect, useState, Fragment } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import {
-  hideLoader, installPackage,
-  processNotification,
+  hideLoader,
   showLoader,
 } from '../../utilities/loaders';
 import HelperPopover from '../HelperPopover';
