@@ -54,7 +54,7 @@ export default function Popup() {
 function LargeButtonGrid() {
   const buttons = [
     {
-      title: 'Deep Save',
+      title: 'Deep Save (Alt+S)',
       toolTipTitle: `Collect a single screen shot and all the content of the web page. Press Alt+S to take a deep save..`,
       onClick: () => {
         chrome.runtime.sendMessage({ cmd: 'deepSave' }).then(response => {
@@ -67,17 +67,16 @@ function LargeButtonGrid() {
       }
     },
     {
-      title: 'Dashboard',
+      title: 'Dashboard (Alt+X)',
       toolTipTitle: `Search by free text and filters, export, and import your data from Your Rapport. Alt+X to open the dashboard.`,
       onClick: async () =>
         await chrome.tabs.create({ url: chrome.runtime.getURL('search.html') }),
     },
     {
-      title: 'Autoscroll Collect',
+      title: 'Autoscroll Collect (Alt+A)',
       toolTipTitle: `Autoscroll collect has started. Press this button, again or press Alt+Z to stop autoscroll. It will stop when it hits the bottom.`,
       onClick: () => {
         (async () => {
-          const tab = await getActiveTab();
           await chrome.runtime.sendMessage({ cmd: AUTO_COLLECT_STARTING });
           processNotification({
             title: 'Autoscroll Collect Started',
@@ -97,7 +96,7 @@ function LargeButtonGrid() {
         }),
     },
     {
-      title: 'Quick Scan',
+      title: 'Quick Scan (Alt+Q)',
       toolTipTitle: `Scans the open page for your pre-existing selectors. The Extension pin will show the counts.`,
       onClick: async () => {
         await scanPage(await getActiveTab());

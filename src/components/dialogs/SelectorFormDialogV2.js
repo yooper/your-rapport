@@ -19,11 +19,8 @@ import {
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
-import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
 import { debug } from '../../services/logger_services';
-import * as SelectorSchema from 'zod';
-import { SelectorInfer } from '../../models/validators/Selector.validator';
 
 export default function SelectorFormDialogV2(props) {
   const [record, setRecord] = useState({});

@@ -236,7 +236,8 @@ export interface DiscoveryPluginInit {
   authorizationBearerToken?: string | null;
   authorizationUserName?: string | null;
   authorizationPassword?: string | null;
-
+  script?: string | null;
+  extractionRules?: any[] | [];
 }
 
 
@@ -310,3 +311,11 @@ export interface IBulkAutomationRecord {
   attempts: number;
   leaseUntil: number | null;
 }
+
+export type DiscoveryPluginAction =
+  | 'BackgroundRunner'
+  | 'CreateTab'
+  | 'ForegroundRunner'
+  | 'SubmitForm';
+
+export type DiscoveryPluginRoute = 'inbound' | 'outbound';

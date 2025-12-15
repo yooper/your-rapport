@@ -195,29 +195,6 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
   }
 })
 
-
-
-/**
- * On install open the github page & install default discovery plugins
- */
-chrome.runtime.onInstalled.addListener(async (details) => {
-  if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-    await createTab('https://github.com/yooper/your-rapport/wiki');
-  } else if (details.reason === 'update') {
-    chrome.tabs.create(
-      {
-        url: 'https://github.com/yooper/your-rapport/wiki',
-      },
-      (tab) => {}
-    );
-    // When extension is updated
-  } else if (details.reason === 'chrome_update') {
-    // When browser is updated
-  } else if (details.reason === 'shared_module_update') {
-    // When a shared module is updated
-  }
-});
-
 /**
  * When the web page changes, we need to reset the extension pin to its default state
  */

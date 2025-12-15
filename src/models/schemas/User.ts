@@ -9,8 +9,10 @@ export interface UserData {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class User {
+
   accessToken: string;
   verifiedOn: number;
+
 
   constructor(accessToken: string) {
     this.accessToken = accessToken;

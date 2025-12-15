@@ -1,5 +1,6 @@
 import { CONFIGURATION } from '../../services/constants';
 import { getUtcNow } from '../../utilities/transformers';
+import { debug } from '../../services/logger_services';
 
 // Shape of the configuration store
 export interface IConfiguration {
@@ -43,25 +44,28 @@ export class Configuration {
   static async getConfiguration(): Promise<IConfiguration> {
     const value = await chrome.storage.local.get(CONFIGURATION);
     try {
-      if (!value || Object.keys(value).length === 0) {
+      if (!value || !value[CONFIGURATION] || Object.keys(value).length === 0) {
         await Configuration.setConfiguration(await Configuration.getDefaultConfiguration())
         return Configuration.getDefaultConfiguration()
+      }
+      else
+      {
+
       }
       const data = JSON.parse(value[CONFIGURATION]);
       return data;
     } catch (e) {
-      console.error(e)
+      debug('error in configuration settings;')
+      return Configuration.getDefaultConfiguration();
     }
-    return Configuration.getDefaultConfiguration();
   }
 
-  static async setConfiguration(
-    configuration: IConfiguration
-  ): Promise<IConfiguration> {
-    const instance = { CONFIGURATION: JSON.stringify(configuration) };
-    await chrome.storage.local.set(instance);
-    return configuration;
-  }
+static async setConfiguration(configuration: IConfiguration): Promise<IConfiguration> {
+  const instance = { [CONFIGURATION]: JSON.stringify(configuration) };
+  await chrome.storage.local.set(instance);
+  return configuration;
+}
+
 
   static async setConfigurationValue<T = unknown>(
     key: string,

@@ -1,5 +1,5 @@
 // DiscoveryPlugin.ts
-import { DiscoveryPluginAction, DiscoveryPluginInit, onClick } from '../../types';
+import { DiscoveryPluginAction, DiscoveryPluginInit, DiscoveryPluginRoute, onClick } from '../../types';
 import { DiscoveryPluginSchema } from "../validators/DiscoveryPlugin.validator";
 import Package from './Package';
 
@@ -35,6 +35,10 @@ export class DiscoveryPlugin {
   authorizationBearerToken: string | null;
   authorizationUserName: string | null;
   authorizationPassword: string | null;
+  route: DiscoveryPluginRoute = 'outbound';
+  script: string | null = null;
+  extractionRules: any[] = [];
+
 
 
   constructor(init: DiscoveryPluginInit = {}) {
@@ -68,6 +72,9 @@ export class DiscoveryPlugin {
     this.authorizationBearerToken = init.authorizationBearerToken ?? null;
     this.authorizationUserName = init.authorizationUserName ?? null;
     this.authorizationPassword = init.authorizationPassword ?? null;
+    this.script = init.script ?? null;
+    this.extractionRules = init.extractionRules ?? []
+
   }
 
   /** Increment access count and mark last accessed time */
@@ -96,6 +103,11 @@ export class DiscoveryPlugin {
     return pl;
   }
 
+  /**
+   * Centralization of validating inbound and outbound discovery plugins
+   * TODO: Validate the discovery plugin before exporting.
+   * @param input
+   */
   static async validate(input: unknown)
   {
       const res = await DiscoveryPluginSchema.safeParseAsync(input);
