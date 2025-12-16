@@ -17,9 +17,11 @@ import {
   showLoader,
 } from '../../../utilities/loaders';
 import { StyledTextField } from '../../inputs/StyledTextField';
+import { Configuration } from '../../../models/schemas/Configuration';
+import { getUtcNow } from '../../../utilities/transformers';
 
 export default function AddTagsFormDialog(props) {
-  const { rows, setRows, record } = props;
+  const { refreshRows, record } = props;
   const [open, setOpen] = React.useState(false);
 
   const [tags, setTags] = useState([]);
@@ -45,14 +47,14 @@ export default function AddTagsFormDialog(props) {
   const handleSave = async () => {
     try {
       showLoader();
-      const updatedRows = [...rows];
-      const found = updatedRows.find((r) => r.uuid == record.uuid);
       const userTags = [...new Set(userAddedTags)].map((t) => new Tag(t));
-      found.tags = userTags;
-      setRows(updatedRows);
+      record.tags = userTags;
       await db.tag.bulkPut(userTags);
-      await db.rapport.put(found);
-      props.setRows(updatedRows);
+      await db.rapport.put(record);
+      const configuration = await Configuration.getConfiguration();
+      configuration.updatedOn = getUtcNow();
+      await Configuration.setConfiguration(configuration);
+      refreshRows();
       processNotification({
         title: 'Tag(s) Added',
         message: `Tag(s) have been added.`,

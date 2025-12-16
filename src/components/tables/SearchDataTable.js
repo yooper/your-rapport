@@ -278,8 +278,7 @@ export default function SearchDataTable(props) {
                 isOpen={open}
                 setIsOpen={setOpen}
                 record={record}
-                rows={rows}
-                setRows={setRows}
+                refreshRows={refreshRows}
               />
             </>
           )
