@@ -171,7 +171,7 @@ function BasicTable() {
       const currentUrl = new URL((await getActiveTab()).url);
       const baseUrl = currentUrl.origin + currentUrl.pathname;
       debug(`base url is ${baseUrl}`);
-      const rapports = await db.rapport.toArray();
+      const rapports = await db.rapport.orderBy('updatedOn').reverse().toArray();
       const found = rapports.find((r) => r.url?.startsWith(baseUrl));
       if (found) {
         debug(`found last captured on ${found.url}`);
