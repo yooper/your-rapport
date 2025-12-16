@@ -14,6 +14,7 @@ import BurstModeIcon from '@mui/icons-material/BurstMode';
 import { mergeImagesVertically } from '../../../services/image_loading_services';
 import { hideLoader, showLoader } from '../../../utilities/loaders';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
+import { db } from '../../../models/db/dexieDb';
 
 const defaultToolbarSelectStyles = (theme) => ({
   root: {
@@ -169,7 +170,7 @@ async function getRapportRecords(selectedRows, displayData, columns) {
     }
     uuids.push(record.uuid);
   }
-  const rapports = ((await getLocalItem(RAPPORT)) ?? []).filter((r) =>
+  const rapports = (await db.rapport.toArray() ?? []).filter((r) =>
     uuids.includes(r.uuid)
   );
   return rapports;

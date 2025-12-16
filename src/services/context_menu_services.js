@@ -3,7 +3,6 @@ import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
 import {
   ACTIVATE_CAPTURE, BULK_AUTOMATION,
-  RAPPORT,
   UUID,
 } from './constants';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
@@ -16,6 +15,7 @@ import { applyBackgroundJobs } from './discovery_plugin_services';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
 import { waitForPageInfo } from '../backgrounds/automation-runner';
+import { db } from '../models/db/dexieDb';
 
 /**
  * Add the selectors as menu items
@@ -84,8 +84,7 @@ export async function initializeContextMenus() {
           );
           rapport.sequenceId = 0;
           rapport.bulkAutomationUuid = null;
-          await addRecord(RAPPORT, UUID, rapport);
-          // add hook
+          await db.rapport.add(rapport);
           applyBackgroundJobs(rapport).then(() => {
             debug('background job completed', rapport)
           })

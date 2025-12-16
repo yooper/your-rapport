@@ -1,8 +1,6 @@
-import { addRecord } from '../models/db/local';
 import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';
-import { RAPPORT, UUID } from '../services/constants';
 import { db } from '../models/db/dexieDb';
 import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
@@ -90,8 +88,8 @@ export async function capture(
       } while (!isSaved && retryCounter < 3);
     }
 
-    // Save the Rapport record
-    await addRecord(RAPPORT, UUID, record);
+    // Save the Rapport
+    await db.rapport.add(record);
 
     // Queue up the background jobs (fire-and-forget; log when done)
     applyBackgroundJobs(record).then(() => {

@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { getLocalItem } from '../../models/db/local';
 import { debug } from '../../services/logger_services';
+import { db } from '../../models/db/dexieDb';
 
 export default function Popup() {
   const [isLoading, setIsLoading] = useState(true);
@@ -170,7 +171,7 @@ function BasicTable() {
       const currentUrl = new URL((await getActiveTab()).url);
       const baseUrl = currentUrl.origin + currentUrl.pathname;
       debug(`base url is ${baseUrl}`);
-      const rapports = await getLocalItem(RAPPORT);
+      const rapports = await db.rapport.toArray();
       const found = rapports.find((r) => r.url?.startsWith(baseUrl));
       if (found) {
         debug(`found last captured on ${found.url}`);

@@ -3,6 +3,7 @@ import { ApiKey, Domain, SelectorType, Tag, Url } from '../../types';
 import { Selector } from '../schemas/Selector';
 import { Artifact } from '../schemas/Artifact';
 import { DiscoveryPlugin } from '../schemas/DiscoveryPlugin';
+import { Rapport } from '../schemas/Rapport';
 
 const db = new Dexie('YourRapport') as Dexie & {
   selector: EntityTable<Selector, 'name'>;
@@ -13,6 +14,7 @@ const db = new Dexie('YourRapport') as Dexie & {
   artifact: EntityTable<Artifact, 'uuid'>;
   discoveryPlugin: EntityTable<DiscoveryPlugin, 'uuid'>
   apiKey: EntityTable<ApiKey, 'key'>
+  rapport: EntityTable<Rapport, 'uuid'>
 };
 db.version(1).stores({
   selector: '&name, selectorTypeName',

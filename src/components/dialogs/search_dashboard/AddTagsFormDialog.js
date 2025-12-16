@@ -17,8 +17,6 @@ import {
   showLoader,
 } from '../../../utilities/loaders';
 import { StyledTextField } from '../../inputs/StyledTextField';
-import { updateRecord } from '../../../models/db/local';
-import { RAPPORT, UUID } from '../../../services/constants';
 
 export default function AddTagsFormDialog(props) {
   const { rows, setRows, record } = props;
@@ -53,7 +51,7 @@ export default function AddTagsFormDialog(props) {
       found.tags = userTags;
       setRows(updatedRows);
       await db.tag.bulkPut(userTags);
-      await updateRecord(RAPPORT, UUID, found);
+      await db.rapport.put(found);
       props.setRows(updatedRows);
       processNotification({
         title: 'Tag(s) Added',

@@ -8,9 +8,7 @@ import { printPdfReport } from '../utilities/print_service';
 import { db } from '../models/db/dexieDb';
 import { debug } from './logger_services';
 import { Artifact } from '../models/schemas/Artifact';
-import { updateRecord } from '../models/db/local';
 import { getJobQueue} from '../pages/Background/index'
-import { RAPPORT, UUID } from './constants';
 
 
 /**
@@ -134,7 +132,7 @@ async function _processFetch(
       // add the artifact
       await db.artifact.add(artifact)
       rapport.artifacts.push(Artifact.getAttachment(artifact));
-      await updateRecord(RAPPORT, UUID, rapport);
+      await db.rapport.put(rapport);
       return; // finish processing
     }
 
@@ -147,7 +145,7 @@ async function _processFetch(
       const artifact = await Artifact.create(new Blob([text], { type: 'text/plain' }), rapport.uuid, url, 'text/plain');
       await db.artifact.add(artifact)
       rapport.artifacts.push(Artifact.getAttachment(artifact));
-      await updateRecord(RAPPORT, UUID, rapport);
+      await db.rapport.put(rapport);
 
       if (parsed.ok && parsed.value && typeof parsed.value === 'object') {
         processNotification({

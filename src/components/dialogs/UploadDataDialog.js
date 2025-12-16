@@ -98,10 +98,10 @@ export default function UploadDataDialog(props) {
           // TODO: use a background job to rebuild the selectors.
 
           // TODO: fix issue with adding duplicates, the uuid is the unique key
-          let rapports = (await getLocalItem(RAPPORT)) ?? [];
+          let rapports = await db.rapport.toArray()
           // TODO: sort by dates.
-          configuration.screenShotCount = rapports.length;
-          await setLocalItem(RAPPORT, rapports.concat(newRecords));
+          configuration.screenShotCount = rapports.length + newRecords.length;
+          await db.rapport.bulkPut(newRecords)
           // update the configuration last
           configuration.updatedOn = getUtcNow();
           await Configuration.setConfiguration(configuration);

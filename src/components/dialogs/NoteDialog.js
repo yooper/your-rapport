@@ -5,11 +5,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import EditIcon from '@mui/icons-material/Edit';
-import { FormControl, TextareaAutosize } from '@mui/material';
-import { processNotification, showLoader } from '../../utilities/loaders';
-import { RAPPORT, UUID } from '../../services/constants';
-import { updateRecord } from '../../models/db/local';
+import { TextareaAutosize } from '@mui/material';
+import { showLoader } from '../../utilities/loaders';
 import { getUtcNow } from '../../utilities/transformers';
+import { db } from '../../models/db/dexieDb';
 
 export default function NotesDialog(props) {
   const [open, setOpen] = useState(false);
@@ -34,7 +33,7 @@ export default function NotesDialog(props) {
     // only update if the values differ
     if (props.record.note !== record.note) {
       showLoader();
-      await updateRecord(RAPPORT, UUID, record);
+      await db.rapport.put(record);
       props.refreshRows();
     }
     setOpen(false);

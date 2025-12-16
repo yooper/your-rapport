@@ -51,26 +51,25 @@ chrome.commands.onCommand.addListener(async(command) => {
   await debug(`Command ${command} received`)
 
   const activeTab = await getActiveTab()
-  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO });
+  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
   const { pageInfo } = response
 
   switch (command) {
     case 'deepSave':
       await capture(activeTab, pageInfo, true);
-      return true;
       break;
     case 'initScanPage':
       await scanPage(activeTab)
       break;
     case 'initAutoScroll':
-      chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE })
-        .then(response => {debug(ACTIVATE_CAPTURE+':', response);
-        })
-      return true;
+      const response = chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
+      await debug('init auto scroll', response)
+      break;
     case 'openDashboard':
       await createTab(`chrome-extension://${chrome.runtime.id}/search.html`);
       break;
     default:
+      debug('Unknown command ' + command)
       break;
   }
 });
@@ -83,7 +82,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
       const activeTab = await getActiveTab();
-      const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO' });
+      const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO', requestId: crypto.randomUUID() });
       await capture(activeTab, pageInfo, true);
       sendResponse({ completed: true, deepSave: true, pageInfo });
     } catch (e) {
@@ -100,7 +99,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   else if(message.cmd === AUTO_COLLECT_STARTING) {
     (async () => {
       const tab = await getActiveTab();
-      await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE })
+      await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
       sendResponse({ completed: true, deepSave: false });
     })();
     return true;
@@ -152,7 +151,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           await createTab(message.url);
           const activateTab = await getActiveTab();
           await sleep(3000);
-          const response = await chrome.tabs.sendMessage(activateTab.id, { cmd: PAGE_INFO });
+          const response = await chrome.tabs.sendMessage(activateTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
           const { pageInfo } = response
           // wait for page contents to load
           // TODO: make this configurable or dynamic based on the domain
@@ -164,7 +163,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           await createTab(message.url);
           await sleep(3000);
           sendResponse({completed: true})
-          chrome.tabs.sendMessage((await getActiveTab()).id, { cmd: ACTIVATE_CAPTURE })
+          chrome.tabs.sendMessage((await getActiveTab()).id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
             .then(response => {
               debug(ACTIVATE_CAPTURE + ':', response);
             })

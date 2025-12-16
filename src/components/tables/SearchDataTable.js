@@ -53,10 +53,10 @@ export default function SearchDataTable(props) {
       setSelectors(await db.selector.toArray());
       setTags(await db.tag.toArray());
       setDiscoveryPlugins((await db.discoveryPlugin.toArray()) ?? []);
-      const screenshots = (await getLocalItem(RAPPORT)) ?? [];
+      const rapports = await db.rapport.orderBy('updatedOn').reverse().toArray();
       const elapsed = performance.now() - start;
       debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-      setRows(screenshots);
+      setRows(rapports);
       setIsLoading(false);
       hideLoader();
     }
@@ -73,7 +73,7 @@ export default function SearchDataTable(props) {
       if (lastModified < configuration.updatedOn) {
         lastModified = configuration.updatedOn;
         showLoader()
-        const rapports = (await getLocalItem(RAPPORT)) ?? [];
+        const rapports = await db.rapport.toArray();
         setRows(rapports);
         hideLoader()
       }
@@ -506,12 +506,12 @@ export default function SearchDataTable(props) {
     const deleteArtifacts = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
       deleteArtifacts.push(rows[idx].artifacts.map((a) => a.uuid));
-      deleteRecords.push(rows[idx]);
+      deleteRecords.push(rows[idx].uuid);
     }
 
     await db.artifact.bulkDelete(deleteArtifacts);
-    await deleteBulkRecords(RAPPORT, UUID, deleteRecords);
-    setRows(await getLocalItem(RAPPORT));
+    await db.rapport.bulkDelete(deleteRecords);
+    setRows(await db.rapport.toArray());
     // update the configuration last
     let configuration = await Configuration.getConfiguration();
     configuration.screenShotCount = rows.length;
@@ -531,7 +531,7 @@ export default function SearchDataTable(props) {
     },
     onDownload: (buildHead, buildBody, columns, data) => {
       showLoader();
-      getLocalItem(RAPPORT).then((rapports) => {
+      db.rapport.toArray().then((rapports) => {
         // set artifacts to an empty array,
         // TODO: support exporting artifacts
         rapports.forEach(r => r.artifacts = []);

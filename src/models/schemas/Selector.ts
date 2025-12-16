@@ -10,9 +10,9 @@ import { Configuration } from './Configuration';
 import { IRapport, ISelector } from '../../types';
 import { db } from '../db/dexieDb';
 import { findAllMatches, getUtcNow } from '../../utilities/transformers';
-import { DiscoveryPluginSchema } from '../validators/DiscoveryPlugin.validator';
 import { SelectorSchema } from '../validators/Selector.validator';
 import { debug } from '../../services/logger_services';
+import { Rapport } from './Rapport';
 
 /**
  * Represents a single Selector used for tagging or filtering records.
@@ -45,9 +45,9 @@ export class Selector implements ISelector {
     try{
       selector.name = selector.name.toLowerCase().trim();
       await db.selector.add(selector);
-      const rapports: any[] = (await getLocalItem(RAPPORT)) ?? [];
+      const rapports: any[] = (await db.rapport.toArray()) ?? [];
       await Selector.findAndAssignMatches(rapports, [selector]);
-      await setLocalItem(RAPPORT, rapports);
+      await db.rapport.bulkPut(rapports);
       const configuration = await Configuration.getConfiguration();
       configuration.updatedOn = getUtcNow();
       await Configuration.setConfiguration(configuration);
@@ -74,12 +74,12 @@ export class Selector implements ISelector {
       names.push(value.name);
     }
 
-    const rapports: IRapport[] = (await getLocalItem(RAPPORT)) ?? [];
+    const rapports: Rapport[] = await db.rapport.toArray() ?? [];
     for (let rapport of rapports) {
       rapport.selectors = rapport.selectors.filter(s => !names.includes(s.name));
     }
     // re-save the rapport records
-    await setLocalItem(RAPPORT, rapports);
+    await db.rapport.bulkPut(rapports);
     const configuration = await Configuration.getConfiguration();
     configuration.updatedOn = getUtcNow();
     await Configuration.setConfiguration(configuration);
