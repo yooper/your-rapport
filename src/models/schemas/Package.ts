@@ -148,15 +148,14 @@ export async function fetchPackages() {
     const configuration: IConfiguration = await Configuration.getConfiguration();
     const newHashCache = await cacheHashResponse.text();
     const oldHashCache = configuration.packageCacheEnabled ? configuration.packageCacheHash : '';
-    // invalid cache
     let data: Package[] = []
-    // TODO: flush localStorage.getItem('cacheHash');
-    if(oldHashCache || newHashCache !== oldHashCache){
+    if(!oldHashCache || newHashCache !== oldHashCache){
       const response = await fetch(
         'https://raw.githubusercontent.com/osint-liar/public-packages/develop/index.json'
       );
       const packageData: Package[] = await response.json();
       data = structuredClone(packageData);
+      configuration.packageCacheHash = newHashCache;
     }
     else{
       // no updated available

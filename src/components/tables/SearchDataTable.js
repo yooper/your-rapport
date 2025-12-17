@@ -3,22 +3,17 @@ import Box from '@mui/material/Box';
 import MUIDataTable from 'mui-datatables';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
 import { hideLoader, showLoader } from '../../utilities/loaders';
-import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
 import PreviewImageDialog from '../dialogs/PreviewImageDialog';
 import UploadDataDialog from '../dialogs/UploadDataDialog';
 import { downloadJsonData, getUtcNow } from '../../utilities/transformers';
 import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
-import { Avatar, Badge, Tooltip } from '@mui/material';
+import { Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import {
-  RAPPORT,
-  UPDATED_ON,
-  UUID,
-} from '../../services/constants';
+import { UUID } from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
@@ -73,7 +68,7 @@ export default function SearchDataTable(props) {
       if (lastModified < configuration.updatedOn) {
         lastModified = configuration.updatedOn;
         showLoader()
-        const rapports = await db.rapport.toArray();
+        const rapports = await db.rapport.orderBy('updatedOn').reverse().toArray();
         setRows(rapports);
         hideLoader()
       }
@@ -385,14 +380,14 @@ export default function SearchDataTable(props) {
       },
     },
     {
-      name: 'createdOn',
-      label: 'COLLECTED ON',
+      name: 'updatedOn',
+      label: 'UPDATED ON',
       options: {
         filter: false,
         sort: true,
         searchable: false,
         customBodyRenderLite: (dataIndex) => {
-          const date = new Date(parseInt(rows[dataIndex].createdOn) * 1000);
+          const date = new Date(parseInt(rows[dataIndex].updatedOn) * 1000);
           return <div>{date.toLocaleString()}</div>;
         },
       },
@@ -510,7 +505,7 @@ export default function SearchDataTable(props) {
 
     await db.artifact.bulkDelete(deleteArtifacts);
     await db.rapport.bulkDelete(deleteRecords);
-    setRows(await db.rapport.toArray());
+    setRows(await db.rapport.orderBy('updatedOn').reverse().toArray());
     // update the configuration last
     let configuration = await Configuration.getConfiguration();
     configuration.screenShotCount = rows.length;
@@ -530,7 +525,7 @@ export default function SearchDataTable(props) {
     },
     onDownload: (buildHead, buildBody, columns, data) => {
       showLoader();
-      db.rapport.toArray().then((rapports) => {
+      db.rapport.orderBy('updatedOn').reverse().toArray().then((rapports) => {
         // set artifacts to an empty array,
         // TODO: support exporting artifacts
         rapports.forEach(r => r.artifacts = []);

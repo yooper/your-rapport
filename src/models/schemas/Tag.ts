@@ -26,12 +26,11 @@ export class Tag implements INameOnly {
       names.push(value.name);
     }
 
-    const records: any[] = await db.rapport.toArray() ?? [];
+    const records: any[] = await db.rapport.orderBy('updatedOn').reverse().toArray() ?? [];
     for (let record of records) {
       record.tags = records.tags?.filter((tag) => !names.includes(tag.name));
     }
-    // re-save the rapport records
-    await setLocalItem(RAPPORT, records);
+    await db.rapport.bulkPut(records);
     const configuration = await Configuration.getConfiguration();
     configuration.updatedOn = getUtcNow();
     await Configuration.setConfiguration(configuration);

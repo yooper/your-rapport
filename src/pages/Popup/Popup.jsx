@@ -123,7 +123,7 @@ function LargeButtonGrid() {
         chrome.tabs.create({
           url: chrome.runtime.getURL('options.html?view=discoveryPlugin'),
         }),
-    },
+    }
   ];
 
   return (

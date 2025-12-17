@@ -70,7 +70,6 @@ export async function capture(
           // attach reference to record
           record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
 
-
           const htmlArtifact = await Artifact.create(
             new Blob([pageInfo.html], { type: 'text/html' }),
             record.uuid,
@@ -88,7 +87,7 @@ export async function capture(
       } while (!isSaved && retryCounter < 3);
     }
 
-    // Save the Rapport
+    // Save the RapportF
     await db.rapport.add(record);
 
     // Queue up the background jobs (fire-and-forget; log when done)

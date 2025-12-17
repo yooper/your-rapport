@@ -45,7 +45,7 @@ export class Selector implements ISelector {
     try{
       selector.name = selector.name.toLowerCase().trim();
       await db.selector.add(selector);
-      const rapports: any[] = (await db.rapport.toArray()) ?? [];
+      const rapports: any[] = await db.rapport.orderBy('updatedOn').reverse().toArray() ?? [];
       await Selector.findAndAssignMatches(rapports, [selector]);
       await db.rapport.bulkPut(rapports);
       const configuration = await Configuration.getConfiguration();
@@ -74,7 +74,7 @@ export class Selector implements ISelector {
       names.push(value.name);
     }
 
-    const rapports: Rapport[] = await db.rapport.toArray() ?? [];
+    const rapports: Rapport[] = await db.rapport.orderBy('updatedOn').reverse().toArray() ?? [];
     for (let rapport of rapports) {
       rapport.selectors = rapport.selectors.filter(s => !names.includes(s.name));
     }

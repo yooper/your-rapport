@@ -5,6 +5,7 @@ import {
   sha256,
   sha256FromBlob,
 } from "../../utilities/transformers";
+import { Artifact } from './Artifact';
 
 /**
  * If you have a real Tab type from chrome, prefer that:
@@ -50,6 +51,8 @@ export interface RapportInit {
   isImportant: boolean;
   relevance: Relevance;
   bulkAutomationUuid?: string | null;
+  visibleText: string | null
+  artifacts: Artifact[];
 }
 
 export class Rapport {
@@ -75,6 +78,7 @@ export class Rapport {
   relevance: Relevance;
   bulkAutomationUuid: string | null;
   artifacts: unknown[];
+  visibleText: string | null;
 
   constructor(init: RapportInit) {
     this.uuid = init.uuid;
@@ -99,6 +103,7 @@ export class Rapport {
     this.relevance = init.relevance;
     this.bulkAutomationUuid = init.bulkAutomationUuid ?? null;
     this.artifacts = [];
+    this.visibleText = init.visibleText;
   }
 
   /**
@@ -150,6 +155,8 @@ export class Rapport {
       isImportant: false,
       relevance: "low",
       bulkAutomationUuid: null,
+      artifacts: [],
+      visibleText: pageInfo.visibleText ?? null
     });
   }
 
@@ -196,6 +203,8 @@ export class Rapport {
       isImportant: false,
       relevance: "low",
       bulkAutomationUuid: null,
+      artifacts: [],
+      visibleText: null
     });
   }
 
