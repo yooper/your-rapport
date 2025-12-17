@@ -2,48 +2,52 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
-import SelectorFormDialog from '../dialogs/SelectorFormDialog';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import {
-  BULK_AUTOMATION,
-  RAPPORT,
   SELECTOR,
   UPDATED_ON,
 } from '../../services/constants';
 import { Configuration } from '../../models/schemas/Configuration';
 import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
+import { Tooltip } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import SelectorFormDialogV2 from '../dialogs/SelectorFormDialogV2';
+import { getUtcNow } from '../../utilities/transformers';
 
 export default function SelectorDataTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
-      showLoader();
-      setIsLoading(true);
-      const records = await db.selector.toArray();
-      setRows(records);
-      setIsLoading(false);
-      hideLoader();
-    }
+
     fetchData();
     /**
      * Check if any updates occurred
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-      let updatedOn = await Configuration.getConfigurationValue(UPDATED_ON);
-      const pageCachedOn = localStorage.getItem(SELECTOR) ?? null;
-
-      if (updatedOn !== pageCachedOn) {
+      const configuration = await Configuration.getConfiguration();
+      const pageCachedOn = localStorage.getItem(SELECTOR) ?? getUtcNow();
+      if (configuration.updatedOn != pageCachedOn) {
         await fetchData(); // check for new data every 10 seconds.
-        localStorage.setItem(UPDATED_ON, updatedOn);
-        localStorage.setItem(SELECTOR, updatedOn);
+        localStorage.setItem(SELECTOR, String(configuration.updatedOn));
       }
     }, 10000); // wait 10 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
+
+  async function fetchData() {
+    showLoader();
+    setIsLoading(true);
+    const records = await db.selector.toArray();
+    setRows(records);
+    setIsLoading(false);
+    hideLoader();
+  }
+
 
   const columns = [
     {
@@ -81,18 +85,28 @@ export default function SelectorDataTable(props) {
       }
 
       await Selector.delete(names);
-      setRows(await db.selector.toArray());
-      setIsLoading(false);
-      hideLoader();
+      await fetchData()
     },
     customToolbar: () => {
       return (
-        <SelectorFormDialog
-          rows={rows}
-          setRows={setRows}
+        <>
+        <Tooltip title={'Add a new selector'}>
+          <IconButton onClick={() =>{
+            setOpen(true)
+          }}>
+            <AddCircleOutlineIcon
+              color={'primary'}
+            />
+          </IconButton>
+        </Tooltip>
+        <SelectorFormDialogV2
+          open={open}
+          setOpen={setOpen}
           isloading={isLoading}
           setIsLoading={setIsLoading}
+          refreshRows={fetchData}
         />
+        </>
       );
     },
     setTableProps: () => {

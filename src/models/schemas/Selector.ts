@@ -1,23 +1,18 @@
 import {
-  addRecord,
-  deleteRecord,
+
   getLocalItem,
   setLocalItem,
-  updateRecord,
 } from '../db/local';
 import {
-  CONFIGURATION,
   RAPPORT,
-  SELECTOR,
-  UPDATED_ON,
-  UUID,
 } from '../../services/constants';
 import { Configuration } from './Configuration';
 import { IRapport, ISelector } from '../../types';
 import { db } from '../db/dexieDb';
-import { findAllMatches } from '../../utilities/transformers';
-import { DiscoveryPluginSchema } from '../validators/DiscoveryPlugin.validator';
+import { findAllMatches, getUtcNow } from '../../utilities/transformers';
 import { SelectorSchema } from '../validators/Selector.validator';
+import { debug } from '../../services/logger_services';
+import { Rapport } from './Rapport';
 
 /**
  * Represents a single Selector used for tagging or filtering records.
@@ -47,12 +42,22 @@ export class Selector implements ISelector {
    * @param selector Selector
    */
   static async add(selector: Selector): Promise<void> {
-    selector.name = selector.name.toLowerCase().trim();
-    await db.selector.add(selector);
-    const rapports: any[] = (await getLocalItem(RAPPORT)) ?? [];
-    await Selector.findAndAssignMatches(rapports, [selector]);
-    await setLocalItem(RAPPORT, rapports);
-    await Configuration.setConfigurationValue(UPDATED_ON, Date.now());
+    try{
+      selector.name = selector.name.toLowerCase().trim();
+      await db.selector.add(selector);
+      const rapports: any[] = await db.rapport.orderBy('updatedOn').reverse().toArray() ?? [];
+      await Selector.findAndAssignMatches(rapports, [selector]);
+      await db.rapport.bulkPut(rapports);
+      const configuration = await Configuration.getConfiguration();
+      configuration.updatedOn = getUtcNow();
+      await Configuration.setConfiguration(configuration);
+    }
+    catch(e){
+      // silence duplicate errors
+      await debug(String(e));
+    }
+
+
   }
 
   /**
@@ -69,15 +74,15 @@ export class Selector implements ISelector {
       names.push(value.name);
     }
 
-    const rapports: IRapport[] = (await getLocalItem(RAPPORT)) ?? [];
+    const rapports: Rapport[] = await db.rapport.orderBy('updatedOn').reverse().toArray() ?? [];
     for (let rapport of rapports) {
       rapport.selectors = rapport.selectors.filter(s => !names.includes(s.name));
     }
     // re-save the rapport records
-    await setLocalItem(RAPPORT, rapports);
-    const configuration = await getLocalItem(CONFIGURATION);
-    configuration[UPDATED_ON] = Date.now().toString();
-    await setLocalItem(CONFIGURATION, configuration);
+    await db.rapport.bulkPut(rapports);
+    const configuration = await Configuration.getConfiguration();
+    configuration.updatedOn = getUtcNow();
+    await Configuration.setConfiguration(configuration);
   }
 
 
@@ -92,15 +97,15 @@ export class Selector implements ISelector {
   ): Promise<IRapport[]> {
     for (const rapport of rapports) {
       rapport.selectors = findAllMatches(
-        rapport.text + (rapport.note ?? ''),
+        rapport.text + (rapport.note ?? '') + (rapport.title ?? '') + (rapport.url ?? ''),
         selectors,
         1
       ).concat(rapport.selectors ?? []);
     }
 
-    const configuration = await getLocalItem(CONFIGURATION);
-    configuration[UPDATED_ON] = Date.now().toString();
-    await setLocalItem(CONFIGURATION, configuration);
+    const configuration = await Configuration.getConfiguration();
+    configuration.updatedOn = getUtcNow();
+    await Configuration.setConfiguration(configuration);
     return rapports;
   }
 

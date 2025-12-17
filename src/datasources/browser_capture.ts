@@ -1,12 +1,11 @@
-import { addRecord } from '../models/db/local';
 import { Rapport } from '../models/schemas/Rapport';
 import ExtensionPin from '../utilities/ExtensionPin';
 import { Configuration } from '../models/schemas/Configuration';
-import { RAPPORT, SELECTOR, UPDATED_ON, UUID } from '../services/constants';
 import { db } from '../models/db/dexieDb';
 import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { applyBackgroundJobs } from '../services/discovery_plugin_services';
+import { getUtcNow } from '../utilities/transformers';
 
 // ----- Types ---------------------------------------------------------------
 
@@ -33,11 +32,7 @@ export async function capture(
 ): Promise<void> {
   try {
     ExtensionPin.setDefaultNotSaved(tab);
-
     let configuration = await Configuration.getConfiguration();
-    // get/set the record count
-    configuration.screenShotCount = configuration?.screenShotCount ?? 0;
-
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
 
@@ -53,14 +48,6 @@ export async function capture(
       deepSave
     );
 
-    // sequence id
-    //record.sequenceId = 'sequence' in page ? (message.sequence ?? 0) : 0;
-
-    // bulk automation id
-    //record.bulkAutomationUuid =
-    //  'automation' in message && message.automation
-    //    ? message.automation.uuid
-    //    : null;
 
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
@@ -71,8 +58,7 @@ export async function capture(
       do {
         try {
           const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({tabId: tab.id});
-
-          const artifact = await Artifact.create(
+          const mhtmlArtifact = await Artifact.create(
             blob,
             record.uuid,
             record.url,
@@ -80,10 +66,19 @@ export async function capture(
           );
 
           // persist artifact (Dexie)
-          await db.artifact.add(artifact);
+          await db.artifact.add(mhtmlArtifact);
           // attach reference to record
-          record.artifacts.push(Artifact.getAttachment(artifact));
+          record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
+
+          const htmlArtifact = await Artifact.create(
+            new Blob([pageInfo.html], { type: 'text/html' }),
+            record.uuid,
+            record.url,
+            'text/html'
+          );
+          record.artifacts.push(Artifact.getAttachment(htmlArtifact));
           isSaved = true;
+
         } catch (e) {
           await debug(String(e));
         } finally {
@@ -92,8 +87,8 @@ export async function capture(
       } while (!isSaved && retryCounter < 3);
     }
 
-    // Save the Rapport record
-    await addRecord(RAPPORT, UUID, record);
+    // Save the RapportF
+    await db.rapport.add(record);
 
     // Queue up the background jobs (fire-and-forget; log when done)
     applyBackgroundJobs(record).then(() => {
@@ -101,7 +96,7 @@ export async function capture(
     });
 
     // update the configuration last saved on metadata
-    configuration[UPDATED_ON] = Date.now();
+    configuration.updatedOn = getUtcNow();
     configuration.screenShotCount++;
 
     await Configuration.setConfiguration(configuration);

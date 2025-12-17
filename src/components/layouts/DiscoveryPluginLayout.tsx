@@ -40,7 +40,7 @@ const DiscoveryPluginLayout: React.FC<DiscoveryPluginLayoutProps> = ({
         variant="fullWidth"
         value={value}
         onChange={handleChange}
-        aria-label="Vertical tabs example"
+        aria-label="Discovery Plugins"
         sx={{
           borderRight: 1,
           borderColor: 'divider',

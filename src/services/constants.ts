@@ -21,7 +21,7 @@ export type StorageKey =
 /**
  * Common field names used in objects
  */
-export const UPDATED_ON = 'updated_on' as const;
+export const UPDATED_ON = 'updatedOn' as const;
 export const UUID = 'uuid' as const;
 
 /**
@@ -49,6 +49,8 @@ export const NO_VISIBLE_TEXT = 'noVisibleText' as const;
 export const PROCESS_QUEUE_AUTOMATION_URLS = 'processQueueAutomationUrls' as const;
 export const AUTO_COLLECT_SCROLLBAR_STOPPED = 'autoCollectScrollbarStopped' as const;
 export const AUTO_COLLECT_MAX_SCREENSHOTS = 'autoCollectMaxScreenshots' as const;
+
+
 
 
 export type CommandName =

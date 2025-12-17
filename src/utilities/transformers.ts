@@ -68,6 +68,10 @@ export function downloadJsonData(
   URL.revokeObjectURL(url);
 }
 
+export function getUtcNow() : number{
+  return Math.floor(Date.now() / 1000);
+}
+
 // Utility: Download base64-encoded image
 export function downloadBase64Image(
   base64Data: string,

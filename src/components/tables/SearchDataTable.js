@@ -3,30 +3,23 @@ import Box from '@mui/material/Box';
 import MUIDataTable from 'mui-datatables';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
 import { hideLoader, showLoader } from '../../utilities/loaders';
-import { deleteBulkRecords, getLocalItem } from '../../models/db/local';
 import { useEffect, useState } from 'react';
 import PreviewImageDialog from '../dialogs/PreviewImageDialog';
 import UploadDataDialog from '../dialogs/UploadDataDialog';
-import { downloadJsonData } from '../../utilities/transformers';
+import { downloadJsonData, getUtcNow } from '../../utilities/transformers';
 import NotesDialog from '../dialogs/NoteDialog';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
-import { Avatar, Badge, Tooltip } from '@mui/material';
+import { Badge, Tooltip } from '@mui/material';
 import { Configuration } from '../../models/schemas/Configuration';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import {
-  RAPPORT,
-  UPDATED_ON,
-  UUID,
-} from '../../services/constants';
+import { UUID } from '../../services/constants';
 import SearchDataTableToolbarSelect from './customizations/SearchDataTableToolbarSelect';
 import { debug } from '../../services/logger_services';
 import { rapportDebounceSearchRender } from './customizations/RapportDebounceSearchRender';
 import { db } from '../../models/db/dexieDb';
 import VerticalGenericTableDialog from '../dialogs/VerticalGenericTableDialog';
-import { Artifact } from '../../models/schemas/Artifact';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
-import TagIcon from '@mui/icons-material/Tag';
 import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
 import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import IconButton from '@mui/material/IconButton';
@@ -40,7 +33,7 @@ export default function SearchDataTable(props) {
   const [selectors, setSelectors] = useState(null);
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
-  const [updatedOn, setUpdatedOn] = useState(new Date().getTime());
+  let lastModified = localStorage.getItem('lastModified') ? parseInt(localStorage.getItem('lastModified')) : getUtcNow();
   const attachmentHeaders = ['view', 'uuid', 'mimeType', 'size', 'url']
 
 
@@ -55,10 +48,10 @@ export default function SearchDataTable(props) {
       setSelectors(await db.selector.toArray());
       setTags(await db.tag.toArray());
       setDiscoveryPlugins((await db.discoveryPlugin.toArray()) ?? []);
-      const screenshots = (await getLocalItem(RAPPORT)) ?? [];
+      const rapports = await db.rapport.orderBy('updatedOn').reverse().toArray();
       const elapsed = performance.now() - start;
       debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-      setRows(screenshots);
+      setRows(rapports);
       setIsLoading(false);
       hideLoader();
     }
@@ -71,11 +64,11 @@ export default function SearchDataTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-      const lastModified = await Configuration.getConfigurationValue(UPDATED_ON);
-      if (updatedOn < lastModified) {
-        setUpdatedOn(lastModified)
+      const configuration = await Configuration.getConfiguration();
+      if (lastModified < configuration.updatedOn) {
+        lastModified = configuration.updatedOn;
         showLoader()
-        const rapports = (await getLocalItem(RAPPORT)) ?? [];
+        const rapports = await db.rapport.orderBy('updatedOn').reverse().toArray();
         setRows(rapports);
         hideLoader()
       }
@@ -102,7 +95,6 @@ export default function SearchDataTable(props) {
         customBodyRenderLite: (dataIndex) => {
           const record = rows[dataIndex];
           const [isOpen, setIsOpen] = useState(false);
-          const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
           const [openAttributeViewer, setOpenAttributeViewer] = useState(false);
           return (
             <>
@@ -262,7 +254,7 @@ export default function SearchDataTable(props) {
               key={`tag-${tag.name}-${record.uuid}`}
               plugins={[]}
               title={'tag'}
-              record={record}
+              rapport={record}
               uxType={'chip'}
               selectorValue={tag.name}
               refreshRows={refreshRows}
@@ -281,8 +273,7 @@ export default function SearchDataTable(props) {
                 isOpen={open}
                 setIsOpen={setOpen}
                 record={record}
-                rows={rows}
-                setRows={setRows}
+                refreshRows={refreshRows}
               />
             </>
           )
@@ -332,7 +323,7 @@ export default function SearchDataTable(props) {
                 return plugin.pluginType === selector.selectorTypeName;
               })}
               title={selector.selectorTypeName ?? ''}
-              record={record}
+              rapport={record}
               uxType={'chip'}
               selectorValue={selector.name}
               refreshRows={refreshRows}
@@ -379,7 +370,7 @@ export default function SearchDataTable(props) {
                 return plugin.pluginType === 'domain';
               })}
               title={'domain'}
-              record={record}
+              rapport={record}
               uxType={'chip'}
               selectorValue={value}
               refreshRows={refreshRows}
@@ -389,14 +380,14 @@ export default function SearchDataTable(props) {
       },
     },
     {
-      name: 'createdOn',
-      label: 'COLLECTED ON',
+      name: 'updatedOn',
+      label: 'UPDATED ON',
       options: {
         filter: false,
         sort: true,
         searchable: false,
         customBodyRenderLite: (dataIndex) => {
-          const date = new Date(parseInt(rows[dataIndex].createdOn));
+          const date = new Date(parseInt(rows[dataIndex].updatedOn) * 1000);
           return <div>{date.toLocaleString()}</div>;
         },
       },
@@ -417,7 +408,7 @@ export default function SearchDataTable(props) {
               key={`content-${value}-${record.uuid}`}
               plugins={plugins}
               title={'content'}
-              record={record}
+              rapport={record}
               uxType={'appsIcon'}
               pluginValue={''}
               refreshRows={refreshRows}
@@ -509,17 +500,17 @@ export default function SearchDataTable(props) {
     const deleteArtifacts = [];
     for (const [idx, value] of Object.entries(records.lookup)) {
       deleteArtifacts.push(rows[idx].artifacts.map((a) => a.uuid));
-      deleteRecords.push(rows[idx]);
+      deleteRecords.push(rows[idx].uuid);
     }
 
     await db.artifact.bulkDelete(deleteArtifacts);
-    await deleteBulkRecords(RAPPORT, UUID, deleteRecords);
-    setRows(await getLocalItem(RAPPORT));
+    await db.rapport.bulkDelete(deleteRecords);
+    setRows(await db.rapport.orderBy('updatedOn').reverse().toArray());
     // update the configuration last
     let configuration = await Configuration.getConfiguration();
     configuration.screenShotCount = rows.length;
-    configuration.updatedOn = new Date().getTime();
-    setUpdatedOn(configuration.updatedOn);
+    configuration.updatedOn = getUtcNow();
+    lastModified = getUtcNow();
     await Configuration.setConfiguration(configuration);
     setIsLoading(false);
     hideLoader();
@@ -534,7 +525,7 @@ export default function SearchDataTable(props) {
     },
     onDownload: (buildHead, buildBody, columns, data) => {
       showLoader();
-      getLocalItem(RAPPORT).then((rapports) => {
+      db.rapport.orderBy('updatedOn').reverse().toArray().then((rapports) => {
         // set artifacts to an empty array,
         // TODO: support exporting artifacts
         rapports.forEach(r => r.artifacts = []);

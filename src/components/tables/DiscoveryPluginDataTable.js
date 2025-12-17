@@ -5,7 +5,6 @@ import MUIDataTable from 'mui-datatables';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import {
   hideLoader,
-  processNotification,
   showLoader,
 } from '../../utilities/loaders';
 import HelperPopover from '../HelperPopover';
@@ -18,6 +17,7 @@ import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { downloadJsonData } from '../../utilities/transformers';
 import UploadDataDialog from '../dialogs/UploadDataDialog';
+import { debug } from '../../services/logger_services';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);
@@ -31,11 +31,9 @@ export default function DiscoveryPluginDataTable() {
     'bitcoin',
     'content',
     'date',
-    'dob',
     'domain',
     'email',
     'ethereum',
-    'event',
     'family',
     'keyword',
     'name',
@@ -44,7 +42,7 @@ export default function DiscoveryPluginDataTable() {
     'phone',
     'religion',
     'tag',
-    'username',
+    'username'
   ];
 
   useEffect(() => {
@@ -56,11 +54,13 @@ export default function DiscoveryPluginDataTable() {
       setPluginTypes(allPluginTypes);
       // only make the key name available, we don't need this value
       setApiKeys(await db.apiKey.toArray());
+
       setIsLoading(false);
       hideLoader();
     }
     fetchData();
   }, []);
+
 
   const handleSwitchChange = async (record, isChecked) => {
     record.active = isChecked;

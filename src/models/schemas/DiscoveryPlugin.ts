@@ -1,9 +1,10 @@
 // DiscoveryPlugin.ts
-import { DiscoveryPluginAction, DiscoveryPluginInit, onClick } from '../../types';
+import { DiscoveryPluginAction, DiscoveryPluginInit, DiscoveryPluginRoute, onClick } from '../../types';
 import { DiscoveryPluginSchema } from "../validators/DiscoveryPlugin.validator";
+import Package from './Package';
 
 export class DiscoveryPlugin {
-  readonly uuid: string = crypto.randomUUID();
+  uuid: string = crypto.randomUUID();
   pluginType: string | 'content';
   url: string | null;
   active: boolean = true;
@@ -34,6 +35,10 @@ export class DiscoveryPlugin {
   authorizationBearerToken: string | null;
   authorizationUserName: string | null;
   authorizationPassword: string | null;
+  route: DiscoveryPluginRoute = 'outbound';
+  script: string | null = null;
+  extractionRules: any[] = [];
+
 
 
   constructor(init: DiscoveryPluginInit = {}) {
@@ -67,6 +72,9 @@ export class DiscoveryPlugin {
     this.authorizationBearerToken = init.authorizationBearerToken ?? null;
     this.authorizationUserName = init.authorizationUserName ?? null;
     this.authorizationPassword = init.authorizationPassword ?? null;
+    this.script = init.script ?? null;
+    this.extractionRules = init.extractionRules ?? []
+
   }
 
   /** Increment access count and mark last accessed time */
@@ -88,13 +96,18 @@ export class DiscoveryPlugin {
   }
 
   /** Rehydrate from a plain object (e.g., DB or JSON) */
-  static from(obj: Partial<DiscoveryPlugin> & { uuid?: string }): DiscoveryPlugin {
+  static from(obj: Package): DiscoveryPlugin {
     const pl = new DiscoveryPlugin(obj);
     // If a uuid was provided, keep it (useful when loading from storage)
     if (obj.uuid) (pl as { uuid: string }).uuid = obj.uuid;
     return pl;
   }
 
+  /**
+   * Centralization of validating inbound and outbound discovery plugins
+   * TODO: Validate the discovery plugin before exporting.
+   * @param input
+   */
   static async validate(input: unknown)
   {
       const res = await DiscoveryPluginSchema.safeParseAsync(input);

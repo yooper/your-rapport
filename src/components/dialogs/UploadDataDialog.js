@@ -17,6 +17,7 @@ import { Configuration } from '../../models/schemas/Configuration';
 import { RAPPORT, UPDATED_ON } from '../../services/constants';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { db } from '../../models/db/dexieDb';
+import { getUtcNow } from '../../utilities/transformers';
 
 /**
  * TODO: Add support for extracting selectors from incoming records
@@ -97,12 +98,12 @@ export default function UploadDataDialog(props) {
           // TODO: use a background job to rebuild the selectors.
 
           // TODO: fix issue with adding duplicates, the uuid is the unique key
-          let rapports = (await getLocalItem(RAPPORT)) ?? [];
+          const count = await db.rapport.count()
           // TODO: sort by dates.
-          configuration.screenShotCount = rapports.length;
-          await setLocalItem(RAPPORT, rapports.concat(newRecords));
+          configuration.screenShotCount = count + newRecords.length;
+          await db.rapport.bulkPut(newRecords)
           // update the configuration last
-          configuration[UPDATED_ON] = Date.now();
+          configuration.updatedOn = getUtcNow();
           await Configuration.setConfiguration(configuration);
         }
       }

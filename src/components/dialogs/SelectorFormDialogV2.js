@@ -19,19 +19,17 @@ import {
   processNotification,
   showLoader,
 } from '../../utilities/loaders';
-import { db } from '../../models/db/dexieDb';
 import { Selector } from '../../models/schemas/Selector';
 import { debug } from '../../services/logger_services';
-import * as SelectorSchema from 'zod';
-import { SelectorInfer } from '../../models/validators/Selector.validator';
 
 export default function SelectorFormDialogV2(props) {
   const [record, setRecord] = useState({});
-  const { open, setOpen, refreshRows} = props
+  const [ open, setOpen] = useState(false);
+  const { refreshRows} = props
 
   useEffect(() => {
-    setOpen(props.isOpen);
-  }, [props.isOpen]);
+    setOpen(props.open);
+  }, [props.open]);
 
   const handleChange = (event) => {
     const name = event.target.name;
@@ -57,15 +55,16 @@ export default function SelectorFormDialogV2(props) {
       }
       else{
         // takes awhile to run
-        await Selector.add(new Selector(record.name, record.selectorTypeName));
+        await Selector.add(new Selector(result.data.name, result.data.selectorTypeName));
         processNotification({
           title: 'Selector Added',
           message: `Selector ${record.name} has been added.`,
           type: 'success',
         });
+        refreshRows()
       }
     } catch (e) {
-      debug(e.toString());
+      await debug(e.toString());
       processNotification({
         title: 'Selector Add Error',
         message: e.toString(),
@@ -75,7 +74,6 @@ export default function SelectorFormDialogV2(props) {
       setOpen(false);
       props.setOpen(false);
       props.setIsLoading(false);
-      refreshRows()
       hideLoader();
     }
   };

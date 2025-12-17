@@ -3,20 +3,19 @@ import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
 import {
   ACTIVATE_CAPTURE, BULK_AUTOMATION,
-  RAPPORT,
-  UPDATED_ON,
   UUID,
 } from './constants';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
 import { addRecord } from '../models/db/local';
-import { selectCorrectLink } from '../utilities/transformers';
+import { getUtcNow, selectCorrectLink } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
 import { fetchBlob } from './image_loading_services';
 import { applyBackgroundJobs } from './discovery_plugin_services';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
 import { waitForPageInfo } from '../backgrounds/automation-runner';
+import { db } from '../models/db/dexieDb';
 
 /**
  * Add the selectors as menu items
@@ -85,8 +84,7 @@ export async function initializeContextMenus() {
           );
           rapport.sequenceId = 0;
           rapport.bulkAutomationUuid = null;
-          await addRecord(RAPPORT, UUID, rapport);
-          // add hook
+          await db.rapport.add(rapport);
           applyBackgroundJobs(rapport).then(() => {
             debug('background job completed', rapport)
           })
@@ -94,7 +92,7 @@ export async function initializeContextMenus() {
           let configuration = await Configuration.getConfiguration();
           // get/set the record count
           configuration.screenShotCount = configuration?.screenShotCount ?? 0;
-          configuration[UPDATED_ON] = Date.now();
+          configuration.updatedOn = getUtcNow();
           configuration.screenShotCount++;
           await Configuration.setConfiguration(configuration);
           ExtensionPin.setDefaultSaved(tab);

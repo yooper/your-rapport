@@ -72,7 +72,8 @@ export default class ExtensionPin {
   };
 
   /**
-   * Show the percent left of automatoins
+   * Show the percent left of automations
+   * TODO: Fix the percent so it counts from zero to a hundred
    * @param automations
    */
   static setAutomationRunning = (automations) => {

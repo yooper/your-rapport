@@ -2,7 +2,6 @@ import { capture } from '../../datasources/browser_capture';
 import {
   createTab,
   getActiveTab,
-  initializeDiscoveryPlugins,
   sleep,
 } from '../../utilities/loaders';
 import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl'
@@ -26,13 +25,15 @@ import { JobQueue } from '../../models/schemas/JobQueue';
 
 import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
 import { addRecord } from '../../models/db/local';
+import { fetchPackages } from '../../models/schemas/Package';
 
 /**
  * Initialize services when the extension is installed / activated
  */
 await initializeContextMenus();
-await initializeDiscoveryPlugins();
 initializeAutomationRunner();
+// upon startup update or install discovery plugins
+await fetchPackages();
 
 
 let _jobQueue = null;
@@ -47,29 +48,28 @@ export function getJobQueue(){
  * Add in support for short-cut keys
  */
 chrome.commands.onCommand.addListener(async(command) => {
-  debug(`Command ${command} received`)
+  await debug(`Command ${command} received`)
 
   const activeTab = await getActiveTab()
-  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO });
+  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
   const { pageInfo } = response
 
   switch (command) {
     case 'deepSave':
       await capture(activeTab, pageInfo, true);
-      return true;
       break;
     case 'initScanPage':
       await scanPage(activeTab)
       break;
     case 'initAutoScroll':
-      chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE })
-        .then(response => {debug(ACTIVATE_CAPTURE+':', response);
-        })
-      return true;
+      const response = chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
+      await debug('init auto scroll', response)
+      break;
     case 'openDashboard':
       await createTab(`chrome-extension://${chrome.runtime.id}/search.html`);
       break;
     default:
+      debug('Unknown command ' + command)
       break;
   }
 });
@@ -79,24 +79,47 @@ chrome.commands.onCommand.addListener(async(command) => {
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.cmd === 'deepSave') {
+  (async () => {
+    try {
+      const activeTab = await getActiveTab();
+      const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO', requestId: crypto.randomUUID() });
+      await capture(activeTab, pageInfo, true);
+      sendResponse({ completed: true, deepSave: true, pageInfo });
+    } catch (e) {
+      await debug('deep save failed.')
+      sendResponse({
+        completed: false,
+        deepSave: true,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  })();
+    return true; // keep the message channel open for async sendResponse
+  }
+  else if(message.cmd === AUTO_COLLECT_STARTING) {
     (async () => {
-      const response = await chrome.tabs.sendMessage(sender.tab.id, { cmd: PAGE_INFO });
-      const { pageInfo } = response
-      await capture(sender.tab, pageInfo, true);
-      sendResponse({completed: true, deepSave: true, pageInfo})
+      const tab = await getActiveTab();
+      await chrome.tabs.sendMessage(tab.id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
+      sendResponse({ completed: true, deepSave: false });
     })();
     return true;
   }
+
   /**
-   * Tell the content script the save was successful
+   * Used by the authentication process
    */
-  if (message.cmd === CAPTURE_VISIBLE_TAB) {
+  if (message.cmd === 'createTab'){
     (async () => {
-      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
+      await createTab(message.url);
       sendResponse({ completed: true });
     })();
     return true;
   }
+
+
+  /**
+   * Tell the content script the save was successful
+   */
   if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
       await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
@@ -123,12 +146,12 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
   try {
     (async () => {
       switch (message.cmd) {
-        case 'singleCollect':
+        case 'singleCollect': // TODO: Deprecated remove after 1/1/26
         case 'deepSave':
           await createTab(message.url);
           const activateTab = await getActiveTab();
           await sleep(3000);
-          const response = await chrome.tabs.sendMessage(activateTab.id, { cmd: PAGE_INFO });
+          const response = await chrome.tabs.sendMessage(activateTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
           const { pageInfo } = response
           // wait for page contents to load
           // TODO: make this configurable or dynamic based on the domain
@@ -136,11 +159,11 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           sendResponse({completed: true})
           break;
         case AUTO_COLLECT_STARTING:
-        case 'autoscrollCollect':
+        case 'autoscrollCollect': // TODO: Deprecated remove after 1/1/26
           await createTab(message.url);
           await sleep(3000);
           sendResponse({completed: true})
-          chrome.tabs.sendMessage((await getActiveTab()).id, { cmd: ACTIVATE_CAPTURE })
+          chrome.tabs.sendMessage((await getActiveTab()).id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
             .then(response => {
               debug(ACTIVATE_CAPTURE + ':', response);
             })
@@ -170,29 +193,6 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
     debug('onMessageExternal:failure', { message, sender })
   }
 })
-
-
-
-/**
- * On install open the github page & install default discovery plugins
- */
-chrome.runtime.onInstalled.addListener(async (details) => {
-  if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-    await createTab('https://github.com/yooper/your-rapport/wiki');
-  } else if (details.reason === 'update') {
-    chrome.tabs.create(
-      {
-        url: 'https://github.com/yooper/your-rapport/wiki',
-      },
-      (tab) => {}
-    );
-    // When extension is updated
-  } else if (details.reason === 'chrome_update') {
-    // When browser is updated
-  } else if (details.reason === 'shared_module_update') {
-    // When a shared module is updated
-  }
-});
 
 /**
  * When the web page changes, we need to reset the extension pin to its default state

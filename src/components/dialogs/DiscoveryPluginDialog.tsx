@@ -35,8 +35,6 @@ import {
   QuestionMark as QuestionMarkIcon,
   CalendarMonth,
 } from '@mui/icons-material';
-import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
 import Mustache from 'mustache';
 import CopyToClipboardIcon from '../CopyToClipboardIcon';
 import { discoveryPluginRunner } from '../../services/discovery_plugin_services';
@@ -44,15 +42,13 @@ import { sort_by_key } from '../../utilities/transformers';
 import { hideLoader, showLoader, processNotification } from '../../utilities/loaders';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { Selector } from '../../models/schemas/Selector';
-import HelperPopover from '../HelperPopover';
 import { IRapport } from '../../types';
-import { addRecord } from '../../models/db/local';
-import { BULK_AUTOMATION, UUID } from '../../services/constants';
+import SearchDiscoveryPluginLayout from '../layouts/SearchDiscoveryPluginLayout';
 
 
 interface DiscoveryPluginDialogProps {
   selectorValue: string;
-  record: IRapport;
+  rapport: IRapport;
   plugins: DiscoveryPlugin[];
   title: string;
   uxType: 'chip' | 'icon';
@@ -61,7 +57,7 @@ interface DiscoveryPluginDialogProps {
 
 const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
   selectorValue,
-  record,
+  rapport,
   plugins,
   title,
   uxType,
@@ -82,11 +78,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
         <AttachFileIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
-    associate: (
-      <Avatar>
-        <PersonIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
     bitcoin: (
       <Avatar>
         <CurrencyBitcoinIcon sx={{ fontSize: 'small' }} />
@@ -98,11 +89,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
       </Avatar>
     ),
     date: (
-      <Avatar>
-        <CalendarMonth />
-      </Avatar>
-    ),
-    dob: (
       <Avatar>
         <CalendarMonth />
       </Avatar>
@@ -122,16 +108,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
         <CurrencyBitcoinIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
-    event: (
-      <Avatar>
-        <EventIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
-    family: (
-      <Avatar>
-        <PersonIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
     keyword: (
       <Avatar>
         <PatternIcon sx={{ fontSize: 'small' }} />
@@ -142,11 +118,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
         <PersonIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
-    occupation: (
-      <Avatar>
-        <WorkIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
     organization: (
       <Avatar>
         <BusinessIcon sx={{ fontSize: 'small' }} />
@@ -155,11 +126,6 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
     phone: (
       <Avatar>
         <SmartphoneIcon sx={{ fontSize: 'small' }} />
-      </Avatar>
-    ),
-    religion: (
-      <Avatar>
-        <ChurchIcon sx={{ fontSize: 'small' }} />
       </Avatar>
     ),
     username: (
@@ -203,7 +169,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
       {uxType === 'chip' ? (
         <Chip
           avatar={getIcon(title)}
-          key={`${title}-${uxType}-${record.uuid}`}
+          key={`${title}-${uxType}-${rapport.uuid}`}
           variant="outlined"
           label={selectorValue}
           color="primary"
@@ -234,6 +200,8 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
         open={open}
         onClose={handleClose}
         aria-labelledby="form-dialog-title"
+        fullWidth={true}
+        maxWidth={'lg'}
       >
         <DialogTitle id="form-dialog-title">
           {title.charAt(0).toUpperCase() + title.slice(1)} Discovery Plugins
@@ -243,85 +211,21 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
           <form>
             <div>
               <Typography variant="h5">
-
                 {selectorValue}
                   <Tooltip title={'Copy the selected selector value into your clip board'}>
                   <CopyToClipboardIcon
-                    record={{ pluginName: selectorValue }}
-                    copyFieldName={'pluginName'}
+                    record={{ selectorValue: selectorValue }}
+                    copyFieldName={'selectorValue'}
                   />
                 </Tooltip>
               </Typography>
 
-              <List dense>
-                <ListItem
-                  dense
-                  key={`plugin-${selectorValue}-open-all`}
-                  className="clickable"
-                  onClick={() => {
-                    plugins.forEach((plugin) =>
-                      !['Download', 'Live Page'].includes(plugin.label)
-                        ? discoveryPluginRunner(plugin, record, selectorValue)
-                        : null
-                    );
-                  }}
-                >
-                  <ListItemIcon>
-                    <OpenInNewIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Open All" />
-                </ListItem>
-              </List>
+              <SearchDiscoveryPluginLayout
+                groupNames={groupNames}
+                plugins={plugins}
+                selectorValue={selectorValue}
+                rapport={rapport}/>
 
-              {groupNames.map((groupName) => (
-                <div key={`group-${groupName}`}>
-                  <h4>{groupName}</h4>
-                  <List dense>
-                    {plugins
-                      .filter((p) => p.groupName === groupName)
-                      .map((plugin) => (
-                        <ListItem
-                          dense
-                          key={`plugin-${plugin.pluginType}-${plugin.uuid}`}
-                        >
-                          <ListItemIcon>
-                            <IconButton>
-                            <HelperPopover message={plugin.description ?? ''}/>
-                            </IconButton>
-                            <Tooltip title={'Queue item into the bulk automation collection'}>
-                              <IconButton disabled={!plugin.url || plugin.action !== 'CreateTab'}>
-                                <AddToQueueIcon onClick={async() => {
-                                  // TODO: disable plugin click after the item has been queued
-                                  // assign the plugin value
-                                  const dp = {...plugin,...{selectorValue: selectorValue}}
-                                  const url = Mustache.render(dp.url, dp);
-                                  const automation = BulkAutomationUrl.createBulkAutomationJob(url, 'count', 100);
-                                  await addRecord(BULK_AUTOMATION, UUID, automation)
-                                  processNotification({title: 'Url queued', message: 'The discovery plugin url has been placed in the automation queue', type:'info'});
-                                }}/>
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title={'Open the website using the discovery plugin and rapport attributes'}>
-                              <IconButton
-                                className="clickable"
-                                onClick={() => { discoveryPluginRunner(plugin, record, selectorValue)}}
-                              >
-                                <OpenInNewIcon
-                                />
-                              </IconButton>
-                            </Tooltip>
-
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={plugin.label}
-                              className="clickable"
-                              onClick={() => { discoveryPluginRunner(plugin, record, selectorValue)}}
-                          />
-                        </ListItem>
-                      ))}
-                  </List>
-                </div>
-              ))}
             </div>
           </form>
         </DialogContent>

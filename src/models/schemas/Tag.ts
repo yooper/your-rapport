@@ -1,7 +1,9 @@
 import { INameOnly } from '../../types';
 import { db } from '../db/dexieDb';
 import { getLocalItem, setLocalItem } from '../db/local';
-import { CONFIGURATION, RAPPORT, UPDATED_ON } from '../../services/constants';
+import { RAPPORT } from '../../services/constants';
+import { Configuration } from './Configuration';
+import { getUtcNow } from '../../utilities/transformers';
 
 export class Tag implements INameOnly {
   name: string;
@@ -24,14 +26,13 @@ export class Tag implements INameOnly {
       names.push(value.name);
     }
 
-    const records: any[] = (await getLocalItem(RAPPORT)) ?? [];
+    const records: any[] = await db.rapport.orderBy('updatedOn').reverse().toArray() ?? [];
     for (let record of records) {
       record.tags = records.tags?.filter((tag) => !names.includes(tag.name));
     }
-    // re-save the rapport records
-    await setLocalItem(RAPPORT, records);
-    const configuration = await getLocalItem(CONFIGURATION);
-    configuration[UPDATED_ON] = Date.now().toString();
-    await setLocalItem(CONFIGURATION, configuration);
+    await db.rapport.bulkPut(records);
+    const configuration = await Configuration.getConfiguration();
+    configuration.updatedOn = getUtcNow();
+    await Configuration.setConfiguration(configuration);
   }
 }

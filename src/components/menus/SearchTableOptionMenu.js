@@ -130,7 +130,7 @@ export default function SearchTableOptionMenu(props) {
       <AddTagsFormDialog
         isOpen={openAddTagDialog}
         setIsOpen={setOpenAddTagDialog}
-        record={record}
+        record={rapport}
         rows={rows}
         setRows={setRows}
       />

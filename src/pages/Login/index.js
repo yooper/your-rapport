@@ -20,9 +20,9 @@ import { ReactNotifications } from 'react-notifications-component';
 import Mustache from 'mustache/mustache.mjs';
 import 'react-notifications-component/dist/theme.css';
 import Divider from '@mui/material/Divider';
-import { User } from '../../models/schemas/User';
-import { getDarkTheme, processNotification } from '../../utilities/loaders';
-import { createTheme } from '@mui/material';
+import { getUser, User } from '../../models/schemas/User';
+import { createTab, getDarkTheme, processNotification } from '../../utilities/loaders';
+import { createTheme, Tooltip } from '@mui/material';
 
 function Copyright(props) {
   return (
@@ -59,31 +59,38 @@ export default function Login() {
   };
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchAccessToken() {
       const urlParams = new URL(window.location.href).searchParams;
-
-      if (urlParams.has('authToken') && urlParams.has('license')) {
+      if (urlParams.has('accessToken')) {
         try {
-          const authToken = urlParams.get('authToken');
-          const license = urlParams.get('license');
-          const user = new User(authToken, license);
+          const accessToken = urlParams.get('accessToken');
+          const user = new User(accessToken);
           await user.save();
-          await user.verify(true);
-
-          // error license mismatch
-          if (license !== user.license) {
-            throw new Error('Login failed');
-          } else {
-            // sign in
-            window.location.href = `chrome-extension://${chrome.runtime.id}/app.html`;
+          if(await user.verify()){
+            window.location.href = `chrome-extension://${chrome.runtime.id}/search.html`;
+          }
+          else{
+            processNotification({
+              title:'Authentication Failed',
+              message: 'The authentication token is no longer valid. Re-sign in or purchase a subscription.',
+              type: 'danger'
+            })
           }
         } catch (e) {
-          throw new Error('Login failed');
+            processNotification({
+              title:'Authentication Failed',
+              message: 'The authentication server is inaccessible',
+              type: 'danger'
+            })
         }
-      } else {
-        // cannot sign in
+      }
+      else if(urlParams.has('logout')){
+        const user = await getUser();
+        await user.delete();
+        window.location.replace(`chrome-extension://${chrome.runtime.id}/login.html`);
       }
     }
+    fetchAccessToken();
   }, []);
 
   /**
@@ -103,15 +110,13 @@ export default function Login() {
       return;
     }
 
-    const url = `http://localhost/email=${email}`;
+    const url = `https://bakerstreet.llc/wp-json/yr/v1/authenticate?email=${email}`;
     try {
       // send the request to reach penguin
-      fetch(url)
-        .then((response) => response.json())
-        .then((data) => {});
+      const response = await fetch(url);
       processNotification(
         {
-          message: 'Check your email for details.',
+          message: 'Check your email for details. Check your spam folder too.',
           title: 'Authentication Email Sent',
           type: 'success',
         },
@@ -120,7 +125,7 @@ export default function Login() {
     } catch (e) {
       processNotification({
         title: 'Could Not Connect',
-        message: 'The CRM service is unavailable.',
+        message: 'The authentication service is unavailable.',
         type: 'danger',
       });
     }
@@ -140,7 +145,9 @@ export default function Login() {
             }}
           >
             <ReactNotifications />
-            <img src={'/OSINT_LIAR_LOGO.png'} height={'200'} />
+            <Tooltip title={'Sign in to gain access to features that are only available in the Pro Version.'}>
+              <img src={'icon-128.png'} height={'200'} />
+            </Tooltip>
             <Typography component="h1" variant="h5">
               Sign in
             </Typography>
@@ -164,11 +171,7 @@ export default function Login() {
                   setEmail(event.target.value);
                 }}
               />
-              <input
-                type={'hidden'}
-                value={`chrome-extension://${chrome.runtime.id}`}
-                name={'ExtensionId'}
-              />
+
               <Button
                 type="submit"
                 fullWidth
@@ -178,6 +181,16 @@ export default function Login() {
                 Sign In
               </Button>
               <Divider />
+
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+                onClick={() => { createTab('https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00')}}
+              >
+                Buy a Pro License
+              </Button>
+
             </Box>
           </Box>
         </Fragment>

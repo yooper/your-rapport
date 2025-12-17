@@ -6,7 +6,8 @@ const selectorTypes: string[] = Object.keys(getSelectorTypeMap())
 
 export const SelectorSchema = z.object({
  name: z.string(),
-  selectorTypeName: z.string()
+ selectorTypeName: z.string()
+    .transform(v => (v === '' ? 'keyword' : v))
     .refine(v => selectorTypes.includes(v), { message: 'Invalid selectorTypeName' })
     .default('keyword'),
  active: z.boolean().default(true),

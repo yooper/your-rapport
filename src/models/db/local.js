@@ -52,25 +52,6 @@ export async function updateRecord(key, idFieldName, record) {
   return records;
 }
 
-export async function updateBulkRecords(key, idFieldName, updatedRecords) {
-  let localRecords = (await getLocalItem(key)) ?? [];
-  if (localRecords.length === 0 || updatedRecords.length === 0) {
-    return localRecords;
-  }
-
-  const updatesById = new Map(
-    updatedRecords.map((record) => [record[idFieldName], record])
-  );
-
-  const mergedRecords = localRecords.map((record) => {
-    const update = updatesById.get(record[idFieldName]);
-    return update ? { ...record, ...update } : record;
-  });
-
-  await setLocalItem(key, mergedRecords);
-  return mergedRecords;
-}
-
 /**
  * add a single record in the collection
  * @param key
@@ -88,25 +69,6 @@ export async function addRecord(key, idFieldName, record) {
     records = [record].concat(records);
     await setLocalItem(key, records);
   }
-}
-
-export async function addBulkRecords(
-  key,
-  idFieldName,
-  records,
-  chunkSize = 50
-) {
-  let localRecords = (await getLocalItem(key)) ?? [];
-  const existingIds = new Set(localRecords.map((r) => r[idFieldName]));
-  const newRecords = records.filter((r) => !existingIds.has(r[idFieldName]));
-  if (newRecords.length === 0) {
-    return; // Nothing to add
-  }
-  for (let i = 0; i < newRecords.length; i += chunkSize) {
-    const chunk = newRecords.slice(i, i + chunkSize);
-    localRecords = localRecords.concat(chunk);
-  }
-  await setLocalItem(key, localRecords);
 }
 
 /**
@@ -151,22 +113,4 @@ export async function deleteBulkRecords(key, idFieldName, records) {
   return filtered;
 }
 
-export async function upsertBulkRecords(key, idFieldName, updatedRecords) {
-  let localRecords = (await getLocalItem(key)) ?? [];
-  const existingMap = new Map(localRecords.map((r) => [r[idFieldName], r]));
 
-  // Apply updates or insert new records
-  for (const updated of updatedRecords) {
-    const id = updated[idFieldName];
-    if (existingMap.has(id)) {
-      const existing = existingMap.get(id);
-      existingMap.set(id, { ...existing, ...updated }); // merge update
-    } else {
-      existingMap.set(id, updated); // insert new
-    }
-  }
-
-  const result = Array.from(existingMap.values());
-  await setLocalItem(key, result);
-  return result;
-}
