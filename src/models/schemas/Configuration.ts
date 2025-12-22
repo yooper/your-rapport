@@ -17,6 +17,8 @@ export interface IConfiguration {
   packageCacheHash: string;
   screenShotCount: number;
   updatedOn: number;
+  syncBackgroundMode: string,
+  syncBackgroundEnabled: boolean,
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -34,10 +36,12 @@ export class Configuration {
       automationKeepTabOpenDefault: true,
       debugMessagesEnabled: false,
       highlightSelectorsEnabled: false,
-      packageCacheEnabled: true,
+      packageCacheEnabled: false,
       packageCacheHash: 'not set',
       screenShotCount: 0,
-      updatedOn: getUtcNow()
+      updatedOn: getUtcNow(),
+      syncBackgroundMode: 'async',
+      syncBackgroundEnabled: false,
     };
   }
 

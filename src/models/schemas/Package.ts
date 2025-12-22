@@ -101,7 +101,10 @@ async function bulkFetchWithLimit(discoveryPlugins: DiscoveryPlugin[], { concurr
     while (true) {
       // Grab the next index atomically
       const currentIndex = index++;
-      if (currentIndex >= discoveryPlugins.length) break;
+      if (currentIndex >= discoveryPlugins.length)
+      {
+        break;
+      }
 
       const _package: Package = discoveryPlugins[currentIndex];
 
@@ -111,9 +114,9 @@ async function bulkFetchWithLimit(discoveryPlugins: DiscoveryPlugin[], { concurr
         if (!res.ok) {
           throw new Error(`HTTP ${res.status} ${res.statusText}`);
         }
-
         const data = await res.json();
         results[currentIndex] = { ok: true, _package, data };
+
       } catch (err) {
         results[currentIndex] = {
           ok: false,
@@ -149,6 +152,7 @@ export async function fetchPackages() {
     const newHashCache = await cacheHashResponse.text();
     const oldHashCache = configuration.packageCacheEnabled ? configuration.packageCacheHash : '';
     let data: Package[] = []
+
     if(!oldHashCache || newHashCache !== oldHashCache){
       const response = await fetch(
         'https://raw.githubusercontent.com/osint-liar/public-packages/develop/index.json'

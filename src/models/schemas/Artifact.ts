@@ -5,7 +5,7 @@
 import { Attachment, IArtifact } from '../../types';
 import { db } from '../db/dexieDb';
 import { debug } from '../../services/logger_services';
-import { sha256FromBlob } from '../../utilities/transformers';
+import { blobToBase64Image, sha256FromBlob } from '../../utilities/transformers';
 
 export class Artifact implements IArtifact {
   createdOn: Date = new Date();
@@ -70,5 +70,20 @@ export class Artifact implements IArtifact {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  static async serialize(artifact: Artifact)
+  {
+    return {
+      createdOn: artifact.createdOn,
+      uuid: artifact.uuid,
+      rapportUuid: artifact.rapportUuid,
+      size: artifact.size,
+      hash: artifact.hash,
+      hashAlgorithm: artifact.hashAlgorithm,
+      mimeType: artifact.mimeType,
+      data: await blobToBase64Image(artifact.data),
+      url: artifact.url
+    }
   }
 }

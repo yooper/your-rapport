@@ -174,8 +174,13 @@ export class Rapport {
    */
   static async add(rapport: Rapport)
   {
-    await Rapport.put(rapport);
-  }
+    // TODO: there is a bug with duplication,
+    await db.rapport.add(rapport)
+    // Queue up the background jobs (fire-and-forget; log when done)
+    applyBackgroundJobs(rapport).then(() => {
+      debug('background job completed', rapport);
+      Rapport.sync(rapport);
+    });  }
 
   /**
    * Centralize updating rapports in the db
@@ -188,6 +193,7 @@ export class Rapport {
     // Queue up the background jobs (fire-and-forget; log when done)
     applyBackgroundJobs(rapport).then(() => {
       debug('background job completed', rapport);
+      Rapport.sync(rapport);
     });
   }
 
@@ -199,12 +205,17 @@ export class Rapport {
     //  return;
     //}
 
-
+    const artifacts = await db.artifact.where('rapportUuid').equals(rapport.uuid).toArray();
+    rapport.artifacts = [];
+    for(const artifact of artifacts)
+    {
+      rapport.artifacts.push(await Artifact.serialize(artifact));
+    }
     const json = JSON.stringify(rapport ?? {}, null, 2);
-
     const blob = new Blob([json], { type: "application/json" });
     const dataUrl = await blobToDataUrl(blob);
     const downloadId = await downloadDataUrl(dataUrl, `your-rapport/sync/${rapport.uuid}.json`);
+    debug('sync to disk ran', {downloadId})
   }
 
   /**
