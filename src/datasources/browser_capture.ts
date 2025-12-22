@@ -75,9 +75,9 @@ export async function capture(
             record.url,
             'text/html'
           );
+          await db.artifact.add(htmlArtifact);
           record.artifacts.push(Artifact.getAttachment(htmlArtifact));
           isSaved = true;
-
 
         } catch (e) {
           await debug(String(e));
@@ -85,9 +85,14 @@ export async function capture(
           retryCounter++;
         }
       } while (!isSaved && retryCounter < 3);
-    }
 
-    await Rapport.put(record);
+      if(isSaved){
+        await Rapport.add(record);
+      }
+    }
+    else{
+      await Rapport.add(record);
+    }
 
     // update the configuration last saved on metadata
     configuration.updatedOn = getUtcNow();
