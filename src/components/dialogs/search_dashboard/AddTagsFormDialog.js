@@ -19,6 +19,7 @@ import {
 import { StyledTextField } from '../../inputs/StyledTextField';
 import { Configuration } from '../../../models/schemas/Configuration';
 import { getUtcNow } from '../../../utilities/transformers';
+import { Rapport } from '../../../models/schemas/Rapport';
 
 export default function AddTagsFormDialog(props) {
   const { refreshRows, record } = props;
@@ -50,7 +51,7 @@ export default function AddTagsFormDialog(props) {
       const userTags = [...new Set(userAddedTags)].map((t) => new Tag(t));
       record.tags = userTags;
       await db.tag.bulkPut(userTags);
-      await db.rapport.put(record);
+      await Rapport.put(record);
       const configuration = await Configuration.getConfiguration();
       configuration.updatedOn = getUtcNow();
       await Configuration.setConfiguration(configuration);

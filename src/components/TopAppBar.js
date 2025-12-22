@@ -11,7 +11,9 @@ import Menu from '@mui/material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import { useEffect } from 'react';
-import { getUser, User } from '../models/schemas/User';
+import { getUser } from '../models/schemas/User';
+import SyncIcon from '@mui/icons-material/Sync';
+import SyncDisabledIcon from '@mui/icons-material/SyncDisabled';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -102,6 +104,17 @@ export default function TopAppBar() {
 
           </div>
           {auth ? (
+            <>
+            <Tooltip title={'Local data sync is active'}>
+              <IconButton
+                size="large"
+                aria-label="Local data sync is active."
+                color="inherit"
+                onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
+              >
+                <SyncIcon />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={'Thank you for your support, all pro features are enabled.'}>
               <IconButton
                 size="large"
@@ -112,7 +125,19 @@ export default function TopAppBar() {
                 <PersonIcon />
               </IconButton>
             </Tooltip>
+            </>
           ) : (
+            <>
+            <Tooltip title={'Local data sync is inactive, upgrade to the Pro to active the local data sync feature. Or log in.'}>
+              <IconButton
+                size="large"
+                aria-label="User has not been authenticated. Pro features are unavailable."
+                color="inherit"
+                onClick={() => createTab(`https://github.com/yooper/your-rapport/wiki/Pro-features`)}
+              >
+                <SyncDisabledIcon />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={'User is not authenticated, pro options are not available.'}>
               <IconButton
                 size="large"
@@ -123,6 +148,7 @@ export default function TopAppBar() {
                 <PersonOffIcon />
               </IconButton>
             </Tooltip>
+            </>
           )}
         </Toolbar>
       </AppBar>
