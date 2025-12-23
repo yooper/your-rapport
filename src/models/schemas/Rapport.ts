@@ -11,6 +11,7 @@ import { blobToDataUrl, downloadDataUrl, downloadViaBlobUrl } from '../../servic
 import { db } from '../db/dexieDb';
 import { applyBackgroundJobs } from '../../services/discovery_plugin_services';
 import { debug } from '../../services/logger_services';
+import { Configuration } from './Configuration';
 
 /**
  * If you have a real Tab type from chrome, prefer that:
@@ -197,25 +198,43 @@ export class Rapport {
     });
   }
 
-
+  /**
+   * Backs the data up to the local disk
+   * @param rapport
+   */
   static async sync(rapport: Rapport){
+    // this is a pro feature, the user must be authenticated
     const user = await getUser();
     // sync is not supported
     //if(!user){
     //  return;
     //}
 
-    const artifacts = await db.artifact.where('rapportUuid').equals(rapport.uuid).toArray();
-    rapport.artifacts = [];
-    for(const artifact of artifacts)
-    {
-      rapport.artifacts.push(await Artifact.serialize(artifact));
+
+    const configuration = await Configuration.getConfiguration();
+    if(!configuration.syncBackgroundEnabled){
+      debug('background sync is off', configuration);
+      return;
     }
-    const json = JSON.stringify(rapport ?? {}, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const dataUrl = await blobToDataUrl(blob);
-    const downloadId = await downloadDataUrl(dataUrl, `your-rapport/sync/${rapport.uuid}.json`);
-    debug('sync to disk ran', {downloadId})
+
+    // only support a strict sync mode initially
+    if(configuration.syncBackgroundMode === 'sync'){
+      const artifacts = await db.artifact.where('rapportUuid').equals(rapport.uuid).toArray();
+      rapport.artifacts = [];
+      for(const artifact of artifacts)
+      {
+        rapport.artifacts.push(await Artifact.serialize(artifact));
+      }
+      const json = JSON.stringify(rapport ?? {}, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const dataUrl = await blobToDataUrl(blob);
+      const downloadId = await downloadDataUrl(dataUrl, `your-rapport/sync/${rapport.uuid}.json`);
+      debug('sync to disk ran', {downloadId})
+    }
+
+    // TODO: add a batch mode that runs when an alarm fires
+    else if(configuration.syncBackgroundMode === 'batch'){
+    }
   }
 
   /**

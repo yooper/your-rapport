@@ -86,4 +86,38 @@ export class Artifact implements IArtifact {
       url: artifact.url
     }
   }
+
+
+  /**
+   * When data is transported between systems we need to hydrate the data
+   * object correctly for persisting. This is a pro feature
+   * Validation happens outside this method
+   * @param artifact
+   */
+  static async deserialize(artifact: any)
+  {
+    let base64Data = artifact.data.split(',')[1];
+    // Add padding '=' characters until the length is a multiple of 4
+    while (base64Data.length % 4 !== 0) {
+      base64Data += '=';
+    }
+
+    const byteChars = globalThis.atob(base64Data);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) {
+        byteNumbers[i] = byteChars.charCodeAt(i);
+    }
+
+    return {
+      createdOn: artifact.createdOn,
+      uuid: artifact.uuid,
+      rapportUuid: artifact.rapportUuid,
+      size: artifact.size,
+      hash: artifact.hash,
+      hashAlgorithm: artifact.hashAlgorithm,
+      mimeType: artifact.mimeType,
+      data: new Blob([new Uint8Array(byteNumbers)], {type: artifact.mimeType}),
+      url: artifact.url
+    }
+  }
 }

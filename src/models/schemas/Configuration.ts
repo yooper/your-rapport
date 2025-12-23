@@ -19,6 +19,7 @@ export interface IConfiguration {
   updatedOn: number;
   syncBackgroundMode: string,
   syncBackgroundEnabled: boolean,
+  syncBackgroundHardDelete: boolean
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -42,6 +43,7 @@ export class Configuration {
       updatedOn: getUtcNow(),
       syncBackgroundMode: 'async',
       syncBackgroundEnabled: false,
+      syncBackgroundHardDelete: true,
     };
   }
 

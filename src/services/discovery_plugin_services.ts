@@ -312,7 +312,7 @@ async function _buildObject(
           obj[key] = base64;
         }
         else{
-          obj[key] = atob(recordObj[fieldName])
+          obj[key] = globalThis.atob(recordObj[fieldName])
         }
       }
       // the field name doesn't exist, but may be part of the expanded attributes
