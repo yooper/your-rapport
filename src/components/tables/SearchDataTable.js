@@ -508,8 +508,6 @@ export default function SearchDataTable(props) {
     await db.artifact.bulkDelete(deleteArtifacts);
     await db.rapport.bulkDelete(deleteRecords);
 
-
-
     setRows(await db.rapport.orderBy('updatedOn').reverse().toArray());
     // update the configuration last
     let configuration = await Configuration.getConfiguration();
@@ -521,7 +519,14 @@ export default function SearchDataTable(props) {
     const user = await getUser();
     // check if we need to hard delete the sync records
     if(user && configuration.syncBackgroundHardDelete){
-
+      for(const uuid of deleteRecords){
+        const downloadItems = await chrome.downloads.search({filename: `your-rapport/sync/${uuid}.json`}) ?? [];
+        if(downloadItems.length > 0){
+          chrome.downloads.removeFile(downloadItems[0].id).then(() => {
+            debug(`Deleting synced file your-rapport/sync/${uuid}.json`);
+          });
+        }
+      }
     }
 
     setIsLoading(false);

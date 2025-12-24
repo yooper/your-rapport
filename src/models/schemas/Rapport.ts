@@ -205,15 +205,9 @@ export class Rapport {
   static async sync(rapport: Rapport){
     // this is a pro feature, the user must be authenticated
     const user = await getUser();
-    // sync is not supported
-    //if(!user){
-    //  return;
-    //}
-
-
     const configuration = await Configuration.getConfiguration();
-    if(!configuration.syncBackgroundEnabled){
-      debug('background sync is off', configuration);
+    if(!user || !configuration.syncBackgroundEnabled){
+      debug('background sync is off', {configuration,user});
       return;
     }
 
