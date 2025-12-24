@@ -129,7 +129,8 @@ export default function UploadDataDialog(props: UploadDataDialogProps): JSX.Elem
           const configuration = await Configuration.getConfiguration();
 
           // TODO: validate the rapports being imported
-          const newRapports: Rapport[] = JSON.parse(fe.target.result);
+          const newRapports: Rapport[] =
+            Array.isArray(JSON.parse(fe.target.result)) ? JSON.parse(fe.target.result) : [JSON.parse(fe.target.result)];
           await debug(`${newRapports.length} rapports are ready to be processed`);
           // TODO: use a background job to rebuild the selectors.
           // TODO: fix issue with adding duplicates, the uuid is the unique key
