@@ -133,10 +133,6 @@ export default function UploadDataDialog(props: UploadDataDialogProps): JSX.Elem
             Array.isArray(JSON.parse(fe.target.result)) ? JSON.parse(fe.target.result) : [JSON.parse(fe.target.result)];
           await debug(`${newRapports.length} rapports are ready to be processed`);
           // TODO: use a background job to rebuild the selectors.
-          // TODO: fix issue with adding duplicates, the uuid is the unique key
-
-          const count = await db.rapport.count();
-          configuration.screenShotCount = count + newRapports.length;
 
           for(const rapport of newRapports){
             await debug(`Processing rapport ${rapport.uuid}`);
@@ -154,16 +150,20 @@ export default function UploadDataDialog(props: UploadDataDialogProps): JSX.Elem
             }
             await debug(`Rapport ${rapport.uuid} artifacts processed.`);
             await db.artifact.bulkPut(artifacts);
+            // overwrite the artifacts
             rapport.artifacts = attachments;
           }
 
-          db.rapport.bulkPut(newRapports);
+          await db.rapport.bulkPut(newRapports);
+          const count = await db.rapport.count();
+          configuration.screenShotCount = count;
+
           // update the configuration last
           configuration.updatedOn = getUtcNow();
           await Configuration.setConfiguration(configuration);
         }
       } catch (err) {
-        setError('Invalid JSON format.');
+        debug(String(err), err);
       } finally {
         setIsLoading(false);
         hideLoader();

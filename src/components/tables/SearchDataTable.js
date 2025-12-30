@@ -520,10 +520,17 @@ export default function SearchDataTable(props) {
     // check if we need to hard delete the sync records
     if(user && configuration.syncBackgroundHardDelete){
       for(const uuid of deleteRecords){
-        const downloadItems = await chrome.downloads.search({filename: `your-rapport/sync/${uuid}.json`}) ?? [];
-        if(downloadItems.length > 0){
+        const relativeFileName = `your_rapport/sync/${uuid}.json`;
+        const downloadItems = await chrome.downloads.search({}) ?? [];
+        const found = downloadItems.find(d => d.filename.endsWith(`${uuid}.json`));
+        if(!found) {
+          debug('sync delete could not find file', { relativeFileName, downloadItems })
+        }
+
+        if(found){
+          debug('sync delete match found', { relativeFileName, downloadItems })
           chrome.downloads.removeFile(downloadItems[0].id).then(() => {
-            debug(`Deleting synced file your-rapport/sync/${uuid}.json`);
+            debug(`Deleting synced file your_rapport/sync/${uuid}.json`);
           });
         }
       }

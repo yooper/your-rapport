@@ -222,7 +222,7 @@ export class Rapport {
       const json = JSON.stringify(rapport ?? {}, null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const dataUrl = await blobToDataUrl(blob);
-      const downloadId = await downloadDataUrl(dataUrl, `your-rapport/sync/${rapport.uuid}.json`);
+      const downloadId = await downloadDataUrl(dataUrl, `your_rapport/sync/${rapport.uuid}.json`);
       debug('sync to disk ran', {downloadId})
     }
 
