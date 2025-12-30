@@ -84,10 +84,7 @@ export async function initializeContextMenus() {
           );
           rapport.sequenceId = 0;
           rapport.bulkAutomationUuid = null;
-          await db.rapport.add(rapport);
-          applyBackgroundJobs(rapport).then(() => {
-            debug('background job completed', rapport)
-          })
+          await Rapport.put(rapport);
           // update the configuration last saved on metadata
           let configuration = await Configuration.getConfiguration();
           // get/set the record count

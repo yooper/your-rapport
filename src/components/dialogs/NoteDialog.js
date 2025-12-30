@@ -9,6 +9,7 @@ import { TextareaAutosize } from '@mui/material';
 import { showLoader } from '../../utilities/loaders';
 import { getUtcNow } from '../../utilities/transformers';
 import { db } from '../../models/db/dexieDb';
+import { Rapport } from '../../models/schemas/Rapport';
 
 export default function NotesDialog(props) {
   const [open, setOpen] = useState(false);
@@ -33,7 +34,9 @@ export default function NotesDialog(props) {
     // only update if the values differ
     if (props.record.note !== record.note) {
       showLoader();
-      await db.rapport.put(record);
+      await Rapport.put(record);
+      // sync in the background
+      const response = await chrome.runtime.sendMessage({cmd:'sync', uuid: record.uuid});
       props.refreshRows();
     }
     setOpen(false);

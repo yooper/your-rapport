@@ -48,7 +48,6 @@ export async function capture(
       deepSave
     );
 
-
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
       // implement retry strategy to mitigate errors when saving
@@ -76,6 +75,7 @@ export async function capture(
             record.url,
             'text/html'
           );
+          await db.artifact.add(htmlArtifact);
           record.artifacts.push(Artifact.getAttachment(htmlArtifact));
           isSaved = true;
 
@@ -85,15 +85,14 @@ export async function capture(
           retryCounter++;
         }
       } while (!isSaved && retryCounter < 3);
+
+      if(isSaved){
+        await Rapport.add(record);
+      }
     }
-
-    // Save the RapportF
-    await db.rapport.add(record);
-
-    // Queue up the background jobs (fire-and-forget; log when done)
-    applyBackgroundJobs(record).then(() => {
-      debug('background job completed', record);
-    });
+    else{
+      await Rapport.add(record);
+    }
 
     // update the configuration last saved on metadata
     configuration.updatedOn = getUtcNow();

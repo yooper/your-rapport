@@ -9,6 +9,7 @@ import { db } from '../models/db/dexieDb';
 import { debug } from './logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { getJobQueue} from '../pages/Background/index'
+import { Rapport } from '../models/schemas/Rapport';
 
 
 /**
@@ -132,7 +133,7 @@ async function _processFetch(
       // add the artifact
       await db.artifact.add(artifact)
       rapport.artifacts.push(Artifact.getAttachment(artifact));
-      await db.rapport.put(rapport);
+      await Rapport.put(rapport);
       return; // finish processing
     }
 
@@ -145,7 +146,7 @@ async function _processFetch(
       const artifact = await Artifact.create(new Blob([text], { type: 'text/plain' }), rapport.uuid, url, 'text/plain');
       await db.artifact.add(artifact)
       rapport.artifacts.push(Artifact.getAttachment(artifact));
-      await db.rapport.put(rapport);
+      await Rapport.put(rapport);
 
       if (parsed.ok && parsed.value && typeof parsed.value === 'object') {
         processNotification({
@@ -311,7 +312,7 @@ async function _buildObject(
           obj[key] = base64;
         }
         else{
-          obj[key] = atob(recordObj[fieldName])
+          obj[key] = globalThis.atob(recordObj[fieldName])
         }
       }
       // the field name doesn't exist, but may be part of the expanded attributes
@@ -438,7 +439,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
  * them for running
  * @param rapport
  */
-export async function applyBackgroundJobs(rapport: IRapport) : Promise<void> {
+export async function applyBackgroundJobs(rapport: Rapport) : Promise<void> {
   const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner').toArray();
   for ( const discoveryPlugin of plugins){
     await debug('Queuing job', {discoveryPlugin, rapport});

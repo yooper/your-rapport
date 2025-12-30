@@ -15,6 +15,7 @@ import { mergeImagesVertically } from '../../../services/image_loading_services'
 import { hideLoader, showLoader } from '../../../utilities/loaders';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import { db } from '../../../models/db/dexieDb';
+import { Artifact } from '../../../models/schemas/Artifact';
 
 const defaultToolbarSelectStyles = (theme) => ({
   root: {
@@ -122,6 +123,7 @@ function SearchDataTableToolbarSelect(props) {
                   columns
                 );
                 rapports.forEach(r => r.artifacts = []);
+                // used to make it easier to export records to AI tools for summarizing
                 downloadJsonData(rapports.map(r => {
                   return {
                     text: r.text,
@@ -137,7 +139,7 @@ function SearchDataTableToolbarSelect(props) {
         </Tooltip>
 
         <Tooltip
-          title={'Export Selected Rapports in a JSON file to share or backup.'}
+          title={'Export Selected Rapports in a JSON file to share or backup, excludes artifacts unless signed in.'}
         >
           <IconButton>
             <CloudDownloadIcon
@@ -170,9 +172,21 @@ async function getRapportRecords(selectedRows, displayData, columns) {
     }
     uuids.push(record.uuid);
   }
+
   const rapports = (await db.rapport.toArray() ?? []).filter((r) =>
     uuids.includes(r.uuid)
   );
+
+  // TODO: Filter
+  for(const rapport of rapports){
+    rapport.artifacts = []; // initialize empty artifacts
+    // TODO: Skip processing if not authenticated
+    const artifacts = await db.artifact.where('rapportUuid').equals(rapport.uuid).toArray();
+    for(const artifact of artifacts)
+    {
+      rapport.artifacts.push(await Artifact.serialize(artifact));
+    }
+  }
   return rapports;
 }
 

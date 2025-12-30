@@ -22,6 +22,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import IconButton from '@mui/material/IconButton';
 import { Tooltip } from '@mui/material';
 import { createTab } from '../../utilities/loaders';
+import SyncIcon from '@mui/icons-material/Sync';
+import SyncSettingsForm, { syncBackgroundSettings } from '../forms/SyncSettingsForm';
+import SyncBackgroundSettingsForm from '../forms/SyncSettingsForm';
 
 
 export default function OptionsLayout() {
@@ -54,6 +57,12 @@ export default function OptionsLayout() {
       key: 'selector',
       message: 'Manage your selectors through creation and deletion.',
       url: 'https://github.com/yooper/your-rapport/wiki/Your-Rapport-Selectors'
+    },
+    {
+      label: 'Sync (Pro)',
+      key: 'sync',
+      message: 'Protect your data by syncing it to disk when it is collected or updated.',
+      url: 'https://github.com/yooper/your-rapport/wiki/Your-Rapport-Sync'
     },
     {
       label: 'Tags',
@@ -115,12 +124,28 @@ function IconMapper(props) {
       return <ExtensionIcon />;
     case 'selector':
       return <LocalOfferIcon />;
+    case 'sync':
+      return <SyncIcon />
     case 'tag':
       return <TagIcon />;
     default:
       return <WebIcon />;
   }
 }
+
+
+// You can also override / extend settings here
+const settings = [
+  ...syncBackgroundSettings,
+  // add more items later without changing the form
+  // {
+  //   kind: "toggle",
+  //   key: "someOtherFlag" as any,
+  //   label: "Some Other Flag",
+  // },
+];
+
+
 
 function Renderer(props) {
   switch (props.selectedComponent) {
@@ -132,6 +157,8 @@ function Renderer(props) {
       return <DiscoveryPluginDataTable />;
     case 'selector':
       return <SelectorDataTable />;
+    case 'sync':
+      return <SyncBackgroundSettingsForm  settings={settings}/>;
     case 'tag':
       return <TagDataTable />;
     default:

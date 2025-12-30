@@ -82,6 +82,13 @@ export function findAllVisibleElements() {
 }
 
 /**
+ * Search through all the visible elements and select the longest element and return it
+ */
+export function findBiggestElement() {
+
+}
+
+/**
  * Advanced SPAs have elements that are custom that must be filtered to reduce data noise
  * @type {Set<string>}
  */
@@ -212,13 +219,24 @@ function isNonStandardTag(element) {
  * @returns {boolean}
  */
 function isElementVisible(element) {
-  const style = window.getComputedStyle(element);
-  if (
-    style.display === 'none' ||
-    style.opacity === '0' ||
-    style.visibility === 'hidden'
-  ) {
-    return false;
+  return element.checkVisibility({
+    opacityProperty: true,
+    visibilityProperty: true,
+    contentVisibilityAuto: true
+  })
+}
+
+export function getVisibleHtml() {
+  const elements = findAllVisibleElements();
+  let element = "";
+  let maxLength = -1;
+
+  for (const el of elements) {
+    const len = el.outerHTML.length; // includes the element tag + its subtree
+    if (len > maxLength) {
+      maxLength = len;
+      element = el;
+    }
   }
-  return true;
+  return element.outerHTML;
 }

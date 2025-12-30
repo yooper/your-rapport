@@ -26,6 +26,8 @@ import { JobQueue } from '../../models/schemas/JobQueue';
 import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
 import { addRecord } from '../../models/db/local';
 import { fetchPackages } from '../../models/schemas/Package';
+import { db } from '../../models/db/dexieDb';
+import { Rapport } from '../../models/schemas/Rapport';
 
 /**
  * Initialize services when the extension is installed / activated
@@ -104,11 +106,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     return true;
   }
+  else if(message.cmd === 'sync'){
+    (async () => {
+      const rapport = await db.rapport.get(message.uuid);
+      if(rapport){
+        Rapport.sync(rapport);
+      }
+      sendResponse({ completed: true});
+    })();
+    return true;
+  }
 
   /**
    * Used by the authentication process
    */
-  if (message.cmd === 'createTab'){
+  else if (message.cmd === 'createTab'){
     (async () => {
       await createTab(message.url);
       sendResponse({ completed: true });
@@ -120,7 +132,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   /**
    * Tell the content script the save was successful
    */
-  if (message.cmd === CAPTURE_VISIBLE_TAB) {
+  else if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
       await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
       sendResponse({ completed: true });
@@ -128,7 +140,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   // TODO: Add better error handling
-  if (message.cmd === NO_VISIBLE_TEXT) {
+  else if (message.cmd === NO_VISIBLE_TEXT) {
     (async () => {
       sendResponse({ completed: true });
     })();

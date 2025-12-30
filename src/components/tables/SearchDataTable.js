@@ -26,6 +26,8 @@ import IconButton from '@mui/material/IconButton';
 import AttachmentIcon from '@mui/icons-material/Attachment';
 import GenericTableDialog from '../dialogs/GenericTableDialog';
 import SelectorFormDialogV2 from '../dialogs/SelectorFormDialogV2';
+import { Artifact } from '../../models/schemas/Artifact';
+import { getUser } from '../../models/schemas/User';
 
 export default function SearchDataTable(props) {
   const [rows, setRows] = useState([]);
@@ -505,6 +507,7 @@ export default function SearchDataTable(props) {
 
     await db.artifact.bulkDelete(deleteArtifacts);
     await db.rapport.bulkDelete(deleteRecords);
+
     setRows(await db.rapport.orderBy('updatedOn').reverse().toArray());
     // update the configuration last
     let configuration = await Configuration.getConfiguration();
@@ -512,6 +515,27 @@ export default function SearchDataTable(props) {
     configuration.updatedOn = getUtcNow();
     lastModified = getUtcNow();
     await Configuration.setConfiguration(configuration);
+
+    const user = await getUser();
+    // check if we need to hard delete the sync records
+    if(user && configuration.syncBackgroundHardDelete){
+      for(const uuid of deleteRecords){
+        const relativeFileName = `your_rapport/sync/${uuid}.json`;
+        const downloadItems = await chrome.downloads.search({}) ?? [];
+        const found = downloadItems.find(d => d.filename.endsWith(`${uuid}.json`));
+        if(!found) {
+          debug('sync delete could not find file', { relativeFileName, downloadItems })
+        }
+
+        if(found){
+          debug('sync delete match found', { relativeFileName, downloadItems })
+          chrome.downloads.removeFile(downloadItems[0].id).then(() => {
+            debug(`Deleting synced file your_rapport/sync/${uuid}.json`);
+          });
+        }
+      }
+    }
+
     setIsLoading(false);
     hideLoader();
   };
@@ -525,10 +549,18 @@ export default function SearchDataTable(props) {
     },
     onDownload: (buildHead, buildBody, columns, data) => {
       showLoader();
-      db.rapport.orderBy('updatedOn').reverse().toArray().then((rapports) => {
+      db.rapport.orderBy('updatedOn').reverse().toArray().then(async(rapports) => {
         // set artifacts to an empty array,
         // TODO: support exporting artifacts
-        rapports.forEach(r => r.artifacts = []);
+        for(const rapport of rapports){
+          rapport.artifacts = []; // initialize empty artifacts
+          // TODO: Skip processing if not authenticated
+          const artifacts = await db.artifact.where('rapportUuid').equals(rapport.uuid).toArray();
+          for(const artifact of artifacts)
+          {
+            rapport.artifacts.push(await Artifact.serialize(artifact));
+          }
+        }
         downloadJsonData(rapports, 'your-rapport.json');
         hideLoader();
       });

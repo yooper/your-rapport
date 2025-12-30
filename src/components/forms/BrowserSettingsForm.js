@@ -8,6 +8,7 @@ import Button from '@mui/material/Button';
 import { Configuration } from '../../models/schemas/Configuration';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import { fetchPackages } from '../../models/schemas/Package';
 
 export default function BrowserSettingsForm(props) {
   const [config, setConfig] = useState({});
@@ -97,6 +98,37 @@ export default function BrowserSettingsForm(props) {
               labelPlacement="end"
               color={'primary'}
               onChange={handleSwitchChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControlLabel
+              id={'packageCacheEnabled'}
+              name={'packageCacheEnabled'}
+              control={
+                <Switch
+                  color="primary"
+                  name="packageCacheEnabled"
+                  checked={!!config?.packageCacheEnabled}
+                  onChange={handleSwitchChange}
+                />
+              }
+              label={
+              <Typography variant="body1" component="h2" color={'white'}>
+                  <IconButton>
+                  <HelperPopover
+                    message={'Enable / Disable package cache hash.'}
+                  />
+                  </IconButton>
+                  Enable Package Cache
+              </Typography>
+              }
+              labelPlacement="end"
+              color={'primary'}
+              onChange={(event, checked) => {
+                handleSwitchChange(event, checked).then(() => {
+                  fetchPackages();
+                })
+              }}
             />
           </Grid>
           <Grid item xs={12}>

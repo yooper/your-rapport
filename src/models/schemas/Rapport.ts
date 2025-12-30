@@ -6,6 +6,12 @@ import {
   sha256FromBlob,
 } from "../../utilities/transformers";
 import { Artifact } from './Artifact';
+import { getUser } from './User';
+import { blobToDataUrl, downloadDataUrl, downloadViaBlobUrl } from '../../services/backup_services';
+import { db } from '../db/dexieDb';
+import { applyBackgroundJobs } from '../../services/discovery_plugin_services';
+import { debug } from '../../services/logger_services';
+import { Configuration } from './Configuration';
 
 /**
  * If you have a real Tab type from chrome, prefer that:
@@ -79,6 +85,7 @@ export class Rapport {
   bulkAutomationUuid: string | null;
   artifacts: unknown[];
   visibleText: string | null;
+  visibleHtml: string | null;
 
   constructor(init: RapportInit) {
     this.uuid = init.uuid;
@@ -104,6 +111,7 @@ export class Rapport {
     this.bulkAutomationUuid = init.bulkAutomationUuid ?? null;
     this.artifacts = [];
     this.visibleText = init.visibleText;
+    this.visibleHtml = init.visibleHtml;
   }
 
   /**
@@ -156,8 +164,71 @@ export class Rapport {
       relevance: "low",
       bulkAutomationUuid: null,
       artifacts: [],
-      visibleText: pageInfo.visibleText ?? null
+      visibleText: pageInfo.visibleText ?? null,
+      visibleHtml: null
     });
+  }
+
+  /**
+   * Centralize adding rapports in the db
+   * @param rapport
+   */
+  static async add(rapport: Rapport)
+  {
+    // TODO: there is a bug with duplication,
+    await db.rapport.add(rapport)
+    // Queue up the background jobs (fire-and-forget; log when done)
+    applyBackgroundJobs(rapport).then(() => {
+      debug('background job completed', rapport);
+      Rapport.sync(rapport);
+    });  }
+
+  /**
+   * Centralize updating rapports in the db
+   * @param rapport
+   */
+  static async put(rapport: Rapport)
+  {
+    // TODO: there is a bug with duplication,
+    await db.rapport.put(rapport)
+    // Queue up the background jobs (fire-and-forget; log when done)
+    applyBackgroundJobs(rapport).then(() => {
+      debug('background job completed', rapport);
+      Rapport.sync(rapport);
+    });
+  }
+
+  /**
+   * Backs the data up to the local disk
+   * @param rapport
+   */
+  static async sync(rapport: Rapport){
+    // this is a pro feature, the user must be authenticated
+    const user = await getUser();
+    const configuration = await Configuration.getConfiguration();
+    if(!user || !configuration.syncBackgroundEnabled){
+      debug('background sync is off', {configuration,user});
+      return;
+    }
+
+    // only support a strict sync mode initially
+    if(configuration.syncBackgroundMode === 'sync'){
+      const artifacts = await db.artifact.where('rapportUuid').equals(rapport.uuid).toArray();
+      rapport.artifacts = [];
+      for(const artifact of artifacts)
+      {
+        rapport.artifacts.push(await Artifact.serialize(artifact));
+      }
+      const json = JSON.stringify(rapport ?? {}, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const dataUrl = await blobToDataUrl(blob);
+      const downloadId = await downloadDataUrl(dataUrl, `your_rapport/sync/${rapport.uuid}.json`);
+      debug('sync to disk ran', {downloadId})
+    }
+
+    // TODO: add a batch mode that runs when an alarm fires
+    else if(configuration.syncBackgroundMode === 'batch'){
+    }
   }
 
   /**

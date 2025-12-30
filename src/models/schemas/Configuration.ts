@@ -17,6 +17,11 @@ export interface IConfiguration {
   packageCacheHash: string;
   screenShotCount: number;
   updatedOn: number;
+  syncBackgroundMode: 'sync' | 'batch' | string,
+  syncBackgroundEnabled: boolean,
+  syncBackgroundHardDelete: boolean,
+  syncBackgroundPath: 'your_rapport/sync/' | string,
+  syncBackgroundArtifactResolution: 'highRes' | 'lowRes' | string
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -34,10 +39,15 @@ export class Configuration {
       automationKeepTabOpenDefault: true,
       debugMessagesEnabled: false,
       highlightSelectorsEnabled: false,
-      packageCacheEnabled: true,
+      packageCacheEnabled: false,
       packageCacheHash: 'not set',
       screenShotCount: 0,
-      updatedOn: getUtcNow()
+      updatedOn: getUtcNow(),
+      syncBackgroundMode: 'sync',
+      syncBackgroundEnabled: false,
+      syncBackgroundHardDelete: true,
+      syncBackgroundPath: 'your_rapport/sync/',
+      syncBackgroundArtifactResolution: 'highRes'
     };
   }
 
@@ -46,11 +56,7 @@ export class Configuration {
     try {
       if (!value || !value[CONFIGURATION] || Object.keys(value).length === 0) {
         await Configuration.setConfiguration(await Configuration.getDefaultConfiguration())
-        return Configuration.getDefaultConfiguration()
-      }
-      else
-      {
-
+        return Configuration.getDefaultConfiguration();
       }
       const data = JSON.parse(value[CONFIGURATION]);
       return data;

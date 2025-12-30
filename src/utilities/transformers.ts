@@ -113,6 +113,17 @@ export function sortByField<T>(array: T[], key: keyof T): T[] {
   });
 }
 
+/**
+ * base64 to blob
+ * @param dataURL
+ */
+export async function dataURLToBlob(dataURL: string) : Promise<Blob> {
+  const response = await fetch(dataURL);
+  // Convert the response body to a Blob
+  const blob = await response.blob();
+  return blob;
+}
+
 // Utility: Convert base64 image string to File
 export function base64ToFile(base64Data: string, fileName: string): File {
   const [prefix, base64] = base64Data.includes(',')
@@ -120,7 +131,7 @@ export function base64ToFile(base64Data: string, fileName: string): File {
     : [null, base64Data];
   const mimeMatch = prefix?.match(/data:(.*);base64/);
   const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-  const binary = atob(base64);
+  const binary = globalThis.atob(base64);
   const buffer = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     buffer[i] = binary.charCodeAt(i);

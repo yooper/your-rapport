@@ -34,7 +34,7 @@ export class User {
    * Parse the access token to get more information
    */
   getSubscriptionPayload() : SubscriptionPayload {
-    return JSON.parse(atob(this.accessToken)) as SubscriptionPayload;
+    return JSON.parse(globalThis.atob(this.accessToken)) as SubscriptionPayload;
   }
 
   /***
@@ -111,7 +111,7 @@ export async function getUser(): Promise<User | null> {
   if (!encoded || typeof encoded !== 'string') {
     return null;
   }
-  const userData = JSON.parse(atob(encoded)) as UserData;
+  const userData = JSON.parse(globalThis.atob(encoded)) as UserData;
   const user = new User(userData.accessToken);
   await user.verify();
   user.verifiedOn = userData.verifiedOn;

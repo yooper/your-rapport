@@ -80,6 +80,8 @@ export interface IRapport
   artifacts: Array<Attachment>;
   extractedUrls: Array<string>;
   extractedDomains: Array<string>;
+  visibleText?: string|null;
+  visibleHtml?: string|null;
 }
 
 export type CaseManagement = ICreatedBy &
@@ -282,6 +284,7 @@ export interface PageInfo {
   screenShotCount: number;
   isAutomationBlockerDetected: boolean;
   visibleText: string;
+  visibleHtml: string
   text: string;
   createdOn: number;
   tab: number | null;

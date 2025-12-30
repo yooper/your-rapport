@@ -13,7 +13,7 @@ import {
   BULK_AUTOMATION, PAGE_INFO,
   PAGE_INITIALIZED, STOPPED,
 } from '../../services/constants';
-import { getVisibleText } from './modules/visibleElements';
+import { getVisibleText, getVisibleHtml } from './modules/visibleElements';
 import { isAutomationBlockerDetected } from './modules/automationBlockerDetection';
 import { IBulkAutomationRecord, PageInfo } from '../../types';
 import { debug } from '../../services/logger_services';
@@ -87,6 +87,7 @@ export function getPageInfo(): PageInfo {
     screenShotCount: 0,
     isAutomationBlockerDetected: isAutomationBlockerDetected(document),
     visibleText: getVisibleText(),
+    visibleHtml: '',
     text: document.documentElement.innerText,
     createdOn: Date.now(),
     tab: getTab(),
