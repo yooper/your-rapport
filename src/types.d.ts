@@ -322,3 +322,15 @@ export type DiscoveryPluginAction =
   | 'SubmitForm';
 
 export type DiscoveryPluginRoute = 'inbound' | 'outbound';
+
+export interface IExtractedData {
+  dataType: "url" | "username" | "domain"| string;
+  value: string;
+  count: number;
+}
+
+type PreExistingFilter = {
+  id: string;
+  name: string;
+  description?: string;
+};

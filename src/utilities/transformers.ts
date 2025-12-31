@@ -141,7 +141,9 @@ export function base64ToFile(base64Data: string, fileName: string): File {
 
 // Scans the page content of the tab and highlights matching selectors
 export async function scanPage(activeTab: ActiveTab): Promise<void> {
-  if (!activeTab.id) return;
+  if (!activeTab.id){
+    return;
+  }
 
   const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO });
   const { pageInfo } = response

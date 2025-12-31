@@ -99,8 +99,13 @@ function LargeButtonGrid() {
     {
       title: 'Quick Scan (Alt+Q)',
       toolTipTitle: `Scans the open page for your pre-existing selectors. The Extension pin will show the counts.`,
-      onClick: async () => {
-        await scanPage(await getActiveTab());
+      onClick: () => {
+        getActiveTab().then(activeTab => {
+          scanPage(activeTab);
+          chrome.runtime.sendMessage({ cmd: 'extractData', requestId: crypto.randomUUID() }, response => {
+            debug(response);
+          });
+        })
       },
     },
     {
@@ -123,7 +128,7 @@ function LargeButtonGrid() {
         chrome.tabs.create({
           url: chrome.runtime.getURL('options.html?view=discoveryPlugin'),
         }),
-    }
+    },
   ];
 
   return (

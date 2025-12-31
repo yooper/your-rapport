@@ -100,13 +100,14 @@ export function getDarkTheme(): ThemeOptions {
 export async function createTab(
   url: string,
   onlyOneTabOpen: boolean = false
-): Promise<void> {
+): Promise<chrome.tabs.Tab|null> {
   const openUrls = (await getAllTabUrls()) ?? [];
   if (onlyOneTabOpen && openUrls.find((openUrl) => openUrl === url)) {
     debug('too many urls', {openUrls});
-    return;
+    return null
   }
-  await chrome.tabs.create({ url });
+  const tab = await chrome.tabs.create({ url });
+  return tab;
 }
 
 /**

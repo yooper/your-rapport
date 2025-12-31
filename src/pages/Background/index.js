@@ -23,7 +23,7 @@ import { debug } from '../../services/logger_services';
 
 import { JobQueue } from '../../models/schemas/JobQueue';
 
-import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
+import { initializeAutomationRunner, waitForPageInfo } from '../../backgrounds/automation-runner';
 import { addRecord } from '../../models/db/local';
 import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
@@ -37,7 +37,6 @@ initializeAutomationRunner();
 // upon startup update or install discovery plugins
 await fetchPackages();
 
-
 let _jobQueue = null;
 export function getJobQueue(){
   if(!_jobQueue){
@@ -50,8 +49,14 @@ export function getJobQueue(){
  * Add in support for short-cut keys
  */
 chrome.commands.onCommand.addListener(async(command) => {
-  await debug(`Command ${command} received`)
+  // This has to be done this way because of way Chrome determines gestures correctly
+  if(command === 'initScanPage'){
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      chrome.sidePanel.open({ tabId: tabs[0].id })
+    })
+  }
 
+  await debug(`Command ${command} received`)
   const activeTab = await getActiveTab()
   const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
   const { pageInfo } = response
@@ -80,7 +85,25 @@ chrome.commands.onCommand.addListener(async(command) => {
  * This functions as the public api that other parts of the app message with
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.cmd === 'deepSave') {
+  if(message.cmd === 'extractData'){
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      chrome.sidePanel.open({ tabId: tabs[0].id })
+    })
+    return false;
+  }
+  else if (message.cmd === 'slidePanelInit'){
+    (async () => {
+      try {
+        const activeTab = await getActiveTab();
+        const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO', requestId: crypto.randomUUID() });
+        sendResponse(pageInfo);
+      } catch (e) {
+        debug(String(e) + ' Slide Panel error');
+      }
+    })();
+    return true;
+  }
+  else if (message.cmd === 'deepSave') {
   (async () => {
     try {
       const activeTab = await getActiveTab();
@@ -96,7 +119,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     }
   })();
-    return true; // keep the message channel open for async sendResponse
+    return true;
   }
   else if(message.cmd === AUTO_COLLECT_STARTING) {
     (async () => {

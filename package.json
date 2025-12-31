@@ -1,6 +1,6 @@
 {
   "name": "your-rapport",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "A chrome extension for saving screenshots and making them searchable.",
   "license": "Commercial",
   "scripts": {
@@ -21,6 +21,7 @@
     "dexie-cloud-addon": "^4.2.0",
     "dexie-react-hooks": "^4.2.0",
     "fflate": "^0.8.2",
+    "jmespath": "^0.16.0",
     "monaco-editor": "^0.55.1",
     "mui-datatables": "^4.3.0",
     "mustache": "^4.2.0",
