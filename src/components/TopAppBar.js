@@ -10,20 +10,23 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getUser } from '../models/schemas/User';
 import SyncIcon from '@mui/icons-material/Sync';
 import SyncDisabledIcon from '@mui/icons-material/SyncDisabled';
+import { Configuration } from '../models/schemas/Configuration';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
   const [auth, setAuth] = React.useState(true);
+  const [configuration, setConfiguration] = useState({})
 
   useEffect(() => {
     async function fetchData(){
       const user = await getUser();
       setAuth(user && user.verify() ? true : false);
+      setConfiguration(await Configuration.getConfiguration());
     }
     fetchData();
   }, []);
@@ -103,8 +106,8 @@ export default function TopAppBar() {
           <div>
 
           </div>
-          {auth ? (
-            <>
+
+          {auth && configuration.syncBackgroundEnabled ? (
             <Tooltip title={'Local data sync is active'}>
               <IconButton
                 size="large"
@@ -115,19 +118,8 @@ export default function TopAppBar() {
                 <SyncIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title={'Thank you for your support, all pro features are enabled.'}>
-              <IconButton
-                size="large"
-                aria-label="User has been authenticated. Pro options enabled."
-                color="inherit"
-                onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
-              >
-                <PersonIcon />
-              </IconButton>
-            </Tooltip>
-            </>
-          ) : (
-            <>
+              ) : (
+
             <Tooltip title={'Local data sync is inactive, upgrade to the Pro to active the local data sync feature. Or log in.'}>
               <IconButton
                 size="large"
@@ -138,6 +130,20 @@ export default function TopAppBar() {
                 <SyncDisabledIcon />
               </IconButton>
             </Tooltip>
+            )
+           }
+          { auth ? (
+            <Tooltip title={'Thank you for your support, all pro features are enabled.'}>
+              <IconButton
+                size="large"
+                aria-label="User has been authenticated. Pro options enabled."
+                color="inherit"
+                onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
+              >
+                <PersonIcon />
+              </IconButton>
+            </Tooltip>
+          ) : (
             <Tooltip title={'User is not authenticated, pro options are not available.'}>
               <IconButton
                 size="large"
@@ -148,7 +154,6 @@ export default function TopAppBar() {
                 <PersonOffIcon />
               </IconButton>
             </Tooltip>
-            </>
           )}
         </Toolbar>
       </AppBar>
