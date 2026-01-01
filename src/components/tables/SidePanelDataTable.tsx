@@ -12,12 +12,14 @@ import {
   Stack,
   TextField,
   Typography,
-  Link, Tooltip,
+  Link, Tooltip, FormGroup, InputAdornment,
 } from '@mui/material';
 
 import { hideLoader, showLoader } from "../../utilities/loaders";
 import * as cheerio from 'cheerio';
-import { IExtractedData, PageInfo, PreExistingFilter } from '../../types';
+import { ExtractContext, IExtractedData, MetaTagRecord, PageInfo, PreExistingFilter } from '../../types';
+import IconButton from '@mui/material/IconButton';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 
 function getBaseUrl(url: string) {
@@ -185,6 +187,52 @@ function extractDomainsFromUrls(items: IExtractedData[]): IExtractedData[] {
     }
   }
   return out;
+}
+
+export function extractAllMetaTags(html: string): MetaTagRecord[] {
+  const $ = cheerio.load(html);
+
+  return $("meta")
+    .toArray()
+    .map((el) => {
+      const $el = $(el);
+      return {
+        name: $el.attr("name") ?? null,
+        property: $el.attr("property") ?? null,
+        httpEquiv: $el.attr("http-equiv") ?? null,
+        charset: $el.attr("charset") ?? null,
+        content: $el.attr("content") ?? null,
+      } satisfies MetaTagRecord;
+    });
+}
+
+/**
+ * Optional: return as IExtractedData rows.
+ * Key is (name|property|http-equiv|charset) and value includes content.
+ */
+export function extractAllMetaTagsAsExtractedData(html: string): IExtractedData[] {
+  const rows = extractAllMetaTags(html);
+
+  return rows.map((m) => {
+    const key =
+      m.name
+        ? `name:${m.name}`
+        : m.property
+        ? `property:${m.property}`
+        : m.httpEquiv
+        ? `http-equiv:${m.httpEquiv}`
+        : m.charset
+        ? `charset:${m.charset}`
+        : "meta:unknown";
+
+    const value = m.content ?? m.charset ?? "";
+
+    return {
+      dataType: "meta",
+      value: `${key}=${value}`,
+      count: 1,
+    };
+  });
 }
 
 /** ---------- Filters: maintainable registry ---------- */
@@ -420,6 +468,13 @@ export const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
       return extractDomainsFromUrls(urls);
     },
   },
+  {
+    id: "meta-tags",
+    name: "Meta tags (all <meta>)",
+    description: "Extract every meta tag as key=value rows (name/property/http-equiv/charset)",
+    pluginType: "meta",
+    extractor: extractAllMetaTagsAsExtractedData,
+  },
 ];
 
 
@@ -607,6 +662,19 @@ export default function SidePanelDataTable({ pageInfo = null }: Props) {
                 size="small"
                 label="Extractor"
                 placeholder="Type to filter…"
+                InputProps={{
+                  ...params.InputProps,
+              // Add the InputAdornment with the PlaceIcon to the start
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Tooltip title={'Refresh page contents. This will update the discovered links and selectors'}>
+                    <IconButton>
+                      <RefreshIcon onClick={() => alert('not implemented, yet')}/>
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
               />
             )}
           />

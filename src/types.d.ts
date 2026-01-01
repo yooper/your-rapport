@@ -350,3 +350,11 @@ export type ExtractContext = {
   pageUrl?: string;    // full url, if you want it
   $: cheerio.CheerioAPI;
 };
+
+export type MetaTagRecord = {
+  name?: string | null;
+  property?: string | null;
+  httpEquiv?: string | null;
+  charset?: string | null;
+  content?: string | null;
+};
