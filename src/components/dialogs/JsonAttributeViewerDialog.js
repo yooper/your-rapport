@@ -19,6 +19,11 @@ export default function JsonAttributeViewerDialog(props) {
     props.setIsOpen(false);
   };
 
+  function pushKeyLast(obj, key) {
+    const { [key]: picked, ...rest } = obj;
+    return picked === undefined ? rest : { ...rest, [key]: picked };
+  }
+
   return (
     <>
       <Dialog
@@ -30,7 +35,10 @@ export default function JsonAttributeViewerDialog(props) {
       >
         <DialogTitle id="form-dialog-title">Debug Data Attributes</DialogTitle>
         <DialogContent>
-          <JsonView src={props.record} theme="vscode" indentWidth={4}/>
+          <h3>The base 64 encoded screenshot is always the last attribute</h3>
+          <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
+            {JSON.stringify(pushKeyLast(props.record, 'screenshot'), null, 4)}
+          </pre>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="cancel" variant={'contained'}>

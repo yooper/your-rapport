@@ -13,6 +13,7 @@ export interface IConfiguration {
   automationDeepSaveEnabled: boolean;
   debugMessagesEnabled: boolean;
   highlightSelectorsEnabled: boolean;
+  linkPlusEnabled: boolean;
   packageCacheEnabled: boolean;
   packageCacheHash: string;
   screenShotCount: number;
@@ -22,6 +23,7 @@ export interface IConfiguration {
   syncBackgroundHardDelete: boolean,
   syncBackgroundPath: 'your_rapport/sync/' | string,
   syncBackgroundArtifactResolution: 'highRes' | 'lowRes' | string
+
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -39,6 +41,7 @@ export class Configuration {
       automationKeepTabOpenDefault: true,
       debugMessagesEnabled: false,
       highlightSelectorsEnabled: false,
+      linkPlusEnabled: false,
       packageCacheEnabled: false,
       packageCacheHash: 'not set',
       screenShotCount: 0,

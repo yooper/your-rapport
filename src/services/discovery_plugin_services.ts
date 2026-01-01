@@ -10,6 +10,10 @@ import { debug } from './logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { getJobQueue} from '../pages/Background/index'
 import { Rapport } from '../models/schemas/Rapport';
+import { Configuration } from '../models/schemas/Configuration';
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
+import { BULK_AUTOMATION, UUID } from './constants';
+import { addRecord} from './../models/db/local';
 
 
 /**
@@ -429,6 +433,26 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       onClick: (record: IRapport) =>
       {
         printPdfReport('basic', { records: [record] });
+      }
+    }),
+    new DiscoveryPlugin({
+      uuid: '0d18fd15-4bb0-4861-ad7f-02a672c9ac21',
+      label: 'Queue Url',
+      pluginType: 'url',
+      description: 'Queue the url / hyperlink for collection',
+      groupName: 'Default',
+      onClick: async(record: IRapport) =>
+      {
+          const unitDefault = await Configuration.getConfigurationValue(
+            'automationUnitDefault',
+            'count'
+          ) ?? 'count';
+          const valueDefault = await Configuration.getConfigurationValue(
+            'automationValueDefault',
+            100
+          ) ?? 100;
+          const automation = BulkAutomationUrl.createBulkAutomationJob(record.url, unitDefault, valueDefault);
+          await addRecord(BULK_AUTOMATION, UUID, record);
       }
     })
   ]

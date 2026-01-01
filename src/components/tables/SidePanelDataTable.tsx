@@ -1,7 +1,7 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Badge from '@mui/material/Badge';
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from 'react';
 import MUIDataTable, {
   type MUIDataTableColumnDef,
   type MUIDataTableOptions,
@@ -20,6 +20,9 @@ import * as cheerio from 'cheerio';
 import { ExtractContext, IExtractedData, MetaTagRecord, PageInfo, PreExistingFilter } from '../../types';
 import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
+import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
 
 
 function getBaseUrl(url: string) {
@@ -68,14 +71,10 @@ const isJunkUrl = (v: string) => {
 
 const toAbsUrl = (raw: string, baseUrl: string) => {
   const v = raw.trim();
-  if (v.startsWith("#")) return baseUrl + v;
-  if (v.startsWith("/")) return baseUrl + v;
-  if (v.startsWith("//")) {
-    const proto = (() => {
-      try { return new URL(baseUrl).protocol; } catch { return "https:"; }
-    })();
-    return proto + v;
+  if(!v.startsWith('http')){
+    return baseUrl + v;
   }
+
   return v;
 };
 
@@ -228,7 +227,7 @@ export function extractAllMetaTagsAsExtractedData(html: string): IExtractedData[
     const value = m.content ?? m.charset ?? "";
 
     return {
-      dataType: "meta",
+      pluginType: "meta",
       value: `${key}=${value}`,
       count: 1,
     };
@@ -503,10 +502,21 @@ export function processHtmlString(html: string, filterId: string, baseUrl: strin
 }
 
 type Props = {
-  pageInfo?: PageInfo|null;
+  pageInfo?: PageInfo|null
+  discoveryPlugins: DiscoveryPlugin[]
+  activeTabUrl: string|null
+  cacheRef: Record<string, PageInfo>
+  fetchDataForUrl: Function
 };
 
-export default function SidePanelDataTable({ pageInfo = null }: Props) {
+export default function SidePanelDataTable(
+  {
+    pageInfo = null,
+    discoveryPlugins = [],
+    activeTabUrl = null,
+    cacheRef = {},
+    fetchDataForUrl
+  }: Props) {
   const [rows, setRows] = useState<IExtractedData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -531,6 +541,22 @@ export default function SidePanelDataTable({ pageInfo = null }: Props) {
             if (!rows[dataIndex].value) {
               return <div></div>;
             }
+            const value = rows[dataIndex].value;
+            const pluginType = rows[dataIndex].pluginType;
+
+            return (
+              <DiscoveryPluginDialog
+                key={`selector-${value}-${pluginType}`}
+                plugins={getIntegratedPlugins().filter(p => p.pluginType === 'url').concat(discoveryPlugins.filter((plugin) => {
+                  return plugin.pluginType === pluginType;
+                }))}
+                title={'Discovery Plugin Guide'}
+                rapport={null}
+                uxType={'icon'}
+                selectorValue={value}
+                refreshRows={null}
+              />
+            )
             // TODO: render action based on data type
           },
         },
@@ -669,7 +695,9 @@ export default function SidePanelDataTable({ pageInfo = null }: Props) {
                 <InputAdornment position="start">
                   <Tooltip title={'Refresh page contents. This will update the discovered links and selectors'}>
                     <IconButton>
-                      <RefreshIcon onClick={() => alert('not implemented, yet')}/>
+                      <RefreshIcon onClick={() => {
+                        fetchDataForUrl(activeTabUrl, false);
+                      }}/>
                     </IconButton>
                   </Tooltip>
                 </InputAdornment>

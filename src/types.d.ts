@@ -325,7 +325,7 @@ export type DiscoveryPluginAction =
 export type DiscoveryPluginRoute = 'inbound' | 'outbound';
 
 export interface IExtractedData {
-  dataType: "url" | "username" | "domain"| string;
+  pluginType: "url" | "username" | "domain"| string;
   value: string;
   count: number;
 }
@@ -340,7 +340,7 @@ export type PreExistingFilter = {
   id: string;
   name: string;
   description?: string;
-  dataType: IExtractedData["dataType"];
+  pluginType: IExtractedData["pluginType"];
   extractor: (ctx: ExtractContext) => IExtractedData[];
 };
 

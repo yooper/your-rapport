@@ -48,11 +48,11 @@ import SearchDiscoveryPluginLayout from '../layouts/SearchDiscoveryPluginLayout'
 
 interface DiscoveryPluginDialogProps {
   selectorValue: string;
-  rapport: IRapport;
+  rapport: IRapport|null;
   plugins: DiscoveryPlugin[];
   title: string;
   uxType: 'chip' | 'icon';
-  refreshRows: any;
+  refreshRows: any|null;
 }
 
 const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
@@ -169,7 +169,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
       {uxType === 'chip' ? (
         <Chip
           avatar={getIcon(title)}
-          key={`${title}-${uxType}-${rapport.uuid}`}
+          key={`${title}-${uxType}-${rapport?.uuid ?? crypto.randomUUID()}`}
           variant="outlined"
           label={selectorValue}
           color="primary"

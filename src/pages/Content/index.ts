@@ -17,7 +17,7 @@ import { getVisibleText, getVisibleHtml } from './modules/visibleElements';
 import { isAutomationBlockerDetected } from './modules/automationBlockerDetection';
 import { IBulkAutomationRecord, PageInfo } from '../../types';
 import { debug } from '../../services/logger_services';
-import { autoScroller } from './modules/autoScroller'
+import { autoScroller } from './modules/autoScroller';
 
 // --- Types ------------------------------------------------------------------
 
@@ -124,7 +124,6 @@ chrome.runtime.onMessage.addListener((msg: any, sender, sendResponse) => {
 
   }
 
-
 });
 
 
@@ -144,5 +143,12 @@ if (window.location.hostname === "bakerstreet.llc") {
     signInHandler();
 }
 
+
+/**
+ * POC work..
+ */
+(async () => {
+  //await startLinkPlus();
+})();
 
 

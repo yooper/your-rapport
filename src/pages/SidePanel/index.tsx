@@ -12,16 +12,32 @@ import type { PageInfo } from "../../types";
 
 import "./index.css";
 import "react-notifications-component/dist/theme.css";
+import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
+import { db } from '../../models/db/dexieDb';
 
 const App: React.FC = () => {
   const [pageInfo, setPageInfo] = useState<PageInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTabUrl, setActiveTabUrl] = useState<string>("");
 
+
   // persistent cache across renders
   const cacheRef = useRef<Record<string, PageInfo>>({});
 
-  const fetchDataForUrl = useCallback(async (url: string) => {
+  const discoveryPluginsCache = useRef<DiscoveryPlugin[]>([]);
+
+  useEffect(() => {
+    async function fetchDiscoveryPlugins(){
+      discoveryPluginsCache.current = await db.discoveryPlugin.toArray();
+    }
+    fetchDiscoveryPlugins();
+  },[])
+
+
+  /**
+   * TODO: The caching algorithm is off due to staleness issues.
+   */
+  const fetchDataForUrl = useCallback(async (url: string, useCache: boolean = false) => {
     if (!url) {
       setPageInfo(null);
       return;
@@ -31,24 +47,36 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (cacheRef.current[url]) {
+      if (cacheRef.current[url] && useCache) {
         await debug("cached response", cacheRef.current[url]);
-      } else {
-        const response = (await chrome.runtime.sendMessage({
-          cmd: "slidePanelInit",
-          requestId: crypto.randomUUID(),
-          tabUrl: url, // optional, if your SW uses it
-        })) as PageInfo;
+      }
+      else {
+        let counter = 0;
+        let flag = false;
+        do {
+          try {
+            const response = (await chrome.runtime.sendMessage({
+              cmd: "slidePanelInit",
+              requestId: crypto.randomUUID(),
+              tabUrl: url, // optional, if your SW uses it
+            })) as PageInfo;
 
-        await debug("response received", response);
-        cacheRef.current[url] = response;
+            await debug("response received", response);
+            cacheRef.current[url] = response;
+            flag = true;
+          } catch (e) {
+            debug('slidePanelInit:fetchDataForUrl ' + String(e))
+          }
+        }while(counter++ < 3 && !flag)
       }
 
       setPageInfo(cacheRef.current[url] ?? null);
-    } catch (e) {
+    }
+    catch (e) {
       await debug("sidepanel fetchData error", e);
       setPageInfo(null);
-    } finally {
+    }
+    finally {
       setIsLoading(false);
       hideLoader();
     }
@@ -107,7 +135,13 @@ const App: React.FC = () => {
   return (
     <Fragment>
       <ReactNotifications />
-      <SidePanelDataTable pageInfo={pageInfo} />
+      <SidePanelDataTable
+        pageInfo={pageInfo}
+        discoveryPlugins={discoveryPluginsCache.current}
+        activeTabUrl={activeTabUrl}
+        cacheRef={cacheRef}
+        fetchDataForUrl={fetchDataForUrl}
+      />
     </Fragment>
   );
 };
