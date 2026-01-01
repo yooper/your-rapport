@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import {
   Apps as AppsIcon,
-  OpenInNew as OpenInNewIcon,
   Home as HomeIcon,
   AttachFile as AttachFileIcon,
   Person as PersonIcon,
@@ -67,6 +66,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
 
   Mustache.escape = (text: string) => text;
   sort_by_key(plugins, 'label');
+
   const iconMap: Record<string, React.JSX.Element> = {
     address: (
       <Avatar>

@@ -23,6 +23,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
 import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
+import { UrlActionButtons } from '../../slidePanels/SlidePanelAction';
 
 
 function getBaseUrl(url: string) {
@@ -544,6 +545,15 @@ export default function SidePanelDataTable(
             const value = rows[dataIndex].value;
             const pluginType = rows[dataIndex].pluginType;
 
+            if(pluginType === 'url'){
+              return (
+                <UrlActionButtons data={rows[dataIndex]} />
+              )
+            }
+            // support for other plugin types
+            else {
+
+            }
             return (
               <DiscoveryPluginDialog
                 key={`selector-${value}-${pluginType}`}
@@ -589,7 +599,19 @@ export default function SidePanelDataTable(
                         <span> </span>
                       </Badge>
                     </Tooltip>
-                    <Link sx={{m:2}} href={rows[dataIndex].value} rel="noreferrer" target={'_blank'}>{rows[dataIndex].value}</Link>
+                    <Link
+                      sx={{m:2}}
+                      href={rows[dataIndex].value}
+                      rel="noreferrer"
+                      onClick={(e) => {
+                        // TODO: add support for Discovery Plugins
+                        if(_isValidUrl(rows[dataIndex].value)){
+                          e.preventDefault();
+                        }
+                      }}
+                      target={'_blank'}>
+                        {rows[dataIndex].value}
+                    </Link>
                   </>
                 )
             }
@@ -598,6 +620,20 @@ export default function SidePanelDataTable(
       },
     ]
 
+  /**
+   * Helps with filter bad urls
+   * @param url
+   * @returns {boolean}
+   * @private
+   */
+  function _isValidUrl(url) {
+    try {
+      new URL(url);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   // Centralized parse runner with cancelation + error handling
   const runParse = async (signal: AbortSignal) => {
