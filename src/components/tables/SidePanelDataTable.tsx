@@ -20,12 +20,6 @@ import * as cheerio from 'cheerio';
 import { IExtractedData, PageInfo, PreExistingFilter } from '../../types';
 
 
-const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
-  { id: "a-hrefs", name: "Links (a[href])", description: "Extract all anchor href URLs" },
-  { id: "img-src", name: "Images (img[src])", description: "Extract image URLs" },
-  { id: "scripts", name: "Scripts (script[src])", description: "Extract script URLs" },
-];
-
 function getBaseUrl(url: string) {
   const u: URL = new URL(url);
   return u.origin;
@@ -42,7 +36,7 @@ function summarizeExtractedData(items: IExtractedData[]): IExtractedData[] {
       existing.count += item.count > 0 ? item.count : 1; // supports pre-counted inputs
     } else {
       acc.set(key, {
-        dataType: item.dataType ?? "url",
+        pluginType: item.pluginType ?? "url",
         value: item.value,
         count: item.count > 0 ? item.count : 1,
       });
@@ -58,50 +52,399 @@ function summarizeExtractedData(items: IExtractedData[]): IExtractedData[] {
 }
 
 
-function processHtmlString(html: string, filterId: string, baseUrl: string): IExtractedData[] {
-  if (!filterId) return [];
-  if (!html.trim()) return [];
+const isJunkUrl = (v: string) => {
+  const s = v.trim().toLowerCase();
+  return (
+    !s ||
+    s === "#" ||
+    s.startsWith("javascript:") ||
+    s.startsWith("mailto:") ||
+    s.startsWith("tel:") ||
+    s.startsWith("data:")
+  );
+};
 
-  const $ = cheerio.load(html);
-  let links: IExtractedData[] = []
-  switch (filterId) {
-    case "a-hrefs":
-      $('a[href]').each((index, element) => {
-        const href = $(element).attr('href');
-        // You might want to resolve relative URLs to absolute URLs here
-        if(!href){
-          return;
-        }
-        if(href.startsWith('/') || href.startsWith('#')){
-          links.push({pluginType: 'url', value: baseUrl+href, count:1} as IExtractedData);
-        }
-        else{
-          links.push({pluginType: 'url', value: href, count: 1} as IExtractedData);
-        }
-      });
-      break;
-    case "img-src":
-      $('img[src]').each((index, element) => {
-        const src = $(element).attr('src');
-        // You might want to resolve relative URLs to absolute URLs here
-        if (src) {
-          links.push({pluginType: 'url', value: src} as IExtractedData);
-        }
-      });
-      break;
-    case "scripts":
-      $('script[src]').each((index, element) => {
-        const src = $(element).attr('src');
-        // You might want to resolve relative URLs to absolute URLs here
-        if (src) {
-          links.push({ pluginType: 'url', value: src } as unknown as IExtractedData);
-        }
-      });
-      break;
-    default:
-      break;
+const toAbsUrl = (raw: string, baseUrl: string) => {
+  const v = raw.trim();
+  if (v.startsWith("#")) return baseUrl + v;
+  if (v.startsWith("/")) return baseUrl + v;
+  if (v.startsWith("//")) {
+    const proto = (() => {
+      try { return new URL(baseUrl).protocol; } catch { return "https:"; }
+    })();
+    return proto + v;
   }
-  return summarizeExtractedData(links)
+  return v;
+};
+
+
+
+/** ---------- generic extraction helpers ---------- */
+
+function extractAttrUrls(
+  $: cheerio.CheerioAPI,
+  selector: string,
+  attr: string,
+  baseUrl: string
+): IExtractedData[] {
+  const out: IExtractedData[] = [];
+  $(selector).each((_i, el) => {
+    const raw = $(el).attr(attr);
+    if (!raw) return;
+    if (isJunkUrl(raw)) return;
+    out.push({ pluginType: "url", value: toAbsUrl(raw, baseUrl), count: 1 });
+  });
+  return out;
+}
+
+function extractMetaContent(
+  $: cheerio.CheerioAPI,
+  metaNameOrProp: string[],
+  baseUrl: string
+): IExtractedData[] {
+  const out: IExtractedData[] = [];
+  for (const key of metaNameOrProp) {
+    const sel = `meta[name="${key}"], meta[property="${key}"]`;
+    $(sel).each((_i, el) => {
+      const raw = $(el).attr("content");
+      if (!raw) return;
+      const v = raw.trim();
+      if (!v) return;
+
+      // If the content looks like a URL, normalize it
+      if (/^(https?:\/\/|\/\/|\/|#)/i.test(v)) {
+        if (!isJunkUrl(v)) out.push({ pluginType: "url", value: toAbsUrl(v, baseUrl), count: 1 });
+      } else {
+        out.push({ pluginType: "username", value: v, count: 1 });
+      }
+    });
+  }
+  return out;
+}
+
+function extractTextMatches(
+  html: string,
+  re: RegExp,
+  pluginType: IExtractedData["pluginType"],
+  group = 0
+): IExtractedData[] {
+  const out: IExtractedData[] = [];
+  for (const m of html.matchAll(re)) {
+    const v = (m[group] ?? "").toString().trim();
+    if (!v) continue;
+    out.push({ pluginType, value: v, count: 1 });
+  }
+  return out;
+}
+
+function extractLinkRelCanonical($: cheerio.CheerioAPI, baseUrl: string): IExtractedData[] {
+  return extractAttrUrls($, 'link[rel="canonical"][href]', "href", baseUrl);
+}
+
+/** ---------- social site specific helpers ---------- */
+
+function extractUsernamesFromProfileLinks(
+  $: cheerio.CheerioAPI,
+  baseUrl: string,
+  hostMatcher: RegExp,
+  pathRe: RegExp
+): IExtractedData[] {
+  const out: IExtractedData[] = [];
+  $("a[href]").each((_i, el) => {
+    const raw = $(el).attr("href");
+    if (!raw || isJunkUrl(raw)) return;
+
+    const href = toAbsUrl(raw, baseUrl);
+    try {
+      const u = new URL(href);
+      if (!hostMatcher.test(u.hostname)) return;
+
+      const m = u.pathname.match(pathRe);
+      if (!m) return;
+
+      const username = (m[1] ?? "").trim();
+      if (!username) return;
+
+      out.push({ pluginType: "username", value: username, count: 1 });
+    } catch {
+      // ignore
+    }
+  });
+  return out;
+}
+
+function extractDomainsFromUrls(items: IExtractedData[]): IExtractedData[] {
+  const out: IExtractedData[] = [];
+  for (const it of items) {
+    if (it.pluginType !== "url") continue;
+    try {
+      const u = new URL(it.value);
+      out.push({ pluginType: "domain", value: u.hostname, count: 1 });
+    } catch {
+      // ignore
+    }
+  }
+  return out;
+}
+
+/** ---------- Filters: maintainable registry ---------- */
+
+export const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
+  {
+    id: "a-hrefs",
+    name: "Links (a[href])",
+    description: "Extract all anchor href URLs",
+    pluginType: "url",
+    extractor: ({ $, baseUrl }) => extractAttrUrls($, "a[href]", "href", baseUrl),
+  },
+  {
+    id: "img-src",
+    name: "Images (img[src])",
+    description: "Extract image URLs",
+    pluginType: "url",
+    extractor: ({ $, baseUrl }) => extractAttrUrls($, "img[src]", "src", baseUrl),
+  },
+  {
+    id: "scripts",
+    name: "Scripts (script[src])",
+    description: "Extract script URLs",
+    pluginType: "url",
+    extractor: ({ $, baseUrl }) => extractAttrUrls($, "script[src]", "src", baseUrl),
+  },
+
+  // ---------- General “social footprint” extractors ----------
+  {
+    id: "meta-social-handles",
+    name: "Social meta handles (twitter, og, etc.)",
+    description: "Extract usernames/ids from common social meta tags",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) =>
+      extractMetaContent(
+        $,
+        [
+          "twitter:creator",
+          "twitter:site",
+          "profile:username",
+          "al:android:url", // can contain app links with ids
+          "al:ios:url",
+        ],
+        baseUrl
+      ),
+  },
+  {
+    id: "canonical-url",
+    name: "Canonical URL",
+    description: "Extract canonical link (often the ‘real’ permalink)",
+    pluginType: "url",
+    extractor: ({ $, baseUrl }) => extractLinkRelCanonical($, baseUrl),
+  },
+
+  // ---------- X / Twitter ----------
+  {
+    id: "x-usernames",
+    name: "X/Twitter usernames (links)",
+    description: "Find @usernames by parsing x.com/twitter.com profile links",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) =>
+      extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)twitter\.com$|(^|\.)x\.com$/i,
+        /^\/([A-Za-z0-9_]{1,15})(?:\/|$)/ // @ handle
+      ),
+  },
+
+  // ---------- Instagram ----------
+  {
+    id: "instagram-usernames",
+    name: "Instagram usernames (links)",
+    description: "Extract instagram.com profile usernames from links",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) =>
+      extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)instagram\.com$/i,
+        /^\/([A-Za-z0-9._]{1,30})(?:\/|$)/
+      ),
+  },
+
+  // ---------- Facebook ----------
+  {
+    id: "facebook-usernames",
+    name: "Facebook usernames/pages (links)",
+    description: "Extract facebook.com/{username} and fb.me shortlinks",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) => [
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)facebook\.com$/i,
+        /^\/(?!sharer\.php|share\.php|login\.php|events|pages|watch|groups)([^/?#]+)(?:\/|$)/
+      ),
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)fb\.me$/i,
+        /^\/([^/?#]+)(?:\/|$)/
+      ),
+    ],
+  },
+
+  // ---------- LinkedIn ----------
+  {
+    id: "linkedin-profiles",
+    name: "LinkedIn profiles/orgs (links)",
+    description: "Extract linkedin.com/in and /company identifiers",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) => [
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)linkedin\.com$/i,
+        /^\/in\/([^/?#]+)(?:\/|$)/
+      ),
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)linkedin\.com$/i,
+        /^\/company\/([^/?#]+)(?:\/|$)/
+      ),
+    ],
+  },
+
+  // ---------- YouTube ----------
+  {
+    id: "youtube-channels",
+    name: "YouTube channels (links)",
+    description: "Extract /@handle, /channel/ID, /c/ vanity",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) => [
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)youtube\.com$/i,
+        /^\/@([^/?#]+)(?:\/|$)/
+      ),
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)youtube\.com$/i,
+        /^\/channel\/([^/?#]+)(?:\/|$)/
+      ),
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)youtube\.com$/i,
+        /^\/c\/([^/?#]+)(?:\/|$)/
+      ),
+    ],
+  },
+
+  // ---------- TikTok ----------
+  {
+    id: "tiktok-usernames",
+    name: "TikTok usernames (links)",
+    description: "Extract tiktok.com/@handle",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) =>
+      extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)tiktok\.com$/i,
+        /^\/@([^/?#]+)(?:\/|$)/
+      ),
+  },
+
+  // ---------- Reddit ----------
+  {
+    id: "reddit-users-subs",
+    name: "Reddit users/subreddits (links)",
+    description: "Extract reddit.com/u and /r identifiers",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) => [
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)reddit\.com$/i,
+        /^\/(?:user|u)\/([^/?#]+)(?:\/|$)/
+      ),
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)reddit\.com$/i,
+        /^\/r\/([^/?#]+)(?:\/|$)/
+      ),
+    ],
+  },
+
+  // ---------- GitHub ----------
+  {
+    id: "github-users-orgs",
+    name: "GitHub users/orgs (links)",
+    description: "Extract github.com/{user} and github.com/orgs/{org}",
+    pluginType: "username",
+    extractor: ({ $, baseUrl }) => [
+      ...extractUsernamesFromProfileLinks(
+        $,
+        baseUrl,
+        /(^|\.)github\.com$/i,
+        /^\/(orgs\/)?([^/?#]+)(?:\/|$)/ // group 2 is the name; we’ll handle below
+      ).map((x) => ({ ...x, value: x.value.replace(/^orgs\//, "") })),
+    ],
+  },
+
+  // ---------- Mastodon (best-effort) ----------
+  {
+    id: "mastodon-handles",
+    name: "Mastodon handles (text best-effort)",
+    description: "Extract @user@instance patterns from visible HTML text",
+    pluginType: "username",
+    extractor: ({ html }) =>
+      extractTextMatches(
+        html,
+        /@([A-Za-z0-9_]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g,
+        "username",
+        1
+      ),
+  },
+
+  // ---------- Domains from extracted URLs ----------
+  {
+    id: "domains-from-links",
+    name: "Domains (from extracted URLs)",
+    description: "Derive domain list from anchor hrefs",
+    pluginType: "domain",
+    extractor: ({ $, baseUrl }) => {
+      const urls = extractAttrUrls($, "a[href]", "href", baseUrl);
+      return extractDomainsFromUrls(urls);
+    },
+  },
+];
+
+
+/**
+ * Maintainable processing entrypoint:
+ * - registry-driven (no huge switch)
+ * - consistent URL resolution + summarization
+ * - safe errors
+ */
+export function processHtmlString(html: string, filterId: string, baseUrl: string): IExtractedData[] {
+  if (!filterId) return [];
+  if (!html?.trim()) return [];
+
+  const filter = PRE_EXISTING_FILTERS.find((f) => f.id === filterId);
+  if (!filter) return [];
+
+  try {
+    const $ = cheerio.load(html);
+    const ctx: ExtractContext = { html, baseUrl, $ };
+
+    const extracted = filter.extractor(ctx) ?? [];
+    return summarizeExtractedData(extracted);
+  } catch {
+    return [];
+  }
 }
 
 type Props = {
@@ -124,7 +467,7 @@ export default function SidePanelDataTable({ pageInfo = null }: Props) {
     [
       {
         label: "Actions",
-        name: "dataType",
+        name: "pluginType",
         options: {
           filter: false,
           sort: false,
@@ -219,7 +562,7 @@ export default function SidePanelDataTable({ pageInfo = null }: Props) {
   const options: MUIDataTableOptions = useMemo(
     () => ({
       searchAlwaysOpen: true,
-      responsive:"scrollFullHeight",
+      responsive:"standard",
       rowsPerPageOptions: [],
       pagination: true,
       rowsPerPage: 10000,

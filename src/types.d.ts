@@ -1,5 +1,6 @@
 import React from 'react';
 import { DiscoveryPlugin, DiscoveryPluginAction } from './models/schemas/DiscoveryPlugin';
+import * as cheerio from 'cheerio/dist/browser';
 
 export type Selector = {
   name: string;
@@ -333,4 +334,19 @@ type PreExistingFilter = {
   id: string;
   name: string;
   description?: string;
+};
+
+export type PreExistingFilter = {
+  id: string;
+  name: string;
+  description?: string;
+  dataType: IExtractedData["dataType"];
+  extractor: (ctx: ExtractContext) => IExtractedData[];
+};
+
+export type ExtractContext = {
+  html: string;
+  baseUrl: string;     // origin, e.g. "https://twitter.com"
+  pageUrl?: string;    // full url, if you want it
+  $: cheerio.CheerioAPI;
 };
