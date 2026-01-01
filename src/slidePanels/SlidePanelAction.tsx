@@ -7,9 +7,10 @@ import { IExtractedData } from '../types';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { BULK_AUTOMATION, UUID } from '../services/constants';
 import { addRecord} from '../models/db/local';
-import { processNotification } from '../utilities/loaders';
+import { createTab, processNotification } from '../utilities/loaders';
 import Stack from "@mui/material/Stack";
-
+import { Avatar } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 
 type SlidePanelActionProps = {
@@ -21,8 +22,9 @@ type SlidePanelActionProps = {
   data: IExtractedData|null;
 };
 
+
 export const SlidePanelAction: React.FC<SlidePanelActionProps> = ({
-  icon: Icon,
+  icon,
   toolTip,
   pluginType, // kept for future use
   onClick,
@@ -32,7 +34,7 @@ export const SlidePanelAction: React.FC<SlidePanelActionProps> = ({
   return (
     <Tooltip title={toolTip}>
         <IconButton onClick={() => onClick(data)} disabled={disabled} size="small">
-          <QueueIcon fontSize="small" />
+          {icon}
         </IconButton>
     </Tooltip>
   );
@@ -41,7 +43,7 @@ export const SlidePanelAction: React.FC<SlidePanelActionProps> = ({
 
 export const urlActions: SlidePanelActionProps[] = [
   {
-    icon: <QueueIcon/>,
+    icon: <QueueIcon />,
     toolTip: 'test url',
     pluginType: 'url', // kept for future use
     onClick: (data: IExtractedData) => {
@@ -49,6 +51,16 @@ export const urlActions: SlidePanelActionProps[] = [
       addRecord(BULK_AUTOMATION, UUID, record).then(() => {
         processNotification({title:'Queued', message:'Url has been queued. Visit the automations page to start the automation run.', type:'info'});
       })
+    },
+    disabled:false,
+    data: null
+  },
+  {
+    icon: <OpenInNewIcon />,
+    toolTip: 'Open web page in new tab.',
+    pluginType: 'url',
+    onClick: (data: IExtractedData) => {
+      createTab(data.value);
     },
     disabled:false,
     data: null
