@@ -17,13 +17,15 @@ import {
 
 import { hideLoader, showLoader } from "../../utilities/loaders";
 import * as cheerio from 'cheerio';
-import { ExtractContext, IExtractedData, MetaTagRecord, PageInfo, PreExistingFilter } from '../../types';
+import { ExtractContext, IExtractedData, MetaTagRecord, PageInfo, PreExistingFilter, Selector } from '../../types';
 import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import DiscoveryPluginDialog from '../dialogs/DiscoveryPluginDialog';
 import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
 import { UrlActionButtons } from '../../slidePanels/SlidePanelAction';
+import { findAllMatches } from '../../utilities/transformers';
+import { db } from "../../models/db/dexieDb";
 
 
 function getBaseUrl(url: string) {
@@ -96,6 +98,19 @@ function extractAttrUrls(
     if (isJunkUrl(raw)) return;
     out.push({ pluginType: "url", value: toAbsUrl(raw, baseUrl), count: 1 });
   });
+  return out;
+}
+
+export async function extractSelectors($: cheerio.CheerioAPI): Promise<IExtractedData[]> {
+  const selectors = await db.selector.toArray();
+  const matches: Selector[] = findAllMatches($.root().text(), selectors);
+
+  const out: IExtractedData[] = matches.map((m): IExtractedData => ({
+    pluginType: m.selectorTypeName,
+    value: m.name,
+    count: m.count
+  }));
+
   return out;
 }
 
@@ -238,6 +253,13 @@ export function extractAllMetaTagsAsExtractedData(html: string): IExtractedData[
 /** ---------- Filters: maintainable registry ---------- */
 
 export const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
+  {
+    id: "selectors-",
+    name: "Selectors (text)",
+    description: "Selectors on this page",
+    pluginType: "content",
+    extractor: async ({ $, baseUrl }) => await extractSelectors($)
+  },
   {
     id: "a-hrefs",
     name: "Links (a[href])",
@@ -484,7 +506,7 @@ export const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
  * - consistent URL resolution + summarization
  * - safe errors
  */
-export function processHtmlString(html: string, filterId: string, baseUrl: string): IExtractedData[] {
+export async function processHtmlString(html: string, filterId: string, baseUrl: string): Promise<IExtractedData[]> {
   if (!filterId) return [];
   if (!html?.trim()) return [];
 
@@ -495,7 +517,7 @@ export function processHtmlString(html: string, filterId: string, baseUrl: strin
     const $ = cheerio.load(html);
     const ctx: ExtractContext = { html, baseUrl, $ };
 
-    const extracted = filter.extractor(ctx) ?? [];
+    const extracted = await filter.extractor(ctx) ?? [];
     return summarizeExtractedData(extracted);
   } catch {
     return [];
@@ -635,12 +657,10 @@ export default function SidePanelDataTable(
     }
   }
 
-  // Centralized parse runner with cancelation + error handling
   const runParse = async (signal: AbortSignal) => {
     setError(null);
     setIsLoading(true);
     showLoader();
-
     try {
       if (!selectedFilterId) {
         setRows([]);
@@ -651,7 +671,8 @@ export default function SidePanelDataTable(
         return;
       }
 
-      const data: IExtractedData[] = processHtmlString(pageInfo.html, selectedFilterId, getBaseUrl(pageInfo.url));
+      // TODO: move this to the service worker
+      const data: IExtractedData[] = await processHtmlString(pageInfo.html, selectedFilterId, getBaseUrl(pageInfo.url));
 
       if (signal.aborted) return;
       setRows(Array.isArray(data) ? data : []);

@@ -9,7 +9,6 @@ import { BULK_AUTOMATION, UUID } from '../services/constants';
 import { addRecord} from '../models/db/local';
 import { createTab, processNotification } from '../utilities/loaders';
 import Stack from "@mui/material/Stack";
-import { Avatar } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 

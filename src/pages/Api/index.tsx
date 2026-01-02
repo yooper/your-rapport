@@ -8,9 +8,14 @@ import { APIResponse, Props } from "../../types";
 import { processApiRequest } from "../../services/api_services";
 import { db } from "../../models/db/dexieDb";
 import { Artifact } from "../../models/schemas/Artifact";
+import { initExtensionPage } from '../../services/init_services';
+
 
 type ViewMode = "json" | "artifact";
 type MonacoTheme = "vs-dark" | "vs-light";
+
+initExtensionPage();
+
 
 function useLocalStorageState<T>(key: string, initial: T) {
   const [value, setValue] = useState<T>(() => {
@@ -176,7 +181,6 @@ const ArtifactLoader: React.FC<{ uuid: string }> = ({ uuid }) => {
 
   return <ArtifactViewer artifact={artifact} />;
 };
-
 
 const App: React.FC = () => {
   const params = new URLSearchParams(window.location.search);
