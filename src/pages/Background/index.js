@@ -233,10 +233,10 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
  * When the web page changes, we need to reset the extension pin to its default state
  */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  // when the tab changes, check if it changes to an extension page and close the side panel
   if(tab.url.startsWith(`chrome://extensions/?id=${chrome.runtime.id}`)){
     chrome.sidePanel.close({tabId})
   }
-
 
   if (changeInfo.status === 'complete') {
     // TODO: Fix bug with autocompleting, can cause loop that requires disabling the extension to exit out.
