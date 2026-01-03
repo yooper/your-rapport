@@ -12,6 +12,7 @@ const QUEUE_TICK_MIN = 1;
 
 let processing = false;
 
+
 export function initializeAutomationRunner() {
   // periodic tick to recover & continue
   chrome.alarms.create('yr_queue_tick', { periodInMinutes: QUEUE_TICK_MIN });
@@ -34,7 +35,9 @@ export function initializeAutomationRunner() {
 }
 
 function trigger() {
-  if (processing) return;
+  if (processing){
+    return;
+  }
   processing = true;
   processQueue().finally(() => { processing = false; });
 }

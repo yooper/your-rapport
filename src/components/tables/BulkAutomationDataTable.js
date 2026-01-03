@@ -180,6 +180,44 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
+      label: 'DEEP SAVE',
+      name: 'isDeepSave',
+      options: {
+        display: true,
+        filter: false,
+        sort: false,
+        customBodyRender: (value, tableMeta, updateValue) => {
+          if (value === undefined) {
+            return <div></div>;
+          }
+          const record = getRecord(tableMeta.rowData);
+          return (
+            <FormControlLabel
+              control={
+                <Switch color="primary" checked={value} />
+              }
+              label={
+                <div>
+                  <IconButton>
+                    <HelperPopover
+                      message={
+                        'By default multiple screenshots are collected using auto collect. This setting will collect a deep save with multiple artifacts.'
+                      }
+                    />
+                  </IconButton>
+                </div>
+              }
+              onChange={async(event) => {
+                updateValue(event.target.checked);
+                record.isDeepSave = event.target.checked;
+                await updateRecord(BULK_AUTOMATION, UUID, record);
+              }}
+            />
+          );
+        },
+      },
+    },
+    {
       label: 'KEEP TAB OPEN',
       name: 'keepTabOpen',
       options: {
@@ -207,9 +245,9 @@ export default function BulkAutomationTable(props) {
                   </IconButton>
                 </div>
               }
-              onChange={(event) => {
-                updateValue(event.target.checked);
-                handleSwitchChange(record, event.target.checked);
+              onChange={async(event) => {
+                record.isDeepSave = event.target.checked;
+                await updateRecord(BULK_AUTOMATION, UUID, record);
               }}
             />
           );
@@ -299,17 +337,6 @@ export default function BulkAutomationTable(props) {
       },
     },
   ];
-
-  /**
-   *
-   * @param {BulkAutomationUrl} record
-   * @param {boolean} isChecked
-   * @returns {Promise<void>}
-   */
-  const handleSwitchChange = async (record, isChecked) => {
-    record.keepTabOpen = isChecked;
-    await updateRecord(BULK_AUTOMATION, UUID, record);
-  };
 
   const options = {
     rowsPerPage: 50,

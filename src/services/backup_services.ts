@@ -2,6 +2,8 @@
  * Write a blob to the downloads directory. This is a pro feature that offers the ability to sync data to your native
  * file system
  */
+import { Configuration } from '../models/schemas/Configuration';
+
 export async function downloadViaBlobUrl(
   data: BlobPart[],
   filename: string,
@@ -57,6 +59,7 @@ export async function blobToDataUrl(blob: Blob): Promise<string> {
   return `data:${blob.type};base64,${base64}`;
 }
 
+
 export async function downloadDataUrl(dataUrl: string, filename: string): Promise<number> {
   return await chrome.downloads.download({
     url: dataUrl,
@@ -64,4 +67,10 @@ export async function downloadDataUrl(dataUrl: string, filename: string): Promis
     saveAs: false,
     conflictAction: "overwrite"
   });
+}
+
+export async function importSyncDirectory(configuration: Configuration){
+
+
+
 }

@@ -46,11 +46,13 @@ export class Configuration {
       packageCacheHash: 'not set',
       screenShotCount: 0,
       updatedOn: getUtcNow(),
+      // pro feature, only runs after authentication
       syncBackgroundMode: 'sync',
-      syncBackgroundEnabled: false,
+      syncBackgroundEnabled: true,
       syncBackgroundHardDelete: true,
       syncBackgroundPath: 'your_rapport/sync/',
       syncBackgroundArtifactResolution: 'highRes'
+      // END
     };
   }
 

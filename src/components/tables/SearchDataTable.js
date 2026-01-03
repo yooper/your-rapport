@@ -547,7 +547,6 @@ export default function SearchDataTable(props) {
         }
       }
     }
-
     setIsLoading(false);
     hideLoader();
   };
