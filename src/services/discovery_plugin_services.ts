@@ -462,9 +462,10 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
  * Once a rapport is saved, iterate through the active background runners and queue
  * them for running
  * @param rapport
+ * @param eventType
  */
-export async function applyBackgroundJobs(rapport: Rapport) : Promise<void> {
-  const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner').toArray();
+export async function applyBackgroundJobs(rapport: Rapport, eventType: string) : Promise<void> {
+  const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner' && dp.eventType === eventType).toArray();
   for ( const discoveryPlugin of plugins){
     await debug('Queuing job', {discoveryPlugin, rapport});
     getJobQueue().enqueue({ discoveryPlugin, rapport })

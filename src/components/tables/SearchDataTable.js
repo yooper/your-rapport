@@ -20,7 +20,7 @@ import { rapportDebounceSearchRender } from './customizations/RapportDebounceSea
 import { db } from '../../models/db/dexieDb';
 import VerticalGenericTableDialog from '../dialogs/VerticalGenericTableDialog';
 import AddTagsFormDialog from '../dialogs/search_dashboard/AddTagsFormDialog';
-import { getIntegratedPlugins } from '../../services/discovery_plugin_services';
+import { applyBackgroundJobs, getIntegratedPlugins } from '../../services/discovery_plugin_services';
 import JsonAttributeViewerDialog from '../dialogs/JsonAttributeViewerDialog';
 import IconButton from '@mui/material/IconButton';
 import AttachmentIcon from '@mui/icons-material/Attachment';
@@ -505,6 +505,17 @@ export default function SearchDataTable(props) {
       deleteRecords.push(rows[idx].uuid);
     }
 
+    // queue the background jobs to run before deleting from the system
+    // this is a time consuming operation
+
+    for(const uuid of deleteRecords){
+      // load the whole record into memory
+      const rapport = await db.rapport.get(uuid);
+      applyBackgroundJobs(rapport, 'delete').then(() => {
+        debug('delete background job completed', rapport);
+      });
+    }
+
     await db.artifact.bulkDelete(deleteArtifacts);
     await db.rapport.bulkDelete(deleteRecords);
 
@@ -516,6 +527,7 @@ export default function SearchDataTable(props) {
     lastModified = getUtcNow();
     await Configuration.setConfiguration(configuration);
 
+    // below deals with deleting from the synchronized storage ie on disk
     const user = await getUser();
     // check if we need to hard delete the sync records
     if(user && configuration.syncBackgroundHardDelete){

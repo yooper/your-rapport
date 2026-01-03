@@ -204,6 +204,7 @@ type EventType =
   | 'create'
   | 'update'
   | 'delete'
+  | null
 
 
 export interface DiscoveryPluginInit {
