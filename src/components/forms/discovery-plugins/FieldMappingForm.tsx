@@ -71,7 +71,6 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
   '{{rapport.updatedOn}}',
   '{{rapport.tags}}',
   '{{rapport.selectors}}',
-
   '{{rapport.caseManagementUuid}}',
   ];
 

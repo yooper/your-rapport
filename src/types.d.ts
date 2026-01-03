@@ -201,12 +201,10 @@ type PluginAction =
   | 'ForegroundRunner'
   | 'BackgroundRunner';
 type EventType =
-  | 'preCreate'
-  | 'postCreate'
-  | 'preUpdate'
-  | 'postUpdate'
-  | 'preDelete'
-  | 'postDelete';
+  | 'create'
+  | 'update'
+  | 'delete'
+
 
 export interface DiscoveryPluginInit {
   uuid?: string;
@@ -315,12 +313,6 @@ export interface IBulkAutomationRecord {
   attempts: number;
   leaseUntil: number | null;
 }
-
-export type DiscoveryPluginAction =
-  | 'BackgroundRunner'
-  | 'CreateTab'
-  | 'ForegroundRunner'
-  | 'SubmitForm';
 
 export type DiscoveryPluginRoute = 'inbound' | 'outbound';
 
