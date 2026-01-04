@@ -39,7 +39,7 @@ export class Configuration {
       automationDelayTabOpenDefault: 3000,
       automationDeepSaveEnabled: false,
       automationKeepTabOpenDefault: true,
-      debugMessagesEnabled: false,
+      debugMessagesEnabled: true,
       highlightSelectorsEnabled: false,
       linkPlusEnabled: false,
       packageCacheEnabled: false,

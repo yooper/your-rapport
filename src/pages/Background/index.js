@@ -65,9 +65,6 @@ chrome.commands.onCommand.addListener(async(command) => {
     case 'deepSave':
       await capture(activeTab, pageInfo, true);
       break;
-    case 'initScanPage':
-      await scanPage(activeTab)
-      break;
     case 'initAutoScroll':
       const response = chrome.tabs.sendMessage(activeTab.id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
       await debug('init auto scroll', response)
@@ -85,7 +82,7 @@ chrome.commands.onCommand.addListener(async(command) => {
  * This functions as the public api that other parts of the app message with
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if(message.cmd === 'extractData'){
+  if(message.cmd === 'quickScan'){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       chrome.sidePanel.open({ tabId: tabs[0].id })
     })

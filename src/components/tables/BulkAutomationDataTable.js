@@ -246,7 +246,8 @@ export default function BulkAutomationTable(props) {
                 </div>
               }
               onChange={async(event) => {
-                record.isDeepSave = event.target.checked;
+                updateValue(event.target.checked);
+                record.keepTabOpen = event.target.checked;
                 await updateRecord(BULK_AUTOMATION, UUID, record);
               }}
             />

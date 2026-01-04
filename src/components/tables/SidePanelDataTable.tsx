@@ -254,13 +254,6 @@ export function extractAllMetaTagsAsExtractedData(html: string): IExtractedData[
 
 export const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
   {
-    id: "selectors-",
-    name: "Selectors (text)",
-    description: "Selectors on this page",
-    pluginType: "content",
-    extractor: async ({ $, baseUrl }) => await extractSelectors($)
-  },
-  {
     id: "a-hrefs",
     name: "Links (a[href])",
     description: "Extract all anchor href URLs",
@@ -280,6 +273,15 @@ export const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
     description: "Extract script URLs",
     pluginType: "url",
     extractor: ({ $, baseUrl }) => extractAttrUrls($, "script[src]", "src", baseUrl),
+  },
+
+  // selectors
+  {
+    id: "selectors-",
+    name: "Selectors (text)",
+    description: "Selectors on this page",
+    pluginType: "content",
+    extractor: async ({ $, baseUrl }) => await extractSelectors($)
   },
 
   // ---------- General “social footprint” extractors ----------

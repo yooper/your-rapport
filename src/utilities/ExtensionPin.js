@@ -21,10 +21,6 @@ export default class ExtensionPin {
     });
   };
 
-  static scanPage = (activeTab) => {
-    ExtensionPin.setBgColorAndText('#619657', 'RUN', activeTab);
-  };
-
   static setDefaultSaved = (activeTab = null) => {
     if (activeTab) {
       ExtensionPin.setBgColorAndText('#619657', 'SAVD', activeTab);

@@ -10,8 +10,7 @@ import {
 } from '../../utilities/loaders';
 import Typography from '@mui/material/Typography';
 import { ButtonBase, Tooltip } from '@mui/material';
-import { scanPage } from '../../utilities/transformers';
-import { AUTO_COLLECT_STARTING, RAPPORT } from '../../services/constants';
+import { AUTO_COLLECT_STARTING } from '../../services/constants';
 import {
   Paper,
   Table,
@@ -101,8 +100,7 @@ function LargeButtonGrid() {
       toolTipTitle: `Scans the open page for your pre-existing selectors. The Extension pin will show the counts.`,
       onClick: () => {
         getActiveTab().then(activeTab => {
-          scanPage(activeTab);
-          chrome.runtime.sendMessage({ cmd: 'extractData', requestId: crypto.randomUUID() }, response => {
+          chrome.runtime.sendMessage({ cmd: 'quickScan', requestId: crypto.randomUUID() }, response => {
             debug(response);
           });
         })
