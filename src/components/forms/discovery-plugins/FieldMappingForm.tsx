@@ -35,6 +35,7 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
   }, []);
 
   const staticFieldMappings = [
+    // legacy mappings
     '{{mhtml}}',
     '{{hash}}',
     '{{hashAlgorithm}}',
@@ -45,9 +46,35 @@ const FieldMappingForm: React.FC<DiscoveryPluginFormProps> = ({
     '{{url}}',
     '{{domain}}',
     '{{selectorValue}}',
-    '{{uuid}}'
+    '{{uuid}}',
+
+  // ----------------------------
+  // Rapport (complete field set)
+  // ----------------------------
+  '{{rapport.uuid}}',
+  '{{rapport.url}}',
+  '{{rapport.domain}}',
+  '{{rapport.referrer}}',
+  '{{rapport.note}}',
+  '{{rapport.relevance}}',
+  '{{rapport.isImportant}}',
+
+  '{{rapport.mhtml}}',
+  '{{rapport.screenshot}}',
+  '{{rapport.hash}}',
+  '{{rapport.hashAlgorithm}}',
+  '{{rapport.html}}',
+  '{{rapport.text}}',
+
+  '{{rapport.title}}',
+  '{{rapport.createdOn}}',
+  '{{rapport.updatedOn}}',
+  '{{rapport.tags}}',
+  '{{rapport.selectors}}',
+  '{{rapport.caseManagementUuid}}',
   ];
 
+  // TODO: Add apiKey namespace
   const getFieldMappings = (): string[] => {
     const apiKeyNames = apiKeys.map((apiKey: ApiKey) => `{{${apiKey.key}}}`);
     const mappings = [...staticFieldMappings, ...apiKeyNames];

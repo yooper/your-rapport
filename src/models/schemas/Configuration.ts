@@ -13,6 +13,7 @@ export interface IConfiguration {
   automationDeepSaveEnabled: boolean;
   debugMessagesEnabled: boolean;
   highlightSelectorsEnabled: boolean;
+  linkPlusEnabled: boolean;
   packageCacheEnabled: boolean;
   packageCacheHash: string;
   screenShotCount: number;
@@ -22,6 +23,7 @@ export interface IConfiguration {
   syncBackgroundHardDelete: boolean,
   syncBackgroundPath: 'your_rapport/sync/' | string,
   syncBackgroundArtifactResolution: 'highRes' | 'lowRes' | string
+
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -37,17 +39,20 @@ export class Configuration {
       automationDelayTabOpenDefault: 3000,
       automationDeepSaveEnabled: false,
       automationKeepTabOpenDefault: true,
-      debugMessagesEnabled: false,
+      debugMessagesEnabled: true,
       highlightSelectorsEnabled: false,
+      linkPlusEnabled: false,
       packageCacheEnabled: false,
       packageCacheHash: 'not set',
       screenShotCount: 0,
       updatedOn: getUtcNow(),
+      // pro feature, only runs after authentication
       syncBackgroundMode: 'sync',
-      syncBackgroundEnabled: false,
+      syncBackgroundEnabled: true,
       syncBackgroundHardDelete: true,
       syncBackgroundPath: 'your_rapport/sync/',
       syncBackgroundArtifactResolution: 'highRes'
+      // END
     };
   }
 

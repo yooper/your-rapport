@@ -8,11 +8,10 @@ import { IBulkAutomationRecord } from '../types';
 import { sleep } from '../utilities/loaders';
 import  ExtensionPin from '../utilities/ExtensionPin';
 
-const IDLE_MS = 6000;   // page considered stuck if no progress for this long
-const OVERLAP_PX = 80;
 const QUEUE_TICK_MIN = 1;
 
 let processing = false;
+
 
 export function initializeAutomationRunner() {
   // periodic tick to recover & continue
@@ -36,7 +35,9 @@ export function initializeAutomationRunner() {
 }
 
 function trigger() {
-  if (processing) return;
+  if (processing){
+    return;
+  }
   processing = true;
   processQueue().finally(() => { processing = false; });
 }

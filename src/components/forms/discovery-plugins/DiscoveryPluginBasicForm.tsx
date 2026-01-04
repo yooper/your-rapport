@@ -54,13 +54,14 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
   ];
 
   const eventTypes: { label: string; eventType: EventType }[] = [
-    { label: 'Pre Create', eventType: 'preCreate' },
-    { label: 'Post Create', eventType: 'postCreate' },
-    { label: 'Pre Update', eventType: 'preUpdate' },
-    { label: 'Post Update', eventType: 'postUpdate' },
-    { label: 'Pre Delete', eventType: 'preDelete' },
-    { label: 'Post Delete', eventType: 'postDelete' },
+    { label: 'Create', eventType: 'create' },
+    { label: 'Update', eventType: 'update' },
+    { label: 'Delete', eventType: 'delete' },
   ];
+
+  const [disableEventType, setDisableEventType] = useState<boolean>(
+    record.action !== 'BackgroundRunner'
+  );
 
   const [disablePluginType, setDisablePluginType] = useState<boolean>(
     record.action === 'BackgroundRunner'
@@ -68,6 +69,7 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
 
   useEffect(() => {
     setDisablePluginType(record.action === 'BackgroundRunner');
+    setDisableEventType(record.action !== 'BackgroundRunner')
   }, [record.action]);
 
   return (
@@ -140,8 +142,9 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
                       ...prevState,
                       pluginType: 'event',
                     }));
-                    setDisablePluginType(true);
-                  } else {
+                    setDisablePluginType(false);
+                  }
+                  else {
                     setRecord((prevState) => ({
                       ...prevState,
                       pluginType: 'content',
@@ -163,18 +166,18 @@ const DiscoveryPluginBasicForm: React.FC<DiscoveryPluginFormProps> = ({
           <Grid item>
             <FormControl>
               <StyledTextField
-                disabled={true}
+                disabled={disableEventType}
                 sx={{ m: 0.75 }}
                 variant="outlined"
                 name="eventType"
                 select
                 id="eventType"
                 label="Event Type"
-                defaultValue={record.eventType ?? 'preCreate'}
+                defaultValue={record.eventType ?? 'create'}
                 onChange={(e) =>
                   setRecord((prevState) => ({
                     ...prevState,
-                    eventType: (e.target.value ?? 'preCreate') as EventType,
+                    eventType: (e.target.value ?? 'create') as EventType,
                   }))
                 }
                 inputProps={{ 'aria-label': 'controlled' }}

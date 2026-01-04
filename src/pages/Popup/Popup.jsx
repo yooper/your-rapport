@@ -10,8 +10,7 @@ import {
 } from '../../utilities/loaders';
 import Typography from '@mui/material/Typography';
 import { ButtonBase, Tooltip } from '@mui/material';
-import { scanPage } from '../../utilities/transformers';
-import { AUTO_COLLECT_STARTING, RAPPORT } from '../../services/constants';
+import { AUTO_COLLECT_STARTING } from '../../services/constants';
 import {
   Paper,
   Table,
@@ -99,8 +98,12 @@ function LargeButtonGrid() {
     {
       title: 'Quick Scan (Alt+Q)',
       toolTipTitle: `Scans the open page for your pre-existing selectors. The Extension pin will show the counts.`,
-      onClick: async () => {
-        await scanPage(await getActiveTab());
+      onClick: () => {
+        getActiveTab().then(activeTab => {
+          chrome.runtime.sendMessage({ cmd: 'quickScan', requestId: crypto.randomUUID() }, response => {
+            debug(response);
+          });
+        })
       },
     },
     {
@@ -123,7 +126,7 @@ function LargeButtonGrid() {
         chrome.tabs.create({
           url: chrome.runtime.getURL('options.html?view=discoveryPlugin'),
         }),
-    }
+    },
   ];
 
   return (

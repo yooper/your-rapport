@@ -10,6 +10,10 @@ import { debug } from './logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { getJobQueue} from '../pages/Background/index'
 import { Rapport } from '../models/schemas/Rapport';
+import { Configuration } from '../models/schemas/Configuration';
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
+import { BULK_AUTOMATION, UUID } from './constants';
+import { addRecord} from './../models/db/local';
 
 
 /**
@@ -430,6 +434,26 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       {
         printPdfReport('basic', { records: [record] });
       }
+    }),
+    new DiscoveryPlugin({
+      uuid: '0d18fd15-4bb0-4861-ad7f-02a672c9ac21',
+      label: 'Queue Url',
+      pluginType: 'url',
+      description: 'Queue the url / hyperlink for collection',
+      groupName: 'Default',
+      onClick: async(record: IRapport) =>
+      {
+          const unitDefault = await Configuration.getConfigurationValue(
+            'automationUnitDefault',
+            'count'
+          ) ?? 'count';
+          const valueDefault = await Configuration.getConfigurationValue(
+            'automationValueDefault',
+            100
+          ) ?? 100;
+          const automation = BulkAutomationUrl.createBulkAutomationJob(record.url, unitDefault, valueDefault);
+          await addRecord(BULK_AUTOMATION, UUID, record);
+      }
     })
   ]
 }
@@ -438,9 +462,10 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
  * Once a rapport is saved, iterate through the active background runners and queue
  * them for running
  * @param rapport
+ * @param eventType
  */
-export async function applyBackgroundJobs(rapport: Rapport) : Promise<void> {
-  const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner').toArray();
+export async function applyBackgroundJobs(rapport: Rapport, eventType: string) : Promise<void> {
+  const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner' && dp.eventType === eventType).toArray();
   for ( const discoveryPlugin of plugins){
     await debug('Queuing job', {discoveryPlugin, rapport});
     getJobQueue().enqueue({ discoveryPlugin, rapport })

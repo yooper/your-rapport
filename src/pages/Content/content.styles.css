@@ -2,3 +2,54 @@ mark {
   color: #ffe88b;
   background: #e86e69;
 }
+
+.yr-link-plus-wrap{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  vertical-align:middle;
+}
+
+.yr-link-plus-btn{
+  all:unset;
+  cursor:pointer;
+  user-select:none;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  width:18px;
+  height:18px;
+  border-radius:999px;
+
+  border:1px solid rgba(120,120,120,.55);
+  background: rgba(255,255,255,.90);
+
+  font: 700 12px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.yr-link-plus-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,.16);
+}
+
+.yr-link-plus-btn:active{
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,.10);
+}
+
+.yr-link-plus-btn:focus-visible{
+  outline: 2px solid rgba(0,0,0,.35);
+  outline-offset: 2px;
+}
+
+.yr-link-plus-btn[data-yr-state="busy"],
+.yr-link-plus-btn[data-yr-state="done"]{
+  cursor:default;
+  opacity:.65;
+}
+

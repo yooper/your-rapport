@@ -1,5 +1,6 @@
 import React from 'react';
 import { DiscoveryPlugin, DiscoveryPluginAction } from './models/schemas/DiscoveryPlugin';
+import * as cheerio from 'cheerio/dist/browser';
 
 export type Selector = {
   name: string;
@@ -200,12 +201,11 @@ type PluginAction =
   | 'ForegroundRunner'
   | 'BackgroundRunner';
 type EventType =
-  | 'preCreate'
-  | 'postCreate'
-  | 'preUpdate'
-  | 'postUpdate'
-  | 'preDelete'
-  | 'postDelete';
+  | 'create'
+  | 'update'
+  | 'delete'
+  | null
+
 
 export interface DiscoveryPluginInit {
   uuid?: string;
@@ -315,10 +315,39 @@ export interface IBulkAutomationRecord {
   leaseUntil: number | null;
 }
 
-export type DiscoveryPluginAction =
-  | 'BackgroundRunner'
-  | 'CreateTab'
-  | 'ForegroundRunner'
-  | 'SubmitForm';
-
 export type DiscoveryPluginRoute = 'inbound' | 'outbound';
+
+export interface IExtractedData {
+  pluginType: "url" | "username" | "domain"| string;
+  value: string;
+  count: number;
+}
+
+type PreExistingFilter = {
+  id: string;
+  name: string;
+  description?: string;
+};
+
+export type PreExistingFilter = {
+  id: string;
+  name: string;
+  description?: string;
+  pluginType: IExtractedData["pluginType"];
+  extractor: (ctx: ExtractContext) => IExtractedData[];
+};
+
+export type ExtractContext = {
+  html: string;
+  baseUrl: string;     // origin, e.g. "https://twitter.com"
+  pageUrl?: string;    // full url, if you want it
+  $: cheerio.CheerioAPI;
+};
+
+export type MetaTagRecord = {
+  name?: string | null;
+  property?: string | null;
+  httpEquiv?: string | null;
+  charset?: string | null;
+  content?: string | null;
+};

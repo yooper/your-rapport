@@ -139,30 +139,6 @@ export function base64ToFile(base64Data: string, fileName: string): File {
   return new File([buffer], fileName, { type: mimeType });
 }
 
-// Scans the page content of the tab and highlights matching selectors
-export async function scanPage(activeTab: ActiveTab): Promise<void> {
-  if (!activeTab.id) return;
-
-  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO });
-  const { pageInfo } = response
-
-  const selectors = findAllMatches(pageInfo.text.toLowerCase(), await db.selector.toArray());
-  const totalCount = Math.min(
-    selectors.reduce((sum: number, item: any) => sum + item.count, 0),
-    99
-  );
-
-  ExtensionPin.showNumber(
-    `${Math.min(selectors.length, 9)}|${totalCount}`,
-    activeTab.id
-  );
-
-  await chrome.tabs.sendMessage(activeTab.id, {
-    cmd: 'markText',
-    selectors: selectors,
-  });
-}
-
 /**
  * Does a full scan of all the text trying to find any selectors contained with,
  * primarily used by the scan feature

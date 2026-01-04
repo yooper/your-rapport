@@ -38,6 +38,7 @@ export class DiscoveryPlugin {
   route: DiscoveryPluginRoute = 'outbound';
   script: string | null = null;
   extractionRules: any[] = [];
+  eventType: string| null = null;
 
 
 
@@ -74,6 +75,8 @@ export class DiscoveryPlugin {
     this.authorizationPassword = init.authorizationPassword ?? null;
     this.script = init.script ?? null;
     this.extractionRules = init.extractionRules ?? []
+    this.eventType = init.eventType ?? null;
+
 
   }
 
@@ -106,6 +109,7 @@ export class DiscoveryPlugin {
   /**
    * Centralization of validating inbound and outbound discovery plugins
    * TODO: Validate the discovery plugin before exporting.
+   * TODO: Add validate to event type and action.
    * @param input
    */
   static async validate(input: unknown)

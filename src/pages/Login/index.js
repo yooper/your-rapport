@@ -23,6 +23,10 @@ import Divider from '@mui/material/Divider';
 import { getUser, User } from '../../models/schemas/User';
 import { createTab, getDarkTheme, processNotification } from '../../utilities/loaders';
 import { createTheme, Tooltip } from '@mui/material';
+import { initExtensionPage } from '../../services/init_services';
+
+
+initExtensionPage();
 
 function Copyright(props) {
   return (

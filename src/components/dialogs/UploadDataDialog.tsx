@@ -114,6 +114,7 @@ export default function UploadDataDialog(props: UploadDataDialogProps): JSX.Elem
       return;
     }
 
+
     const reader = new FileReader();
     reader.onload = async (evt: ProgressEvent<FileReader>) => {
       showLoader();

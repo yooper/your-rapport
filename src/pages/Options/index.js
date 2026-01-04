@@ -7,6 +7,9 @@ import OptionsLayout from '../../components/layouts/OptionsLayout';
 import TopAppBar from '../../components/TopAppBar';
 import './index.css';
 import 'react-notifications-component/dist/theme.css';
+import { initExtensionPage } from '../../services/init_services';
+
+initExtensionPage();
 
 function App() {
   return (

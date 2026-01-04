@@ -33,6 +33,8 @@ export async function capture(
   try {
     ExtensionPin.setDefaultNotSaved(tab);
     let configuration = await Configuration.getConfiguration();
+    // always force close the sidePanel upon save
+    chrome.sidePanel.close({tabId: tab.id});
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
 

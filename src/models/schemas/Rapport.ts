@@ -7,7 +7,7 @@ import {
 } from "../../utilities/transformers";
 import { Artifact } from './Artifact';
 import { getUser } from './User';
-import { blobToDataUrl, downloadDataUrl, downloadViaBlobUrl } from '../../services/backup_services';
+import { blobToDataUrl, downloadDataUrl} from '../../services/backup_services';
 import { db } from '../db/dexieDb';
 import { applyBackgroundJobs } from '../../services/discovery_plugin_services';
 import { debug } from '../../services/logger_services';
@@ -175,10 +175,9 @@ export class Rapport {
    */
   static async add(rapport: Rapport)
   {
-    // TODO: there is a bug with duplication,
     await db.rapport.add(rapport)
     // Queue up the background jobs (fire-and-forget; log when done)
-    applyBackgroundJobs(rapport).then(() => {
+    applyBackgroundJobs(rapport, 'create').then(() => {
       debug('background job completed', rapport);
       Rapport.sync(rapport);
     });  }
@@ -192,7 +191,7 @@ export class Rapport {
     // TODO: there is a bug with duplication,
     await db.rapport.put(rapport)
     // Queue up the background jobs (fire-and-forget; log when done)
-    applyBackgroundJobs(rapport).then(() => {
+    applyBackgroundJobs(rapport, 'update').then(() => {
       debug('background job completed', rapport);
       Rapport.sync(rapport);
     });

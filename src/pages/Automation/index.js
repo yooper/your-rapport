@@ -7,8 +7,10 @@ import TopAppBar from '../../components/TopAppBar';
 import './index.css';
 import 'react-notifications-component/dist/theme.css';
 import AutomationLayout from '../../components/layouts/AutomationLayout';
+import { initExtensionPage } from '../../services/init_services';
 
 function App() {
+  initExtensionPage();
   return (
     <Fragment>
       <ReactNotifications />

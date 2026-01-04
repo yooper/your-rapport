@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import {
   Apps as AppsIcon,
-  OpenInNew as OpenInNewIcon,
   Home as HomeIcon,
   AttachFile as AttachFileIcon,
   Person as PersonIcon,
@@ -48,11 +47,11 @@ import SearchDiscoveryPluginLayout from '../layouts/SearchDiscoveryPluginLayout'
 
 interface DiscoveryPluginDialogProps {
   selectorValue: string;
-  rapport: IRapport;
+  rapport: IRapport|null;
   plugins: DiscoveryPlugin[];
   title: string;
   uxType: 'chip' | 'icon';
-  refreshRows: any;
+  refreshRows: any|null;
 }
 
 const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
@@ -67,6 +66,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
 
   Mustache.escape = (text: string) => text;
   sort_by_key(plugins, 'label');
+
   const iconMap: Record<string, React.JSX.Element> = {
     address: (
       <Avatar>
@@ -169,7 +169,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
       {uxType === 'chip' ? (
         <Chip
           avatar={getIcon(title)}
-          key={`${title}-${uxType}-${rapport.uuid}`}
+          key={`${title}-${uxType}-${rapport?.uuid ?? crypto.randomUUID()}`}
           variant="outlined"
           label={selectorValue}
           color="primary"
