@@ -103,8 +103,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                     onChange={async (_e, nextChecked) => {
                       updateValue(nextChecked);
                       record.active = nextChecked;
-                      // TODO: update rapport
-                      await updateRecord(BULK_AUTOMATION, UUID, record);
+                      await db.scheduledAutomation.put(record);
                     }}
                   />
                 }
@@ -167,7 +166,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                     onChange={async (_e, nextChecked) => {
                       updateValue(nextChecked);
                       record.isDeepSave = nextChecked;
-                      // TODO: update record
+                      await db.scheduledAutomation.put(record);
                     }}
                   />
                 }
@@ -219,20 +218,6 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
         },
       },
       {
-        name: "lastRanOn",
-        label: "LAST RAN",
-        options: {
-          filter: false,
-          sort: true,
-          searchable: false,
-          customBodyRender: (value: any) => {
-            return <div>
-
-            </div>;
-          },
-        },
-      },
-      {
         label: "OPTIONS",
         name: "options",
         options: {
@@ -252,6 +237,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
               </Tooltip>
               <Tooltip title={'Test Automation'}>
                 <IconButton
+                  disabled={true}
                   onClick={async () => {
                     try {
                       const interval = CronExpressionParser.parse(record.crontab);
