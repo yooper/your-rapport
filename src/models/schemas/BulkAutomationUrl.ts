@@ -1,4 +1,5 @@
 import { IBulkAutomationRecord } from '../../types';
+import { ScheduledAutomation } from './ScheduledAutomation';
 
 export default class BulkAutomationUrl implements IBulkAutomationRecord {
   uuid: string;
@@ -21,6 +22,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
   attempts: number;
   leaseUntil: number | null;
   status: 'queued' | 'running' | 'done' | 'failed';
+  scheduledAutomation: ScheduledAutomation | null;
 
   constructor() {
     this.uuid = crypto.randomUUID();
@@ -42,29 +44,31 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
     this.attempts = 0;
     this.leaseUntil = null;
     this.status = 'queued';
+    this.scheduledAutomation = null;
   }
 
   static createBulkAutomationJob(
     url: string,
-    unitDefault: BulkAutomationUrl['unit'],   // 'count' | 'time'
-    valueDefault: number,
     options?: {
       keepTabOpen?: boolean;
       isDeepSave?: boolean;
       discoveryPluginUuid?: string | null;
       description?: string | null;
+      unitDefault: 'count' | 'time';
+      valueDefault: number,
+      scheduledAutomation: ScheduledAutomation | null
     }): BulkAutomationUrl {
     const job = new BulkAutomationUrl();
     job.url = url;
-    job.unit = unitDefault;
-    job.value = valueDefault;
+    job.unit = options?.unitDefault ?? 'count';
+    job.value = options?.valueDefault ?? 100;
     job.active = false;
     job.keepTabOpen = options?.keepTabOpen ?? true;
     job.isDeepSave = options?.isDeepSave ?? false;
     job.discoveryPluginUuid = options?.discoveryPluginUuid ?? null;
     job.description = options?.description ?? null;
+    job.scheduledAutomation = options?.scheduledAutomation ?? null;
     job.status = 'queued';
-
     return job;
   }
 }

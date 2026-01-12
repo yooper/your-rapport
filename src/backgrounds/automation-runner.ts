@@ -2,20 +2,22 @@
 import { takeNext, complete, fail, recoverExpiredLeases, getQueue } from './automation-queue';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
-import { updateRecord, getLocalItem } from '../models/db/local'
+import { updateRecord, getLocalItem, setLocalItem } from '../models/db/local'
 import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, PAGE_INITIALIZED, UUID } from '../services/constants';
 import { IBulkAutomationRecord } from '../types';
 import { sleep } from '../utilities/loaders';
 import  ExtensionPin from '../utilities/ExtensionPin';
+import { CronExpressionParser } from 'cron-parser';
+import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
+import { db } from '../models/db/dexieDb';
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 
-const QUEUE_TICK_MIN = 1;
 
-let processing = false;
-
+let processing: boolean = false;
 
 export function initializeAutomationRunner() {
   // periodic tick to recover & continue
-  chrome.alarms.create('yr_queue_tick', { periodInMinutes: QUEUE_TICK_MIN });
+  chrome.alarms.create('yr_queue_tick', { periodInMinutes: 1 });
   chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_queue_tick') trigger(); });
 
   // resume on startup / install
@@ -34,7 +36,42 @@ export function initializeAutomationRunner() {
   });
 }
 
-function trigger() {
+
+
+
+async function trigger() {
+  // upon trigger, we need to check for any active scheduled automations that must be run by checking their crontab evaluation and generate
+  // any associated bulk automations
+  try {
+    const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
+    const utcNow: Date = new Date();
+    utcNow.setUTCSeconds(0, 0);
+    const automations: BulkAutomationUrl[] = [];
+    for (const scheduledAutomation of scheduledAutomations) {
+      const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
+      if(interval.includesDate(utcNow)){
+        // TODO: queue the job
+        const automation = BulkAutomationUrl.createBulkAutomationJob(scheduledAutomation.url, {
+          keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
+          isDeepSave: scheduledAutomation.isDeepSave ?? true,
+          scheduledAutomation: scheduledAutomation ?? null,
+          unitDefault: scheduledAutomation.unit,
+          unitValue: scheduledAutomation.value
+        });
+        // MUST be set to active to trigger running in the automation queue
+        automation.active = true;
+        automations.push(automation)
+      }
+    }
+    const items: BulkAutomationUrl[] = await getLocalItem(BULK_AUTOMATION);
+    await setLocalItem(BULK_AUTOMATION, items.concat(automations));
+
+  }
+  catch(e){
+    debug('Error creating bulk automation from schedule automation')
+  }
+
+
   if (processing){
     return;
   }

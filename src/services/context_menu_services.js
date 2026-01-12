@@ -108,21 +108,12 @@ export async function initializeContextMenus() {
         break;
       case 'addBulkAutomationUrl':
         (async () => {
-          const unitDefault = await Configuration.getConfigurationValue(
-            'automationUnitDefault',
-            'count'
-          );
-          const valueDefault = await Configuration.getConfigurationValue(
-            'automationValueDefault',
-            100
-          );
-
           const urlLink = selectCorrectLink({
             linkUrl: info.linkUrl,
             frameUrl: info.frameUrl,
             pageUrl: info.pageUrl,
           });
-          const record = await BulkAutomationUrl.createBulkAutomationJob(urlLink, unitDefault, valueDefault);
+          const record = await BulkAutomationUrl.createBulkAutomationJob(urlLink);
           await addRecord(BULK_AUTOMATION, UUID, record);
           ExtensionPin.setTemporaryPin('SAVD');
         })();

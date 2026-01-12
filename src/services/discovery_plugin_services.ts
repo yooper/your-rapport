@@ -451,7 +451,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
             'automationValueDefault',
             100
           ) ?? 100;
-          const automation = BulkAutomationUrl.createBulkAutomationJob(record.url, unitDefault, valueDefault);
+          const automation = BulkAutomationUrl.createBulkAutomationJob(record.url);
           await addRecord(BULK_AUTOMATION, UUID, record);
       }
     })

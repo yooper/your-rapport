@@ -202,15 +202,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           break;
         case ENQUEUE_BULK_AUTOMATION_URL:
         case 'enqueueBulkAutomation':
-          const unitDefault = await Configuration.getConfigurationValue(
-            'automationUnitDefault',
-            'count'
-          );
-          const valueDefault = await Configuration.getConfigurationValue(
-            'automationValueDefault',
-            100
-          );
-          const record = await BulkAutomationUrl.createBulkAutomationJob(message.url, unitDefault, valueDefault);
+          const record = await BulkAutomationUrl.createBulkAutomationJob(message.url);
           await addRecord(BULK_AUTOMATION, UUID, record);
           break;
         case 'ping':

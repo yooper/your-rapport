@@ -15,6 +15,7 @@ const db = new Dexie('YourRapport') as Dexie & {
   discoveryPlugin: EntityTable<DiscoveryPlugin, 'uuid'>
   apiKey: EntityTable<ApiKey, 'key'>
   rapport: EntityTable<Rapport, 'uuid'>
+  scheduledAutomation: EntityTable<ScheduledAutomation, 'uuid'>
 };
 db.version(1).stores({
   selector: '&name, selectorTypeName',
@@ -32,6 +33,9 @@ db.version(3).stores({
 });
 db.version(4).stores({
   rapport: '&uuid, updatedOn, domain, isImportant'
+});
+db.version(5).stores({
+  scheduledAutomation: '&uuid'
 });
 
 

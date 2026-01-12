@@ -46,7 +46,7 @@ export const urlActions: SlidePanelActionProps[] = [
     toolTip: 'test url',
     pluginType: 'url', // kept for future use
     onClick: (data: IExtractedData) => {
-      const record = BulkAutomationUrl.createBulkAutomationJob(data.value, 'count', 100);
+      const record = BulkAutomationUrl.createBulkAutomationJob(data.value);
       addRecord(BULK_AUTOMATION, UUID, record).then(() => {
         processNotification({title:'Queued', message:'Url has been queued. Visit the automations page to start the automation run.', type:'info'});
       })

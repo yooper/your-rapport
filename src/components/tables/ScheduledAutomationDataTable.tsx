@@ -1,428 +1,358 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import { useEffect, useState } from 'react';
-import MUIDataTable from 'mui-datatables';
+import * as React from "react";
+import Box from "@mui/material/Box";
+import { useEffect, useMemo, useState } from "react";
+import MUIDataTable, {
+  MUIDataTableColumn,
+  MUIDataTableOptions,
+  MUIDataTableIsRowCheck,
+} from 'mui-datatables';
 import {
   deleteRecord,
   getLocalItem,
   setLocalItem,
   updateRecord,
-} from '../../models/db/local';
+} from "../../models/db/local";
 import {
   hideLoader,
   processNotification,
   showLoader,
-} from '../../utilities/loaders';
-import BulkAutomationAddDialog from '../dialogs/automations/BulkAutomationAddDialog';
+} from "../../utilities/loaders";
+import IconButton from "@mui/material/IconButton";
+import { FormControlLabel, Switch, Tooltip } from "@mui/material";
+import HelperPopover from "../HelperPopover";
+import { BULK_AUTOMATION, UUID } from "../../services/constants";
+import { debug } from "../../services/logger_services";
+import { db } from '../../models/db/dexieDb';
+import AlarmAddIcon from '@mui/icons-material/AlarmAdd';
+import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
+import ScheduleAutomationDialog from '../dialogs/automations/ScheduledAutomationDialog';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
-import IconButton from '@mui/material/IconButton';
-import CancelIcon from '@mui/icons-material/Cancel';
-import { FormControlLabel, Switch, Tooltip } from '@mui/material';
-import HelperPopover from '../HelperPopover';
-import {
-  BULK_AUTOMATION,
-  UUID,
-} from '../../services/constants';
-import { debug } from '../../services/logger_services';
-import ExtensionPin from '../../utilities/ExtensionPin';
+import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
+import EditIcon from '@mui/icons-material/Edit';
+import { CronExpressionParser } from 'cron-parser';
+import { getUtcNow } from '../../utilities/transformers';
 
-export default function BulkAutomationTable(props) {
-  const [rows, setRows] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+export default function ScheduledAutomationDataTable(): JSX.Element {
+  const [rows, setRows] = useState<ScheduledAutomation[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  const refresh = async (): Promise<void> => {
+    showLoader();
+    setIsLoading(true);
+
+    const start = performance.now();
+    const records = await db.scheduledAutomation.toArray();
+
+    if (records.length !== rows.length){
+      setRows(records);
+    }
+
+    const elapsed = performance.now() - start;
+    debug(`Finished after ${elapsed.toFixed(0)}ms`);
+    setIsLoading(false);
+    hideLoader();
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      showLoader();
-      setIsLoading(true);
-      const start = performance.now();
-      const data = await getLocalItem(BULK_AUTOMATION);
-      if (data.length !== rows.length) {
-        setRows(data);
-      }
-      const elapsed = performance.now() - start;
-      debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-      hideLoader();
-    }
+    void refresh();
 
-    fetchData();
+    const intervalId = window.setInterval(async () => {
+      // void refresh(); // enable if you want periodic refresh
+    }, 3000);
 
-    /**
-     * Check if any updates occurred
-     * @type {number}
-     */
-    const intervalId = setInterval(async () => {
-      //await fetchData(); // check for new data every 3 seconds.
-    }, 3000); // wait 3 seconds before re-renders
-    return () => clearInterval(intervalId);
+    return () => window.clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * Initiate the process of bulk downloading the list of urls
-   * @param records
-   */
-  async function startAutomationProcess() {
-
-    const automations = await getLocalItem(BULK_AUTOMATION);
-    automations.forEach(a => {
-      if(!a.active && !a.ranOn){
-        a.active = true;
-        a.description = 'Queued to run'
-      }
-    })
-
-    const filtered = automations.filter(r => !r.ranOn && r.active);
-    if(filtered.length === 0) {
-      processNotification({
-        title:'No New Bulk Automations',
-        message:'Enter some new web site urls in order to collect them, all your automations have already run.',
-        type:'info'
-      });
-      return;
-    }
-
-    await setLocalItem(BULK_AUTOMATION, automations);
-    await ExtensionPin.setAutomationRunning(automations);
-    chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
-    processNotification({
-      title: 'Automation job(s) Queued',
-      message:
-        `${filtered.length} automation job(s) Queued. Don't Spam the button.`,
-      type: 'success',
-    });
-  }
-
-
-  const getRecord = (rowData) => {
-    let record = {};
+  const getRecord = (rowData: any) => {
+    let record: any = {};
     for (let idx = 0; idx < columns.length; idx++) {
       record[columns[idx].name] = rowData[idx];
     }
     return record;
   };
 
-  useEffect(() => {
-    async function fetchData() {
-      showLoader();
-      setIsLoading(true);
-      const records = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      if (records.length !== rows.length) {
-        setRows(records);
-      }
-      setIsLoading(false);
-      hideLoader();
-    }
-    fetchData();
-  }, []);
+  const columns: MUIDataTableColumn[] = [
+      {
+        name: UUID,
+        label: "UUID",
+        options: { display: "excluded", filter: false, sort: false },
+      },
+      {
+        label: "ACTIVE",
+        name: "active",
+        options: {
+          display: true,
+          filter: true,
+          sort: true,
+          customBodyRender: (
+            value: any,
+            tableMeta: any,
+            updateValue: any
+          ) => {
+            const record = getRecord(tableMeta.rowData);
 
-  const columns = [
-    {
-      name: UUID,
-      label: 'UUID',
-      options: {
-        display: 'excluded',
-        filter: false,
-        sort: false,
-      },
-    },
-    {
-      name: 'url',
-      label: 'URL',
-      options: {
-        filter: true,
-        sort: false,
-        searchable: true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-          const record = getRecord(tableMeta.rowData);
-          let url = record.url;
-          if (url.length > 32) {
-            url = record.url.substring(0, 32) + '...';
-          }
-          return (
-            <div>
-              <span>
-                <Tooltip title={record.url}>
-                  <a href={record.url} target={'_blank'} rel={'noreferrer'}>
-                    {url}
-                  </a>
-                </Tooltip>
-              </span>
-            </div>
-          );
-        },
-      },
-    },
-    { label: 'STATUS', name: 'status' },
-    {
-      name: 'unit',
-      label: 'UNIT',
-      options: {
-        display: false,
-        filter: false,
-        sort: false,
-      },
-    },
-    {
-      name: 'value',
-      label: 'VALUE',
-      options: {
-        display: false,
-        filter: false,
-        sort: false,
-      },
-    },
-    {
-      name: 'screenShotsCollected',
-      label: '# SCREENSHOTS',
-      options: {
-        display: false,
-        filter: false,
-        sort: false,
-      },
-    },
-    {
-      label: 'DEEP SAVE',
-      name: 'isDeepSave',
-      options: {
-        display: true,
-        filter: false,
-        sort: false,
-        customBodyRender: (value, tableMeta, updateValue) => {
-          if (value === undefined) {
-            return <div></div>;
-          }
-          const record = getRecord(tableMeta.rowData);
-          return (
-            <FormControlLabel
-              control={
-                <Switch color="primary" checked={value} />
-              }
-              label={
-                <div>
+            return (
+              <FormControlLabel
+                control={
+                  <Switch
+                    color="primary"
+                    checked={value}
+                    onChange={async (_e, nextChecked) => {
+                      updateValue(nextChecked);
+                      record.active = nextChecked;
+                      // TODO: update rapport
+                      await updateRecord(BULK_AUTOMATION, UUID, record);
+                    }}
+                  />
+                }
+                label={
                   <IconButton>
-                    <HelperPopover
-                      message={
-                        'By default multiple screenshots are collected using auto collect. This setting will collect a deep save with multiple artifacts.'
-                      }
-                    />
+                    <HelperPopover message="Enable/disable this scheduled automation." />
                   </IconButton>
-                </div>
-              }
-              onChange={async(event) => {
-                updateValue(event.target.checked);
-                record.isDeepSave = event.target.checked;
-                await updateRecord(BULK_AUTOMATION, UUID, record);
-              }}
-            />
-          );
+                }
+              />
+            );
+          },
         },
       },
-    },
-    {
-      label: 'KEEP TAB OPEN',
-      name: 'keepTabOpen',
-      options: {
-        display: true,
-        filter: false,
-        sort: false,
-        customBodyRender: (value, tableMeta, updateValue) => {
-          if (value === undefined) {
-            return <div></div>;
-          }
-          const record = getRecord(tableMeta.rowData);
-          return (
-            <FormControlLabel
-              control={
-                <Switch color="primary" checked={value} />
-              }
-              label={
-                <div>
-                  <IconButton>
-                    <HelperPopover
-                      message={
-                        'After the collection process has completed do you want the tab to stay open?'
-                      }
-                    />
-                  </IconButton>
-                </div>
-              }
-              onChange={async(event) => {
-                updateValue(event.target.checked);
-                record.keepTabOpen = event.target.checked;
-                await updateRecord(BULK_AUTOMATION, UUID, record);
-              }}
-            />
-          );
+      {
+        name: "crontab",
+        label: "CRONTAB",
+        options: {
+          filter: true,
+          sort: false,
+          searchable: true,
+          customBodyRender: (value: unknown) => {
+            const v = typeof value === "string" ? value : "";
+            return <div>{v}</div>;
+          },
         },
       },
-    },
-    {
-      name: 'ranOn',
-      label: 'RAN ON',
-      options: {
-        filter: false,
-        sort: true,
-        searchable: false,
-        customBodyRenderLite: (dataIndex) => {
-          if (!rows[dataIndex].ranOn) {
-            return <div></div>;
-          }
-          const date = new Date(parseInt(rows[dataIndex].ranOn));
-          return <div>{date.toLocaleString()}</div>;
+      {
+        name: "url",
+        label: "URL",
+        options: {
+          filter: false,
+          sort: false,
+          customBodyRenderLite: (dataIndex: number) => (
+            <>
+              {rows[dataIndex].url}
+            </>
+          ),
         },
       },
-    },
-    {
-      name: 'CompletedOn',
-      label: 'COMPLETED',
-      options: {
-        filter: false,
-        sort: true,
-        searchable: false,
-        customBodyRenderLite: (dataIndex) => {
-          if (!rows[dataIndex].completedOn) {
-            return <div></div>;
-          }
-          const date = new Date(parseInt(rows[dataIndex].completedOn));
-          return <div>{date.toLocaleString()}</div>;
-        },
-      },
-    },
-    {
-      name: 'description',
-      label: 'INFO',
-      options: {
-        filter: false,
-        sort: false,
-        searchable: false,
-        customBodyRenderLite: (dataIndex) => {
-          return <div>{rows[dataIndex].description ?? ''}</div>;
-        },
-      },
-    },
-    {
-      label: 'OPTIONS',
-      name: 'options',
-      options: {
-        display: true,
-        filter: false,
-        sort: false,
-        customBodyRender: (value, tableMeta, updateValue) => {
-          const record = getRecord(tableMeta.rowData);
+      {
+        label: "DEEP SAVE",
+        name: "isDeepSave",
+        options: {
+          display: true,
+          filter: false,
+          sort: false,
+          customBodyRender: (
+            value: any,
+            tableMeta: any,
+            updateValue: any
+          ) => {
+            const record = getRecord(tableMeta.rowData);
 
-          return (
-            <Tooltip title={'Re run the automation on this url'}>
-              <IconButton
-                onClick={async () => {
-                  let copy = {...record};
-                  copy.active = true;
-                  copy.ranOn = null;
-                  copy.status = 'queued';
-                  copy.completedOn = null;
-                  copy.description = 'Manually run'
-                  await ExtensionPin.setAutomationRunning([copy]);
-                  setRows(await updateRecord(BULK_AUTOMATION, UUID, copy));
-                  chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
-                  processNotification({
-                    title: 'Restarting Automation',
-                    message:
-                      "Automation job is restarting, and may take a couple seconds. Don't Spam the button!",
-                    type: 'success',
-                  });
-                }}
-              >
-                <DirectionsRunIcon />
+            return (
+              <FormControlLabel
+                control={
+                  <Switch
+                    color="primary"
+                    checked={value}
+                    onChange={async (_e, nextChecked) => {
+                      updateValue(nextChecked);
+                      record.isDeepSave = nextChecked;
+                      // TODO: update record
+                    }}
+                  />
+                }
+                label={
+                  <IconButton>
+                    <HelperPopover message="Deep Save collects multiple artifacts (beyond basic screenshots)." />
+                  </IconButton>
+                }
+              />
+            );
+          },
+        },
+      },
+      {
+        label: "KEEP TAB OPEN",
+        name: "keepTabOpen",
+        options: {
+          display: true,
+          filter: false,
+          sort: false,
+          customBodyRender: (
+            value: any,
+            tableMeta: any,
+            updateValue: any
+          ) => {
+            const record = getRecord(tableMeta.rowData);
+
+            return (
+              <FormControlLabel
+                control={
+                  <Switch
+                    color="primary"
+                    checked={value}
+                    onChange={async (_e, nextChecked) => {
+                      updateValue(nextChecked);
+                      record.keepTabOpen = nextChecked;
+                      await db.scheduledAutomation.put(record);
+                    }}
+                  />
+                }
+                label={
+                  <IconButton>
+                    <HelperPopover message="After the collection process has completed, do you want the tab to stay open?" />
+                  </IconButton>
+                }
+              />
+            );
+          },
+        },
+      },
+      {
+        name: "lastRanOn",
+        label: "LAST RAN",
+        options: {
+          filter: false,
+          sort: true,
+          searchable: false,
+          customBodyRender: (value: any) => {
+            return <div>
+
+            </div>;
+          },
+        },
+      },
+      {
+        label: "OPTIONS",
+        name: "options",
+        options: {
+          display: true,
+          filter: false,
+          sort: false,
+          customBodyRender: (_value: any, tableMeta: any) => {
+            const record: ScheduledAutomation = getRecord(tableMeta.rowData);
+            return (
+              <>
+              <Tooltip title={'Edit Automation'}>
+                <IconButton
+                  onClick={async () => {}}
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={'Test Automation'}>
+                <IconButton
+                  onClick={async () => {
+                    try {
+                      const interval = CronExpressionParser.parse(record.crontab);
+                      const now = new Date()
+                      now.setUTCSeconds(0, 0);
+
+                      if(interval.includesDate(now)){
+                        console.log('now '+ now.toISOString());
+                      }
+                      console.log('Prev:', interval.prev().toString());
+                      // Get next 3 dates
+                      console.log(
+                        'Next 3:',
+                        interval.take(3).map((date) => date.toString()),
+                      );
+                      // Get previous date
+                      console.log('Previous:', interval.prev().toString());
+                    } catch (err) {
+                      console.log('Error:', err.message);
+                    }
+
+                  }}
+                >
+                  <DirectionsRunIcon />
+                </IconButton>
+              </Tooltip>
+              </>
+
+            );
+          },
+        },
+      },
+    ];
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    const options: MUIDataTableOptions = {
+        rowsPerPage: 50,
+        rowsPerPageOptions: [20, 50],
+        searchAlwaysOpen: true,
+        onRowsDelete: async (deleteInfo: any) => {
+          setIsLoading(true);
+          showLoader();
+
+          setIsLoading(false);
+          hideLoader();
+        },
+        customToolbar: () => (
+          <>
+            <Tooltip title={'Add a new scheduled automation'}>
+              <IconButton onClick={() => { setIsOpen(true)}}>
+                <AlarmAddIcon />
               </IconButton>
             </Tooltip>
-          );
-        },
-      },
-    },
-  ];
+            <ScheduleAutomationDialog
+             onClose={() => setIsOpen(false)}
+             onSave={async(record:ScheduledAutomation) => {
+               try{
+                 await db.scheduledAutomation.add(record);
+                 processNotification({
+                   title:'Scheduled Automation Added',
+                   message:`A scheduled automation was added for the url ${record.url}`,
+                   type: 'success'
+                 })
+               }
+               catch(e){
+                 debug(`scheduled automation did not save + ${String(e)}`, record);
+                 processNotification({
+                   title:'Scheduled Automation Not Added',
+                   message:`The scheduled automation could not be added.`,
+                   type: 'danger'
+                 })
+               }
+               finally {
+                 refresh()
+                 setIsOpen(false)
+               }
+             }}
+             open={isOpen}
+             title={'Add a scheduled automation'}
+             initialValues={{...new ScheduledAutomation()}}
+             refresh={refresh}
+            />
+          </>
+        ),
+        setTableProps: () => ({ size: "small" as const }),
+        print: false,
+        filter: false,
+        download: false,
+    };
 
-  const options = {
-    rowsPerPage: 50,
-    rowsPerPageOptions: [20, 50],
-    searchAlwaysOpen: true,
-    onRowsDelete: async (records, data) => {
-      setIsLoading(true);
-      showLoader();
-      for (const [idx, value] of Object.entries(records.lookup)) {
-        await deleteRecord(BULK_AUTOMATION, UUID, rows[idx]);
-      }
-      setRows(await getLocalItem(BULK_AUTOMATION));
-      setIsLoading(false);
-      hideLoader();
-    },
-    customToolbar: () => {
-      return (
-        <>
-          <BulkAutomationAddDialog
-            rows={rows}
-            setRows={setRows}
-            isloading={isLoading}
-            setIsLoading={setIsLoading}
-          />
-          <Tooltip
-            title={
-              'Start Automation Process, do not interact with your browser while automation is running.'
-            }
-          >
-            <IconButton onClick={() => startAutomationProcess()}>
-              <DirectionsRunIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip
-            title={
-              'Stop automations from running.'
-            }
-          >
-            <IconButton onClick={async () => {
-              showLoader()
-              const automations = await getLocalItem(BULK_AUTOMATION);
-              automations.forEach(a => {
-                // flagged to run
-                if(a.active && !a.ranOn){
-                  a.active = false;
-                }
-              })
-              await setLocalItem(BULK_AUTOMATION, automations);
-              hideLoader()
-              processNotification({
-                title: 'Automations Queuing Stopped',
-                message:'Automations will stop running shortly',
-                type:'info'}
-              )
-            }}>
-              <CancelIcon />
-            </IconButton>
-          </Tooltip>
-
-        </>
-      );
-    },
-    setTableProps: () => {
-      return {
-        size: 'small',
-      };
-    },
-    print: false,
-    filter: false,
-    download: false,
-  };
-
-  if (isLoading) {
-    return <div></div>;
+  if (isLoading){
+    return <div />;
   }
+
   return (
-    <Box sx={{ height: '100%', width: '100%' }}>
-      {!isLoading && (
-        <MUIDataTable
-          title={'Bulk Automation Management'}
-          data={rows}
-          columns={columns}
-          options={options}
-        />
-      )}
+    <Box sx={{ height: "100%", width: "100%" }}>
+      <MUIDataTable
+        title={"Scheduled Automation Management"}
+        data={rows}
+        columns={columns as any}
+        options={options as any}
+      />
     </Box>
   );
 }
