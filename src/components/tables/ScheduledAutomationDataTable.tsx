@@ -7,12 +7,6 @@ import MUIDataTable, {
   MUIDataTableIsRowCheck,
 } from 'mui-datatables';
 import {
-  deleteRecord,
-  getLocalItem,
-  setLocalItem,
-  updateRecord,
-} from "../../models/db/local";
-import {
   hideLoader,
   processNotification,
   showLoader,
@@ -27,10 +21,8 @@ import AlarmAddIcon from '@mui/icons-material/AlarmAdd';
 import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
 import ScheduleAutomationDialog from '../dialogs/automations/ScheduledAutomationDialog';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
-import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl';
 import EditIcon from '@mui/icons-material/Edit';
 import { CronExpressionParser } from 'cron-parser';
-import { getUtcNow } from '../../utilities/transformers';
 
 
 export default function ScheduledAutomationDataTable(): JSX.Element {
@@ -41,16 +33,8 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
   const refresh = async (): Promise<void> => {
     showLoader();
     setIsLoading(true);
-
-    const start = performance.now();
     const records = await db.scheduledAutomation.toArray();
-
-    if (records.length !== rows.length){
-      setRows(records);
-    }
-
-    const elapsed = performance.now() - start;
-    debug(`Finished after ${elapsed.toFixed(0)}ms`);
+    setRows(records);
     setIsLoading(false);
     hideLoader();
   };
@@ -224,13 +208,16 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
           display: true,
           filter: false,
           sort: false,
-          customBodyRender: (_value: any, tableMeta: any) => {
-            const record: ScheduledAutomation = getRecord(tableMeta.rowData);
+          customBodyRenderLite: (dataIndex: number) => {
+            const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
+            const record: ScheduledAutomation = rows[dataIndex];
             return (
               <>
               <Tooltip title={'Edit Automation'}>
                 <IconButton
-                  onClick={async () => {}}
+                  onClick={async () => {
+                    setIsEditOpen(true);
+                  }}
                 >
                   <EditIcon />
                 </IconButton>
@@ -240,10 +227,10 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                   disabled={true}
                   onClick={async () => {
                     try {
-                      const interval = CronExpressionParser.parse(record.crontab);
                       const now = new Date()
                       now.setUTCSeconds(0, 0);
-
+                      const interval = CronExpressionParser.parse(record.crontab);
+                      console.log(interval.fields.minute);
                       if(interval.includesDate(now)){
                         console.log('now '+ now.toISOString());
                       }
@@ -264,6 +251,36 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                   <DirectionsRunIcon />
                 </IconButton>
               </Tooltip>
+                <ScheduleAutomationDialog
+                 onClose={() => setIsEditOpen(false)}
+                 onSave={async(record:ScheduledAutomation) => {
+                   try{
+                     CronExpressionParser.parse(record.crontab, {strict: true});
+                     await db.scheduledAutomation.put(record);
+                     processNotification({
+                       title:'Scheduled Automation Added',
+                       message:`A scheduled automation was added for the url ${record.url}`,
+                       type: 'success'
+                     })
+                   }
+                   catch(e){
+                     debug(`scheduled automation did not save + ${String(e)}`, record);
+                     processNotification({
+                       title:'Scheduled Automation Not Added',
+                       message:`The scheduled automation could not be edited. Review the <a href='https://github.com/harrisiirak/cron-parser'>documentation</a>, to ensure you are using a proper crontab value.`,
+                       type: 'danger'
+                     })
+                   }
+                   finally {
+                     await refresh()
+                     setIsEditOpen(false)
+                   }
+                 }}
+                 open={isEditOpen}
+                 title={'Add a scheduled automation'}
+                 initialValues={{...record}}
+                 refresh={refresh}
+                />
               </>
 
             );
@@ -294,6 +311,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
              onClose={() => setIsOpen(false)}
              onSave={async(record:ScheduledAutomation) => {
                try{
+                 CronExpressionParser.parse(record.crontab, {strict: true});
                  await db.scheduledAutomation.add(record);
                  processNotification({
                    title:'Scheduled Automation Added',
@@ -305,7 +323,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                  debug(`scheduled automation did not save + ${String(e)}`, record);
                  processNotification({
                    title:'Scheduled Automation Not Added',
-                   message:`The scheduled automation could not be added.`,
+                   message:`The scheduled automation could not be added. Review the <a href='https://github.com/harrisiirak/cron-parser'>documentation</a>, to ensure you are using a proper crontab value.`,
                    type: 'danger'
                  })
                }
