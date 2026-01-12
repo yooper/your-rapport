@@ -18,6 +18,7 @@ import IconButton from '@mui/material/IconButton';
 import { Tooltip } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { createTab } from '../../utilities/loaders';
+import ScheduledAutomationDataTable from '../tables/ScheduledAutomationDataTable';
 
 export default function AutomationLayout() {
   const urlParams = new URL(window.location.href).searchParams;
@@ -32,6 +33,13 @@ export default function AutomationLayout() {
       message:
         'Insert a list of urls that will be opened in a tab and collected',
       url: 'https://github.com/yooper/your-rapport/wiki/Setting-Up-And-Running-Automations'
+    },
+    {
+      label: 'Scheduled Automations',
+      key: 'scheduled_automation',
+      message:
+        'Set up a scheduled time to open a page and collect',
+      url: 'https://github.com/yooper/your-rapport/wiki/scheduled-automations'
     }
   ];
 
@@ -83,8 +91,6 @@ function IconMapper(props) {
       return <LibraryAddIcon />;
     case 'scheduled_automation':
       return <AlarmIcon />;
-    case 'selector_automation':
-      return <LocalOfferIcon />;
     default:
       return <WebIcon />;
   }
@@ -95,7 +101,7 @@ function Renderer(props) {
     case BULK_AUTOMATION:
       return <BulkAutomationTable />;
     case 'scheduled_automation':
-      return <div>TODO...</div>;
+      return <ScheduledAutomationDataTable />;
     case 'selector_automation':
       return <div>TODO...</div>;
     default:

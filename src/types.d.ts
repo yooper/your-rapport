@@ -339,8 +339,8 @@ export type PreExistingFilter = {
 
 export type ExtractContext = {
   html: string;
-  baseUrl: string;     // origin, e.g. "https://twitter.com"
-  pageUrl?: string;    // full url, if you want it
+  baseUrl: string;
+  pageUrl?: string;
   $: cheerio.CheerioAPI;
 };
 
@@ -351,3 +351,13 @@ export type MetaTagRecord = {
   charset?: string | null;
   content?: string | null;
 };
+
+export type ChangeDetection = {
+  uuid: string
+  pathType: "css" | "xpath" | "jsonpath" | "regex" | "meta"
+  path: string
+  value?: string | null
+  oldValue?: | null
+  scheduledAutomationUuid: string
+  updatedOn: string
+}

@@ -12,6 +12,7 @@ import { db } from '../db/dexieDb';
 import { applyBackgroundJobs } from '../../services/discovery_plugin_services';
 import { debug } from '../../services/logger_services';
 import { Configuration } from './Configuration';
+import BulkAutomationUrl from './BulkAutomationUrl';
 
 /**
  * If you have a real Tab type from chrome, prefer that:
@@ -56,7 +57,7 @@ export interface RapportInit {
   note: string | null;
   isImportant: boolean;
   relevance: Relevance;
-  bulkAutomationUuid?: string | null;
+  bulkAutomation: BulkAutomationUrl | null;
   visibleText: string | null
   artifacts: Artifact[];
 }
@@ -82,7 +83,7 @@ export class Rapport {
   note: string | null;
   isImportant: boolean;
   relevance: Relevance;
-  bulkAutomationUuid: string | null;
+  bulkAutomation: BulkAutomationUrl | null;
   artifacts: unknown[];
   visibleText: string | null;
   visibleHtml: string | null;
@@ -108,10 +109,10 @@ export class Rapport {
     this.note = init.note;
     this.isImportant = init.isImportant;
     this.relevance = init.relevance;
-    this.bulkAutomationUuid = init.bulkAutomationUuid ?? null;
     this.artifacts = [];
     this.visibleText = init.visibleText;
     this.visibleHtml = init.visibleHtml;
+    this.bulkAutomation = init?.bulkAutomation ?? null;
   }
 
   /**
@@ -162,7 +163,7 @@ export class Rapport {
       note: null,
       isImportant: false,
       relevance: "low",
-      bulkAutomationUuid: null,
+      bulkAutomation: null,
       artifacts: [],
       visibleText: pageInfo.visibleText ?? null,
       visibleHtml: null
@@ -272,7 +273,7 @@ export class Rapport {
       note: null,
       isImportant: false,
       relevance: "low",
-      bulkAutomationUuid: null,
+      bulkAutomation: null,
       artifacts: [],
       visibleText: null
     });

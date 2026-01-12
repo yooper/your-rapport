@@ -67,7 +67,7 @@ export default function BulkAutomationAddDialog(props) {
         100
       );
       let automateUrls = urls.map((url) => {
-        return BulkdAutomationUrl.createBulkAutomationJob(url, 'count', 100);
+        return BulkdAutomationUrl.createBulkAutomationJob(url);
       });
 
       const rows = existingUrls.concat(automateUrls);
