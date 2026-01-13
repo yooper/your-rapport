@@ -24,12 +24,12 @@ export class ScheduledAutomation {
     this.keepTabOpen = false;
     this.createdOn = getUtcNow();   // matches type Date
     this.active = true;
-    this.isDeepSave = false;
+    this.isDeepSave = true;
     this.changeDetectors = [];
     this.onlySaveOnChange = false;
     this.lastRanOn = null;
     this.runInServiceWorker = false;
     this.lastError = null
-    this.crontab = '* * * * *';
+    this.crontab = '* * * * * *';
   }
 }

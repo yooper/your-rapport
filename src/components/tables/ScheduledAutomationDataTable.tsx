@@ -145,6 +145,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
               <FormControlLabel
                 control={
                   <Switch
+                    disabled={true}
                     color="primary"
                     checked={value}
                     onChange={async (_e, nextChecked) => {
