@@ -27,7 +27,7 @@ type FormState = Pick<
 > &
   Partial<Pick<ScheduledAutomation, "onlySaveOnChange" | "changeDetectors">>;
 
-const DEFAULT_CRONTAB = "* * * * *";
+const DEFAULT_CRONTAB = "* * * * * *";
 
 const toNullIfBlank = (v: string) => {
   const s = v.trim();
@@ -45,7 +45,7 @@ export default function ScheduleAutomationDialog({
   const [values, setValues] = React.useState<FormState>({
     url: initialValues?.url ?? null,
     keepTabOpen: initialValues?.keepTabOpen ?? false,
-    isDeepSave: initialValues?.isDeepSave ?? false,
+    isDeepSave: initialValues?.isDeepSave ?? true,
     crontab: initialValues?.crontab ?? DEFAULT_CRONTAB,
     onlySaveOnChange: initialValues?.onlySaveOnChange ?? false,
     changeDetectors: initialValues?.changeDetectors ?? [],
@@ -57,7 +57,7 @@ export default function ScheduleAutomationDialog({
     setValues({
       url: initialValues?.url ?? null,
       keepTabOpen: initialValues?.keepTabOpen ?? false,
-      isDeepSave: initialValues?.isDeepSave ?? false,
+      isDeepSave: initialValues?.isDeepSave ?? true,
       crontab: initialValues?.crontab ?? DEFAULT_CRONTAB,
       onlySaveOnChange: initialValues?.onlySaveOnChange ?? false,
       changeDetectors: initialValues?.changeDetectors ?? [],
@@ -107,19 +107,20 @@ export default function ScheduleAutomationDialog({
             label="Crontab"
             value={values.crontab ?? DEFAULT_CRONTAB}
             onChange={(e) => setField("crontab")(e.target.value)}
-            placeholder="* * * * *"
-            helperText='5-field cron: "min hour dom month dow" (e.g., "0 9 * * 1-5"). Default is run once a minute.'
+            placeholder="* * * * * *"
+            helperText='6-field cron: "sec min hour dom month dow" (e.g., "* 9 * * 1-5"). Default will run once a minute, because of chrome limits.'
             fullWidth
           />
 
           <FormControlLabel
             control={
               <Switch
+                disabled={true}
                 checked={!!values.isDeepSave}
                 onChange={(e) => setField("isDeepSave")(e.target.checked)}
               />
             }
-            label="Deep save"
+            label="Deep Save"
           />
 
           <FormControlLabel
