@@ -128,6 +128,43 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
         },
       },
       {
+        label: "SAVE ON CHANGE",
+        name: "onlySaveOnChange",
+        options: {
+          display: true,
+          filter: false,
+          sort: false,
+          customBodyRender: (
+            value: any,
+            tableMeta: any,
+            updateValue: any
+          ) => {
+            const record = getRecord(tableMeta.rowData);
+
+            return (
+              <FormControlLabel
+                control={
+                  <Switch
+                    color="primary"
+                    checked={value}
+                    onChange={async (_e, nextChecked) => {
+                      updateValue(nextChecked);
+                      record.onlySaveOnChange = nextChecked;
+                      await db.scheduledAutomation.put(record);
+                    }}
+                  />
+                }
+                label={
+                  <IconButton>
+                    <HelperPopover message="When off, the page is always collected, when on, it compares the images to detect a change" />
+                  </IconButton>
+                }
+              />
+            );
+          },
+        },
+      },
+      {
         label: "DEEP SAVE",
         name: "isDeepSave",
         options: {

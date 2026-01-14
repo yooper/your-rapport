@@ -7,8 +7,6 @@ import {
 import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl'
 import { initializeContextMenus } from '../../services/context_menu_services';
 import ExtensionPin from '../../utilities/ExtensionPin';
-import { scanPage } from '../../utilities/transformers';
-import { Configuration } from '../../models/schemas/Configuration';
 import {
   ACTIVATE_CAPTURE,
   AUTO_COLLECT_STARTING,
@@ -154,7 +152,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    */
   else if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
-      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
+      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false, message.pageInfo.automation ?? null);
       sendResponse({ completed: true });
     })();
     return true;

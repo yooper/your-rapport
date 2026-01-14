@@ -11,6 +11,8 @@ import {
   Stack,
 } from "@mui/material";
 import type { ScheduledAutomation } from "../../../models/schemas/ScheduledAutomation";
+import IconButton from '@mui/material/IconButton';
+import HelperPopover from '../../HelperPopover';
 
 type Props = {
   open: boolean;
@@ -47,7 +49,7 @@ export default function ScheduleAutomationDialog({
     keepTabOpen: initialValues?.keepTabOpen ?? false,
     isDeepSave: initialValues?.isDeepSave ?? true,
     crontab: initialValues?.crontab ?? DEFAULT_CRONTAB,
-    onlySaveOnChange: initialValues?.onlySaveOnChange ?? false,
+    onlySaveOnChange: initialValues?.onlySaveOnChange ?? true,
     changeDetectors: initialValues?.changeDetectors ?? [],
   });
 
@@ -59,7 +61,7 @@ export default function ScheduleAutomationDialog({
       keepTabOpen: initialValues?.keepTabOpen ?? false,
       isDeepSave: initialValues?.isDeepSave ?? true,
       crontab: initialValues?.crontab ?? DEFAULT_CRONTAB,
-      onlySaveOnChange: initialValues?.onlySaveOnChange ?? false,
+      onlySaveOnChange: initialValues?.onlySaveOnChange ?? true,
       changeDetectors: initialValues?.changeDetectors ?? [],
     });
   }, [open, initialValues]);
@@ -135,25 +137,31 @@ export default function ScheduleAutomationDialog({
           <FormControlLabel
             control={
               <Switch
-                disabled={true}
                 checked={!!values.onlySaveOnChange}
                 onChange={(e) =>
                   setField("onlySaveOnChange")(e.target.checked)
                 }
               />
             }
-            label="Only save when changes detected"
+            label={
+            <>
+              <IconButton>
+                <HelperPopover message="A screenshot comparison is performed. If the screenshots differ the web page is saved." />
+              </IconButton>
+              <span>Save On Change</span>
+            </>
+            }
           />
         </Stack>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} variant="text">
-          Cancel
-        </Button>
-        <Button onClick={handleSave} variant="contained" disabled={!canSave}>
-          Save
-        </Button>
+          <Button onClick={onClose} color="cancel" variant={'contained'}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} color="secondary" variant={'contained'}>
+            Save
+          </Button>
       </DialogActions>
     </Dialog>
   );

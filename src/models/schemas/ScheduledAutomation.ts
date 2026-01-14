@@ -16,6 +16,7 @@ export class ScheduledAutomation {
   onlySaveOnChange: boolean;
   lastRanOn: number | null;
   lastError: string | null;
+  tags: string[]
 
   constructor() {
     this.uuid = crypto.randomUUID();
@@ -26,10 +27,11 @@ export class ScheduledAutomation {
     this.active = true;
     this.isDeepSave = true;
     this.changeDetectors = [];
-    this.onlySaveOnChange = false;
+    this.onlySaveOnChange = true;
     this.lastRanOn = null;
     this.runInServiceWorker = false;
     this.lastError = null
     this.crontab = '* * * * * *';
+    this.tags = []
   }
 }

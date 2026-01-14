@@ -55,8 +55,8 @@ async function trigger() {
           keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
           isDeepSave: scheduledAutomation.isDeepSave ?? true,
           scheduledAutomation: scheduledAutomation ?? null,
-          unitDefault: scheduledAutomation.unit,
-          unitValue: scheduledAutomation.value
+          unitDefault: scheduledAutomation.unit ?? 'count',
+          unitValue: scheduledAutomation.value ?? 100
         });
         // MUST be set to active to trigger running in the automation queue
         automation.active = true;
@@ -70,7 +70,6 @@ async function trigger() {
   catch(e){
     debug('Error creating bulk automation from schedule automation')
   }
-
 
   if (processing){
     return;
@@ -142,7 +141,7 @@ async function processQueue() {
       }
       // deep save
       else {
-        await capture(tab, pageInfo, true);
+        await capture(tab, pageInfo, true, job as BulkAutomationUrl);
       }
       await complete(job);
     } catch (e: any) {

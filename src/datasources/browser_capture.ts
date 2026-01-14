@@ -4,23 +4,9 @@ import { Configuration } from '../models/schemas/Configuration';
 import { db } from '../models/db/dexieDb';
 import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
-import { applyBackgroundJobs } from '../services/discovery_plugin_services';
 import { getUtcNow } from '../utilities/transformers';
-
-// ----- Types ---------------------------------------------------------------
-
-export interface CaptureAutomation {
-  uuid: string;
-  [key: string]: unknown;
-}
-
-export interface CaptureMessage {
-  sequence?: number;
-  automation?: CaptureAutomation | null;
-  text?: string;
-  visibleText?: string;
-  [key: string]: unknown;
-}
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
+import { areEqual } from '../services/change_detection_services';
 
 /**
  * Capture the tab and persist it into local storage.
@@ -28,7 +14,8 @@ export interface CaptureMessage {
 export async function capture(
   tab: chrome.tabs.Tab,
   pageInfo: any = {},
-  deepSave = false
+  deepSave = false,
+  bulkAutomation: BulkAutomationUrl | null = null
 ): Promise<void> {
   try {
     ExtensionPin.setDefaultNotSaved(tab);
@@ -49,6 +36,29 @@ export async function capture(
       selectors,
       deepSave
     );
+    // assign the bulk automation if one has been
+    record.bulkAutomation = bulkAutomation;
+    const scheduledAutomation = record.bulkAutomation?.scheduledAutomation ?? null;
+
+    if(scheduledAutomation && scheduledAutomation.onlySaveOnChange)
+    {
+      const previousRapports: Rapport[]|undefined = await db.rapport
+          .where("domain")
+          .equals(record.domain)
+          .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
+          .sortBy('createdOn')
+
+      if(previousRapports?.length){
+        debug('previous rapports found', previousRapports);
+      }
+
+      if(previousRapports?.length > 0 && areEqual(record, previousRapports[0], ['screenshot'])){
+        debug('only save on change, change not detected, ignore', {scheduledAutomation, rapport:record})
+        ExtensionPin.setDefault();
+        throw new Error("No change detected in scheduled automation collection");
+        return;
+      }
+    }
 
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
@@ -66,7 +76,6 @@ export async function capture(
             'multipart/related'
           );
 
-          // persist artifact (Dexie)
           await db.artifact.add(mhtmlArtifact);
           // attach reference to record
           record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
@@ -78,6 +87,7 @@ export async function capture(
             'text/html'
           );
           await db.artifact.add(htmlArtifact);
+          // attach reference
           record.artifacts.push(Artifact.getAttachment(htmlArtifact));
           isSaved = true;
 

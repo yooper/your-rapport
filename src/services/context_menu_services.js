@@ -83,7 +83,7 @@ export async function initializeContextMenus() {
             []
           );
           rapport.sequenceId = 0;
-          rapport.bulkAutomationUuid = null;
+          rapport.bulkAutomation = null;
           await Rapport.put(rapport);
           // update the configuration last saved on metadata
           let configuration = await Configuration.getConfiguration();

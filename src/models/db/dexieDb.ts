@@ -4,6 +4,7 @@ import { Selector } from '../schemas/Selector';
 import { Artifact } from '../schemas/Artifact';
 import { DiscoveryPlugin } from '../schemas/DiscoveryPlugin';
 import { Rapport } from '../schemas/Rapport';
+import { ScheduledAutomation } from '../schemas/ScheduledAutomation';
 
 const db = new Dexie('YourRapport') as Dexie & {
   selector: EntityTable<Selector, 'name'>;
