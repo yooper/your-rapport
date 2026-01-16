@@ -443,31 +443,33 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       groupName: 'Default',
       onClick: async(record: IRapport) =>
       {
-          const unitDefault = await Configuration.getConfigurationValue(
-            'automationUnitDefault',
-            'count'
-          ) ?? 'count';
-          const valueDefault = await Configuration.getConfigurationValue(
-            'automationValueDefault',
-            100
-          ) ?? 100;
           const automation = BulkAutomationUrl.createBulkAutomationJob(record.url);
-          await addRecord(BULK_AUTOMATION, UUID, record);
+          await addRecord(BULK_AUTOMATION, UUID, automation);
       }
     })
   ]
 }
 
 /**
- * Once a rapport is saved, iterate through the active background runners and queue
- * them for running
  * @param rapport
  * @param eventType
  */
 export async function applyBackgroundJobs(rapport: Rapport, eventType: string) : Promise<void> {
   const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner' && dp.eventType === eventType).toArray();
   for ( const discoveryPlugin of plugins){
-    await debug('Queuing job', {discoveryPlugin, rapport});
-    getJobQueue().enqueue({ discoveryPlugin, rapport })
+
+    // these jobs cannot be queued, they must be run in serial
+    if(eventType === 'preCreate'){
+      await discoveryPluginRunner(discoveryPlugin, rapport);
+      if(!rapport){
+        debug('preCreate is exiting', {discoveryPlugin, rapport});
+        return;
+      }
+    }
+    else{
+      await debug('Queuing job', {discoveryPlugin, rapport});
+      getJobQueue().enqueue({ discoveryPlugin, rapport })
+    }
+
   }
 }

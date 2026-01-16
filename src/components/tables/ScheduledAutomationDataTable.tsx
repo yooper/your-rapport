@@ -110,7 +110,11 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
           searchable: true,
           customBodyRender: (value: unknown) => {
             const v = typeof value === "string" ? value : "";
-            return <div>{v}</div>;
+            return <div>
+              <Tooltip title={'crontab is a common format for sheduling automated jobs.'}>
+                {v}
+              </Tooltip>
+            </div>;
           },
         },
       },
@@ -266,7 +270,6 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                   onClick={async () => {
                     try {
                       const now = new Date()
-                      now.setUTCSeconds(0, 0);
                       const interval = CronExpressionParser.parse(record.crontab);
                       console.log(interval.fields.minute);
                       if(interval.includesDate(now)){

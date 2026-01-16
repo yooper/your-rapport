@@ -25,6 +25,7 @@ import {
 } from '../../services/constants';
 import { debug } from '../../services/logger_services';
 import ExtensionPin from '../../utilities/ExtensionPin';
+import { sortByField } from '../../utilities/transformers';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
@@ -105,8 +106,9 @@ export default function BulkAutomationTable(props) {
       showLoader();
       setIsLoading(true);
       const records = (await getLocalItem(BULK_AUTOMATION)) ?? [];
+      sortByField(records, 'createdOn')
       if (records.length !== rows.length) {
-        setRows(records);
+        setRows(records.reverse());
       }
       setIsLoading(false);
       hideLoader();

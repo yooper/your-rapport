@@ -7,6 +7,9 @@ import { Artifact } from '../models/schemas/Artifact';
 import { getUtcNow } from '../utilities/transformers';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { areEqual } from '../services/change_detection_services';
+import { applyBackgroundJobs } from '../services/discovery_plugin_services';
+import { Tag } from '../models/schemas/Tag';
+import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 
 /**
  * Capture the tab and persist it into local storage.
@@ -36,27 +39,33 @@ export async function capture(
       selectors,
       deepSave
     );
-    // assign the bulk automation if one has been
-    record.bulkAutomation = bulkAutomation;
-    const scheduledAutomation = record.bulkAutomation?.scheduledAutomation ?? null;
 
-    if(scheduledAutomation && scheduledAutomation.onlySaveOnChange)
+
+    if(bulkAutomation)
     {
-      const previousRapports: Rapport[]|undefined = await db.rapport
-          .where("domain")
-          .equals(record.domain)
-          .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
-          .sortBy('createdOn')
+      // assign the bulk automation if one has been
+      record.bulkAutomation = bulkAutomation;
+      const scheduledAutomation = record.bulkAutomation?.scheduledAutomation ?? null;
 
-      if(previousRapports?.length){
-        debug('previous rapports found', previousRapports);
-      }
+      if(scheduledAutomation && scheduledAutomation.onlySaveOnChange)
+      {
+        const previousRapports: Rapport[]|undefined = await db.rapport
+            .where("domain")
+            .equals(record.domain)
+            .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
+            .sortBy('createdOn')
 
-      if(previousRapports?.length > 0 && areEqual(record, previousRapports[0], ['screenshot'])){
-        debug('only save on change, change not detected, ignore', {scheduledAutomation, rapport:record})
-        ExtensionPin.setDefault();
-        throw new Error("No change detected in scheduled automation collection");
-        return;
+        const previousRapport: Rapport|null = previousRapports.at(-1) ?? null;
+
+        if(previousRapports.length > 0 && areEqual(record, previousRapport, ['hash'])){
+          // should be using the latest save
+          debug('only save on change -> change not detected, ignore', {scheduledAutomation, rapport:record, previousRapport})
+          ExtensionPin.setDefault();
+          throw new NoChangeDetectedError();
+          return;
+        }
+
+        record.tags = [new Tag('change-detected')];
       }
     }
 

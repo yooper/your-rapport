@@ -11,18 +11,22 @@ import { CronExpressionParser } from 'cron-parser';
 import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
 import { db } from '../models/db/dexieDb';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
+import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 
 
 let processing: boolean = false;
 
 export function initializeAutomationRunner() {
   // periodic tick to recover & continue
-  chrome.alarms.create('yr_queue_tick', { periodInMinutes: 1 });
+  chrome.alarms.create('yr_queue_tick', { periodInMinutes: 0.5 });
   chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_queue_tick') trigger(); });
 
+  chrome.alarms.create('yr_scheduled_automations', { periodInMinutes: 1 });
+  chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_scheduled_automations') queueScheduledAutomations(); });
+
   // resume on startup / install
-  chrome.runtime.onStartup.addListener(() => { recoverExpiredLeases().then(trigger); });
-  chrome.runtime.onInstalled.addListener(() => { recoverExpiredLeases().then(trigger); });
+  chrome.runtime.onStartup.addListener(() => { recoverExpiredLeases().then(trigger); queueScheduledAutomations() });
+  chrome.runtime.onInstalled.addListener(() => { recoverExpiredLeases().then(trigger); queueScheduledAutomations() });
 
   // public API for UI / context menu to enqueue
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -36,16 +40,12 @@ export function initializeAutomationRunner() {
   });
 }
 
-
-
-
-async function trigger() {
+async function queueScheduledAutomations(){
   // upon trigger, we need to check for any active scheduled automations that must be run by checking their crontab evaluation and generate
   // any associated bulk automations
   try {
     const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
     const utcNow: Date = new Date();
-    utcNow.setUTCSeconds(0, 0);
     const automations: BulkAutomationUrl[] = [];
     for (const scheduledAutomation of scheduledAutomations) {
       const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
@@ -70,6 +70,9 @@ async function trigger() {
   catch(e){
     debug('Error creating bulk automation from schedule automation')
   }
+}
+
+async function trigger() {
 
   if (processing){
     return;
@@ -145,7 +148,16 @@ async function processQueue() {
       }
       await complete(job);
     } catch (e: any) {
-      await fail(job, String(e?.message ?? e));
+      if (e instanceof NoChangeDetectedError)
+      {
+        ; // do nothing, no change was detected
+        job.description = job.description + ' No Change Detected';
+        await complete(job)
+      }
+      else
+      {
+        await fail(job, String(e?.message ?? e));
+      }
     } finally {
       if(!job.keepTabOpen && job.status !== 'failed' && tabId){
         try { await chrome.tabs.remove(tabId); } catch {}

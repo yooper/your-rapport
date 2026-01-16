@@ -176,11 +176,10 @@ export class Rapport {
    */
   static async add(rapport: Rapport)
   {
-    await db.rapport.add(rapport)
+    await db.rapport.add(rapport);
     // Queue up the background jobs (fire-and-forget; log when done)
     applyBackgroundJobs(rapport, 'create').then(() => {
-      debug('background job completed', rapport);
-      Rapport.sync(rapport);
+      debug('preCreate background job completed', rapport)
     });  }
 
   /**
