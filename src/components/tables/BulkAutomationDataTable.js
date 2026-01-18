@@ -284,7 +284,7 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
-      name: 'CompletedOn',
+      name: 'completedOn',
       label: 'COMPLETED',
       options: {
         filter: false,
@@ -325,21 +325,23 @@ export default function BulkAutomationTable(props) {
             <Tooltip title={'Re run the automation on this url'}>
               <IconButton
                 onClick={async () => {
-                  let copy = {...record};
-                  copy.active = true;
-                  copy.ranOn = null;
-                  copy.status = 'queued';
-                  copy.completedOn = null;
-                  copy.description = 'Manually run'
-                  await ExtensionPin.setAutomationRunning([copy]);
-                  await db.bulkAutomation.put(record);
-                  setRows(await db.bulkAutomation.toArray());
-                  chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
-                  processNotification({
-                    title: 'Restarting Automation',
-                    message:
-                      "Automation job is restarting, and may take a couple seconds. Don't Spam the button!",
-                    type: 'success',
+                  db.transaction('rw', db.bulkAutomation, async () => {
+                    const automation = await db.bulkAutomation.get(record.uuid);
+                    automation.active = true;
+                    automation.ranOn = null;
+                    automation.status = 'queued';
+                    automation.completedOn = null;
+                    automation.description = 'Manually run'
+                    await ExtensionPin.setAutomationRunning([automation]);
+                    await db.bulkAutomation.put(automation);
+                    setRows(await db.bulkAutomation.toArray());
+                    const response = await chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE' });
+                    processNotification({
+                      title: 'Restarting Automation',
+                      message:
+                        "Automation job is restarting, and may take a couple seconds. Don't Spam the button!",
+                      type: 'success',
+                    });
                   });
                 }}
               >
