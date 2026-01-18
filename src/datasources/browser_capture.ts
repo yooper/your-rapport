@@ -6,10 +6,10 @@ import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
 import { getUtcNow } from '../utilities/transformers';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
-import { areEqual } from '../services/change_detection_services';
 import { applyBackgroundJobs } from '../services/discovery_plugin_services';
-import { Tag } from '../models/schemas/Tag';
-import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
+
+
+let _lastRapport: Rapport|null = null;
 
 /**
  * Capture the tab and persist it into local storage.
@@ -47,52 +47,46 @@ export async function capture(
       return;
     }
 
+    // there is an issue with duplicated being generated, this mitigates the issue.
+    if(_lastRapport && _lastRapport.hash === record.hash){
+      debug('Duplicate detected, skipping', {_lastRapport, currentRapport:record});
+      return;
+    }
 
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
       // implement retry strategy to mitigate errors when saving
-      let retryCounter = 0;
-      let isSaved = false;
+      try {
+        const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
+        const mhtmlArtifact = await Artifact.create(
+          blob,
+          record.uuid,
+          record.url,
+          'multipart/related'
+        );
 
-      do {
-        try {
-          const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({tabId: tab.id});
-          const mhtmlArtifact = await Artifact.create(
-            blob,
-            record.uuid,
-            record.url,
-            'multipart/related'
-          );
+        await db.artifact.add(mhtmlArtifact);
+        // attach reference to record
+        record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
 
-          await db.artifact.add(mhtmlArtifact);
-          // attach reference to record
-          record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
+        const htmlArtifact = await Artifact.create(
+          new Blob([pageInfo.html], { type: 'text/html' }),
+          record.uuid,
+          record.url,
+          'text/html'
+        );
+        await db.artifact.add(htmlArtifact);
+        // attach reference
+        record.artifacts.push(Artifact.getAttachment(htmlArtifact));
 
-          const htmlArtifact = await Artifact.create(
-            new Blob([pageInfo.html], { type: 'text/html' }),
-            record.uuid,
-            record.url,
-            'text/html'
-          );
-          await db.artifact.add(htmlArtifact);
-          // attach reference
-          record.artifacts.push(Artifact.getAttachment(htmlArtifact));
-          isSaved = true;
-
-        } catch (e) {
-          await debug(String(e));
-        } finally {
-          retryCounter++;
-        }
-      } while (!isSaved && retryCounter < 3);
-
-      if(isSaved){
-        await Rapport.add(record);
+      } catch (e) {
+        await debug(String(e));
       }
     }
-    else{
-      await Rapport.add(record);
-    }
+    // persist the record
+    await Rapport.add(record);
+
+    _lastRapport = record;
 
     // update the configuration last saved on metadata
     configuration.updatedOn = getUtcNow();

@@ -161,6 +161,7 @@ async function processQueue() {
           try {
             await chrome.tabs.remove(tabId);
           } catch {
+
           }
         }
       }
