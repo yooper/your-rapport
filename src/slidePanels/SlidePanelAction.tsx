@@ -10,6 +10,7 @@ import { addRecord} from '../models/db/local';
 import { createTab, processNotification } from '../utilities/loaders';
 import Stack from "@mui/material/Stack";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { db } from '../models/db/dexieDb';
 
 
 type SlidePanelActionProps = {
@@ -47,7 +48,8 @@ export const urlActions: SlidePanelActionProps[] = [
     pluginType: 'url', // kept for future use
     onClick: (data: IExtractedData) => {
       const record = BulkAutomationUrl.createBulkAutomationJob(data.value);
-      addRecord(BULK_AUTOMATION, UUID, record).then(() => {
+
+      db.bulkAutomation.add(record).then(() => {
         processNotification({title:'Queued', message:'Url has been queued. Visit the automations page to start the automation run.', type:'info'});
       })
     },

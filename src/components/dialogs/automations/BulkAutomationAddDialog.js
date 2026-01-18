@@ -19,6 +19,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import BulkdAutomationUrl from '../../../models/schemas/BulkAutomationUrl';
 import { Configuration } from '../../../models/schemas/Configuration';
 import { BULK_AUTOMATION } from '../../../services/constants';
+import { db } from '../../../models/db/dexieDb';
 
 export default function BulkAutomationAddDialog(props) {
   const [open, setOpen] = useState(false);
@@ -57,22 +58,13 @@ export default function BulkAutomationAddDialog(props) {
   const handleSave = async () => {
     if (text.length > 0 && text.trim().length > 0) {
       const urls = text.split('\n').filter((t) => t && _isValidUrl(t));
-      const existingUrls = (await getLocalItem(BULK_AUTOMATION)) ?? [];
-      const unitDefault = await Configuration.getConfigurationValue(
-        'automationUnitDefault',
-        'count'
-      );
-      const valueDefault = await Configuration.getConfigurationValue(
-        'automationValueDefault',
-        100
-      );
-      let automateUrls = urls.map((url) => {
+      const records = urls.map((url) => {
         return BulkdAutomationUrl.createBulkAutomationJob(url);
       });
 
-      const rows = existingUrls.concat(automateUrls);
-      props.setRows(rows);
-      await setLocalItem(BULK_AUTOMATION, rows);
+      await db.bulkAutomation.bulkAdd(records);
+
+      props.setRows(await db.bulkAutomation.toArray());
       processNotification({
         title: 'Bulk Automation',
         message: `${urls.length} sites have been added to the bulk automation queue.`,

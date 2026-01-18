@@ -1,5 +1,6 @@
 import { IBulkAutomationRecord } from '../../types';
 import { ScheduledAutomation } from './ScheduledAutomation';
+import { DiscoveryPlugin } from './DiscoveryPlugin';
 
 export default class BulkAutomationUrl implements IBulkAutomationRecord {
   uuid: string;
@@ -17,7 +18,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tab: any | null;
   isDeepSave: boolean;
-  discoveryPluginUuid: string | null;
+  discoveryPlugin: DiscoveryPlugin | null;
   failReason: string | null;
   attempts: number;
   leaseUntil: number | null;
@@ -39,7 +40,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
     this.tabId = null;
     this.tab = null;
     this.isDeepSave = false;
-    this.discoveryPluginUuid = null;
+    this.discoveryPlugin = null;
     this.failReason = null;
     this.attempts = 0;
     this.leaseUntil = null;
@@ -52,7 +53,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
     options?: {
       keepTabOpen?: boolean;
       isDeepSave?: boolean;
-      discoveryPluginUuid?: string | null;
+      discoveryPlugin?: DiscoveryPlugin | null;
       description?: string | null;
       unitDefault: 'count' | 'time';
       valueDefault: number,
@@ -65,9 +66,12 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
     job.active = false;
     job.keepTabOpen = options?.keepTabOpen ?? true;
     job.isDeepSave = options?.isDeepSave ?? false;
-    job.discoveryPluginUuid = options?.discoveryPluginUuid ?? null;
+    job.discoveryPlugin = options?.discoveryPlugin ?? null;
     job.description = options?.description ?? null;
     job.scheduledAutomation = options?.scheduledAutomation ?? null;
+    if(!job.discoveryPlugin && job.scheduledAutomation?.discoveryPlugin){
+      job.discoveryPlugin = job.scheduledAutomation?.discoveryPlugin
+    }
     job.status = 'queued';
     return job;
   }

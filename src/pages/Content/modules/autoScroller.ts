@@ -12,6 +12,7 @@ import {
 import { getPageInfo } from "../index";
 import { debug } from "../../../services/logger_services";
 import { updateRecord } from "../../../models/db/local";
+import { db } from '../../../models/db/dexieDb';
 
 /** Local state machine */
 const STATE_STOPPED = "stopped" as const;
@@ -74,9 +75,9 @@ function setAutomation(msg: AutoScrollerMessage): void {
 }
 
 async function safeUpdateAutomation(partial: Partial<BulkAutomationRecord>): Promise<void> {
-  if (!automation) return;
   try {
     Object.assign(automation, partial);
+    await db.bulkAutomation.put(automation);
     await updateRecord(BULK_AUTOMATION, UUID, automation);
   } catch (e) {
     // Don’t crash the scroller if persistence fails.
@@ -220,7 +221,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
 
       // Update automation progress
       if (automation) {
-        await safeUpdateAutomation({ screenShotsCollected: screenCollectionCount });
+        //await safeUpdateAutomation({ screenShotsCollected: screenCollectionCount });
       }
 
       // Stop if we can’t scroll further
@@ -291,12 +292,14 @@ async function processAutomation(description: string | null = null): Promise<voi
     return;
   }
 
+  /*
   await safeUpdateAutomation({
     completedOn: Date.now(),
     screenShotsCollected: screenCollectionCount,
     description,
     status: "done",
   });
+  */
 
   state = STATE_STOPPED;
 }

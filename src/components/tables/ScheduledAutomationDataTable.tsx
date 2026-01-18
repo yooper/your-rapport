@@ -14,7 +14,7 @@ import {
 import IconButton from "@mui/material/IconButton";
 import { FormControlLabel, Switch, Tooltip } from "@mui/material";
 import HelperPopover from "../HelperPopover";
-import { BULK_AUTOMATION, UUID } from "../../services/constants";
+import { UUID } from "../../services/constants";
 import { debug } from "../../services/logger_services";
 import { db } from '../../models/db/dexieDb';
 import AlarmAddIcon from '@mui/icons-material/AlarmAdd';
@@ -264,29 +264,20 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                   <EditIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title={'Test Automation'}>
+              <Tooltip title={'Test Automation Details'}>
                 <IconButton
                   disabled={true}
                   onClick={async () => {
                     try {
                       const now = new Date()
                       const interval = CronExpressionParser.parse(record.crontab);
-                      console.log(interval.fields.minute);
+                      debug(interval.fields.minute);
                       if(interval.includesDate(now)){
-                        console.log('now '+ now.toISOString());
+                        debug('now '+ now.toISOString());
                       }
-                      console.log('Prev:', interval.prev().toString());
-                      // Get next 3 dates
-                      console.log(
-                        'Next 3:',
-                        interval.take(3).map((date) => date.toString()),
-                      );
-                      // Get previous date
-                      console.log('Previous:', interval.prev().toString());
                     } catch (err) {
-                      console.log('Error:', err.message);
+                      debug('Error:', err.message);
                     }
-
                   }}
                 >
                   <DirectionsRunIcon />
@@ -328,12 +319,22 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
           },
         },
       },
+      {
+        name: "enableImageChangeDetector",
+        label: "enableImageChangeDetector",
+        options: { display: "excluded", filter: false, sort: false },
+      },
+      {
+        name: "enableSelectorChangeDetector",
+        label: "enableSelectorChangeDetector",
+        options: { display: "excluded", filter: false, sort: false },
+      },
     ];
       // eslint-disable-next-line react-hooks/exhaustive-deps
     const options: MUIDataTableOptions = {
         rowsPerPage: 50,
         rowsPerPageOptions: [20, 50],
-        searchAlwaysOpen: true,
+        searchAlwaysOpen: false,
         onRowsDelete: async (deleteInfo: any) => {
           setIsLoading(true);
           showLoader();
@@ -383,7 +384,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
         setTableProps: () => ({ size: "small" as const }),
         print: false,
         filter: false,
-        download: false,
+        download: true,
     };
 
   if (isLoading){

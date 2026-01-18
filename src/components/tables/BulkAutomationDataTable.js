@@ -26,6 +26,7 @@ import {
 import { debug } from '../../services/logger_services';
 import ExtensionPin from '../../utilities/ExtensionPin';
 import { sortByField } from '../../utilities/transformers';
+import { db } from '../../models/db/dexieDb';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
@@ -36,7 +37,7 @@ export default function BulkAutomationTable(props) {
       showLoader();
       setIsLoading(true);
       const start = performance.now();
-      const data = await getLocalItem(BULK_AUTOMATION);
+      const data = await db.bulkAutomation.toArray();
       if (data.length !== rows.length) {
         setRows(data);
       }
@@ -63,7 +64,7 @@ export default function BulkAutomationTable(props) {
    */
   async function startAutomationProcess() {
 
-    const automations = await getLocalItem(BULK_AUTOMATION);
+    const automations = await db.bulkAutomation.toArray();
     automations.forEach(a => {
       if(!a.active && !a.ranOn){
         a.active = true;
@@ -81,7 +82,7 @@ export default function BulkAutomationTable(props) {
       return;
     }
 
-    await setLocalItem(BULK_AUTOMATION, automations);
+    await db.bulkAutomation.bulkPut(automations);
     await ExtensionPin.setAutomationRunning(automations);
     chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
     processNotification({
@@ -105,7 +106,7 @@ export default function BulkAutomationTable(props) {
     async function fetchData() {
       showLoader();
       setIsLoading(true);
-      const records = (await getLocalItem(BULK_AUTOMATION)) ?? [];
+      const records = await db.bulkAutomation.toArray() ?? [];
       sortByField(records, 'createdOn')
       if (records.length !== rows.length) {
         setRows(records.reverse());
@@ -173,6 +174,15 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
+      name: 'createdOn',
+      label: 'CREATED ON',
+      options: {
+        display: false,
+        filter: false,
+        sort: true,
+      },
+    },
+    {
       name: 'screenShotsCollected',
       label: '# SCREENSHOTS',
       options: {
@@ -212,7 +222,7 @@ export default function BulkAutomationTable(props) {
               onChange={async(event) => {
                 updateValue(event.target.checked);
                 record.isDeepSave = event.target.checked;
-                await updateRecord(BULK_AUTOMATION, UUID, record);
+                await db.bulkAutomation.put(record);
               }}
             />
           );
@@ -250,7 +260,7 @@ export default function BulkAutomationTable(props) {
               onChange={async(event) => {
                 updateValue(event.target.checked);
                 record.keepTabOpen = event.target.checked;
-                await updateRecord(BULK_AUTOMATION, UUID, record);
+                await db.bulkAutomation.put(record);
               }}
             />
           );
@@ -322,7 +332,8 @@ export default function BulkAutomationTable(props) {
                   copy.completedOn = null;
                   copy.description = 'Manually run'
                   await ExtensionPin.setAutomationRunning([copy]);
-                  setRows(await updateRecord(BULK_AUTOMATION, UUID, copy));
+                  await db.bulkAutomation.put(record);
+                  setRows(await db.bulkAutomation.toArray());
                   chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
                   processNotification({
                     title: 'Restarting Automation',
@@ -349,9 +360,9 @@ export default function BulkAutomationTable(props) {
       setIsLoading(true);
       showLoader();
       for (const [idx, value] of Object.entries(records.lookup)) {
-        await deleteRecord(BULK_AUTOMATION, UUID, rows[idx]);
+        await db.bulkAutomation.delete(rows[idx].uuid);
       }
-      setRows(await getLocalItem(BULK_AUTOMATION));
+      setRows(await db.bulkAutomation.toArray());
       setIsLoading(false);
       hideLoader();
     },
@@ -380,14 +391,14 @@ export default function BulkAutomationTable(props) {
           >
             <IconButton onClick={async () => {
               showLoader()
-              const automations = await getLocalItem(BULK_AUTOMATION);
+              const automations = await db.bulkAutomation.toArray();
               automations.forEach(a => {
                 // flagged to run
                 if(a.active && !a.ranOn){
                   a.active = false;
                 }
               })
-              await setLocalItem(BULK_AUTOMATION, automations);
+              await db.bulkAutomation.bulkPut(automations);
               hideLoader()
               processNotification({
                 title: 'Automations Queuing Stopped',

@@ -153,6 +153,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   else if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
       await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false, message.pageInfo.automation ?? null);
+      // update the screenshot count
+      if(message.pageInfo.automation){
+        const automation = message.pageInfo.automation;
+        const record = await db.bulkAutomation.get(automation.uuid);
+        record.screenShotsCollected = message.pageInfo.sequence;
+        await db.bulkAutomation.put(record);
+      }
       sendResponse({ completed: true });
     })();
     return true;
@@ -201,7 +208,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
         case ENQUEUE_BULK_AUTOMATION_URL:
         case 'enqueueBulkAutomation':
           const record = await BulkAutomationUrl.createBulkAutomationJob(message.url);
-          await addRecord(BULK_AUTOMATION, UUID, record);
+          await db.bulkAutomation.add(record);
           break;
         case 'ping':
           sendResponse({completed: true});

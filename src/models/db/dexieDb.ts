@@ -5,6 +5,7 @@ import { Artifact } from '../schemas/Artifact';
 import { DiscoveryPlugin } from '../schemas/DiscoveryPlugin';
 import { Rapport } from '../schemas/Rapport';
 import { ScheduledAutomation } from '../schemas/ScheduledAutomation';
+import BulkAutomationUrl from '../schemas/BulkAutomationUrl';
 
 const db = new Dexie('YourRapport') as Dexie & {
   selector: EntityTable<Selector, 'name'>;
@@ -17,6 +18,7 @@ const db = new Dexie('YourRapport') as Dexie & {
   apiKey: EntityTable<ApiKey, 'key'>
   rapport: EntityTable<Rapport, 'uuid'>
   scheduledAutomation: EntityTable<ScheduledAutomation, 'uuid'>
+  bulkAutomation: EntityTable<BulkAutomationUrl, 'uuid'>
 };
 db.version(1).stores({
   selector: '&name, selectorTypeName',
@@ -38,6 +40,8 @@ db.version(4).stores({
 db.version(5).stores({
   scheduledAutomation: '&uuid'
 });
-
+db.version(6).stores({
+  bulkAutomation: '&uuid'
+});
 
 export { db };

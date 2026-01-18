@@ -1,5 +1,6 @@
 import { getUtcNow } from '../../utilities/transformers';
 import { ChangeDetection } from '../../types';
+import { DiscoveryPlugin } from './DiscoveryPlugin';
 
 export class ScheduledAutomation {
   uuid: string;
@@ -13,10 +14,13 @@ export class ScheduledAutomation {
   crontab: string
   runInServiceWorker: boolean;
   changeDetectors: ChangeDetection[];
+  enableImageChangeDetector: boolean;
+  enableSelectorChangeDetector: boolean;
   onlySaveOnChange: boolean;
   lastRanOn: number | null;
   lastError: string | null;
-  tags: string[]
+  discoveryPlugin: DiscoveryPlugin | null;
+  tags: string[];
 
   constructor() {
     this.uuid = crypto.randomUUID();
@@ -28,10 +32,16 @@ export class ScheduledAutomation {
     this.isDeepSave = true;
     this.changeDetectors = [];
     this.onlySaveOnChange = true;
+    this.enableImageChangeDetector = true;
+    this.enableSelectorChangeDetector = true;
     this.lastRanOn = null;
     this.runInServiceWorker = false;
     this.lastError = null
-    this.crontab = '* * * * * *';
+    this.crontab = '0 * * * * *';
+    this.discoveryPlugin = null;
     this.tags = []
   }
+
+  static async addMonitor()
+
 }

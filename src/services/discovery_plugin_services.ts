@@ -3,7 +3,13 @@ import { createTab, processNotification } from '../utilities/loaders';
 import { getUser } from '../models/schemas/User';
 import { DiscoveryPlugin } from '../models/schemas/DiscoveryPlugin';
 import { ApiKey, IRapport } from '../types';
-import { base64ToFile, downloadBase64Image, downloadJsonData, safeJsonParse } from '../utilities/transformers';
+import {
+  base64ToFile,
+  downloadBase64Image,
+  downloadJsonData,
+  findAllMatches,
+  safeJsonParse,
+} from '../utilities/transformers';
 import { printPdfReport } from '../utilities/print_service';
 import { db } from '../models/db/dexieDb';
 import { debug } from './logger_services';
@@ -14,6 +20,9 @@ import { Configuration } from '../models/schemas/Configuration';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { BULK_AUTOMATION, UUID } from './constants';
 import { addRecord} from './../models/db/local';
+import { areEqual } from './change_detection_services';
+import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
+import { Tag } from '../models/schemas/Tag';
 
 
 /**
@@ -444,7 +453,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       onClick: async(record: IRapport) =>
       {
           const automation = BulkAutomationUrl.createBulkAutomationJob(record.url);
-          await addRecord(BULK_AUTOMATION, UUID, automation);
+          await db.bulkAutomation.add(record);
       }
     })
   ]
@@ -455,21 +464,63 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
  * @param eventType
  */
 export async function applyBackgroundJobs(rapport: Rapport, eventType: string) : Promise<void> {
+  if(eventType === 'preCreate'){
+    // throws an error
+    await preCreate(rapport);
+  }
+
+  // these jobs cannot be queued, they must be run in serial
   const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner' && dp.eventType === eventType).toArray();
   for ( const discoveryPlugin of plugins){
+    await debug('Queuing job', {discoveryPlugin, rapport});
+    getJobQueue().enqueue({ discoveryPlugin, rapport })
+  }
+}
 
-    // these jobs cannot be queued, they must be run in serial
-    if(eventType === 'preCreate'){
-      await discoveryPluginRunner(discoveryPlugin, rapport);
-      if(!rapport){
-        debug('preCreate is exiting', {discoveryPlugin, rapport});
+
+async function preCreate(rapport: Rapport){
+  if(rapport.bulkAutomation)
+  {
+    const scheduledAutomation = rapport.bulkAutomation?.scheduledAutomation ?? null;
+
+    if(scheduledAutomation && scheduledAutomation.onlySaveOnChange)
+    {
+      if(!scheduledAutomation.enableImageChangeDetector && !scheduledAutomation.enableSelectorChangeDetector){
+        // odd case where both the detection algorithms are off
+        debug('change detection algorithms disabled', {rapport})
         return;
       }
-    }
-    else{
-      await debug('Queuing job', {discoveryPlugin, rapport});
-      getJobQueue().enqueue({ discoveryPlugin, rapport })
-    }
 
+      // use image hashtag comparison
+      if(scheduledAutomation.enableImageChangeDetector){
+        const previousRapports: Rapport[]|undefined = await db.rapport
+            .where("domain")
+            .equals(rapport.domain)
+            .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
+            .sortBy('createdOn')
+
+        const matchFound: Rapport|null = previousRapports.reverse().find(r => areEqual(rapport, r, ['hash'])) ?? null
+
+        if(matchFound){
+          // should be using the latest save
+          debug('only save on change -> change not detected, ignore', {scheduledAutomation, rapport, matchFound})
+        }
+        else{
+          rapport.tags = [new Tag('change-detected')];
+        }
+      }
+      if(scheduledAutomation.enableSelectorChangeDetector){
+        const selectors = findAllMatches(rapport.text, await db.selector.toArray(), 1)
+        // detect if selectors are on the page
+        if(selectors.length > 0){
+          rapport.tags = [new Tag('selectors-detected')];
+        }
+      }
+
+      if(rapport.tags.length === 0){
+        throw new NoChangeDetectedError();
+      }
+      debug('Changes detected', {rapport});
+    }
   }
 }

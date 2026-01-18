@@ -42,8 +42,14 @@ export async function initializeContextMenus() {
 
   // add link to bulk capture for future research
   chrome.contextMenus.create({
+    id: 'monitorUrl',
+    title: 'Monitor (Hourly)',
+    contexts: ['link'],
+  });
+
+  chrome.contextMenus.create({
     id: 'addBulkAutomationUrl',
-    title: 'Add url to Automation Queue',
+    title: 'Add URL to Automation Queue',
     contexts: ['link'],
   });
 
@@ -114,7 +120,19 @@ export async function initializeContextMenus() {
             pageUrl: info.pageUrl,
           });
           const record = await BulkAutomationUrl.createBulkAutomationJob(urlLink);
-          await addRecord(BULK_AUTOMATION, UUID, record);
+          await db.bulkAutomation.add(record);
+          ExtensionPin.setTemporaryPin('SAVD');
+        })();
+        break;
+      case 'monitorHourly':
+        (async () => {
+          const urlLink = selectCorrectLink({
+            linkUrl: info.linkUrl,
+            frameUrl: info.frameUrl,
+            pageUrl: info.pageUrl,
+          });
+          const record = await BulkAutomationUrl.createBulkAutomationJob(urlLink);
+          await db.bulkAutomation.add(record);
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;

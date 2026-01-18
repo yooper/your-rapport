@@ -2,9 +2,7 @@
 import { takeNext, complete, fail, recoverExpiredLeases, getQueue } from './automation-queue';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
-import { updateRecord, getLocalItem, setLocalItem } from '../models/db/local'
-import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, PAGE_INITIALIZED, UUID } from '../services/constants';
-import { IBulkAutomationRecord } from '../types';
+import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, PAGE_INITIALIZED } from '../services/constants';
 import { sleep } from '../utilities/loaders';
 import  ExtensionPin from '../utilities/ExtensionPin';
 import { CronExpressionParser } from 'cron-parser';
@@ -12,21 +10,25 @@ import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
 import { db } from '../models/db/dexieDb';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
+import { Tag } from '../models/schemas/Tag';
 
 
 let processing: boolean = false;
 
 export function initializeAutomationRunner() {
+  // add default set of tags used in the automations
+  db.tag.bulkPut([new Tag('change-detected'), new Tag('selectors-detected')]);
+
   // periodic tick to recover & continue
-  chrome.alarms.create('yr_queue_tick', { periodInMinutes: 0.5 });
+  chrome.alarms.create('yr_queue_tick', { periodInMinutes: 1 });
   chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_queue_tick') trigger(); });
 
   chrome.alarms.create('yr_scheduled_automations', { periodInMinutes: 1 });
   chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_scheduled_automations') queueScheduledAutomations(); });
 
   // resume on startup / install
-  chrome.runtime.onStartup.addListener(() => { recoverExpiredLeases().then(trigger); queueScheduledAutomations() });
-  chrome.runtime.onInstalled.addListener(() => { recoverExpiredLeases().then(trigger); queueScheduledAutomations() });
+  chrome.runtime.onStartup.addListener(() => { recoverExpiredLeases().then(trigger); });
+  chrome.runtime.onInstalled.addListener(() => { recoverExpiredLeases().then(trigger); });
 
   // public API for UI / context menu to enqueue
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -46,6 +48,7 @@ async function queueScheduledAutomations(){
   try {
     const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
     const utcNow: Date = new Date();
+    utcNow.setSeconds(0, 0);
     const automations: BulkAutomationUrl[] = [];
     for (const scheduledAutomation of scheduledAutomations) {
       const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
@@ -63,9 +66,8 @@ async function queueScheduledAutomations(){
         automations.push(automation)
       }
     }
-    const items: BulkAutomationUrl[] = await getLocalItem(BULK_AUTOMATION);
-    await setLocalItem(BULK_AUTOMATION, items.concat(automations));
 
+    await db.bulkAutomation.bulkPut(automations);
   }
   catch(e){
     debug('Error creating bulk automation from schedule automation')
@@ -82,88 +84,87 @@ async function trigger() {
 }
 
 async function processQueue() {
-  while (true) {
-    const job = await takeNext();
-    if (!job){
-      return;
-    }
-    ExtensionPin.setAutomationRunning(await getQueue());
-    job.ranOn = new Date().getTime()
-    await updateRecord(BULK_AUTOMATION, UUID, job);
-    let tabId: number | null = null;
-    try {
-      const tab = await chrome.tabs.create({ url: job.url, active: false });
-
-      if (!tab.id) {
-        await debug('failed to open tab', job)
-        throw new Error('failed to open tab');
+    while (true) {
+      const job = await takeNext();
+      if (!job) {
+        return;
       }
-      tabId = tab.id;
+      ExtensionPin.setAutomationRunning(await getQueue());
+      job.ranOn = new Date().getTime()
+      await db.bulkAutomation.put(job);
+      let tabId: number | null = null;
+      try {
+        const tab = await chrome.tabs.create({ url: job.url, active: false });
 
-      // Wait for load or DNS failure (ERR_NAME_NOT_RESOLVED)
-      await waitForCompleteOrDnsError(tabId);
-      const response = await chrome.tabs.sendMessage(tabId, { cmd: PAGE_INFO });
-      const { pageInfo } = response
-      await focusTab(tabId);
+        if (!tab.id) {
+          await debug('failed to open tab', job)
+          throw new Error('failed to open tab');
+        }
+        tabId = tab.id;
 
-      // wait for the page to finish loading
-      // TODO: add configurable delay
-      await sleep(3000)
+        // Wait for load or DNS failure (ERR_NAME_NOT_RESOLVED)
+        await waitForCompleteOrDnsError(tabId);
+        const response = await chrome.tabs.sendMessage(tabId, { cmd: PAGE_INFO });
+        const { pageInfo } = response
+        await focusTab(tabId);
 
-      // the automation requires scrolling through the page
-      if(!job.isDeepSave){
+        // wait for the page to finish loading
+        // TODO: add configurable delay
+        await sleep(3000)
+
+        // the automation requires scrolling through the page
+        if (!job.isDeepSave) {
           chrome.tabs.sendMessage(tabId, { cmd: ACTIVATE_CAPTURE, automation: job })
             .then(response => {
               debug(ACTIVATE_CAPTURE + ':', response);
             })
-        do {
+          do {
 
-          await sleep(1000)
-          const refreshedJob = (await getLocalItem(BULK_AUTOMATION))
-            .find((j: IBulkAutomationRecord) => j.uuid === job.uuid)
+            await sleep(2000)
+            const refreshedJob = await db.bulkAutomation.get(job.uuid)
 
-          if (!refreshedJob) {
-            throw Error('Unknown job')
+            if (!refreshedJob) {
+              throw Error('Unknown job')
+            }
+
+            job.completedOn = refreshedJob.completedOn;
+            job.status = refreshedJob.status
+
+            if (job.screenShotsCollected === refreshedJob.screenShotsCollected) {
+              // screen is not scrolling
+              job.completedOn = new Date().getTime()
+              job.status = "done";
+              job.description = 'scrolling stopped';
+              break;
+            }
+            job.screenShotsCollected = refreshedJob.screenShotsCollected
+            ExtensionPin.setAutomationRunning(await getQueue());
+            await sleep(3000);
           }
-
-          job.completedOn = refreshedJob.completedOn;
-          job.status = refreshedJob.status
-
-          if(job.screenShotsCollected === refreshedJob.screenShotsCollected){
-            // screen is not scrolling
-            job.completedOn = new Date().getTime()
-            job.status = "done";
-            job.description = 'scrolling stopped';
-            break;
-          }
-          job.screenShotsCollected = refreshedJob.screenShotsCollected
-          ExtensionPin.setAutomationRunning(await getQueue());
-          await sleep(3000);
+          while (['running', 'queued'].includes(job.status));
         }
-        while(['running', 'queued'].includes(job.status));
-      }
-      // deep save
-      else {
-        await capture(tab, pageInfo, true, job as BulkAutomationUrl);
-      }
-      await complete(job);
-    } catch (e: any) {
-      if (e instanceof NoChangeDetectedError)
-      {
-        ; // do nothing, no change was detected
-        job.description = job.description + ' No Change Detected';
-        await complete(job)
-      }
-      else
-      {
-        await fail(job, String(e?.message ?? e));
-      }
-    } finally {
-      if(!job.keepTabOpen && job.status !== 'failed' && tabId){
-        try { await chrome.tabs.remove(tabId); } catch {}
+        // deep save
+        else {
+          await capture(tab, pageInfo, true, job as BulkAutomationUrl);
+        }
+        await complete(job);
+      } catch (e: any) {
+        if (e instanceof NoChangeDetectedError) {
+          ; // do nothing, no change was detected
+          job.description = job.description + ' No Change Detected';
+          await complete(job)
+        } else {
+          await fail(job, String(e?.message ?? e));
+        }
+      } finally {
+        if (!job.keepTabOpen && job.status !== 'failed' && tabId) {
+          try {
+            await chrome.tabs.remove(tabId);
+          } catch {
+          }
+        }
       }
     }
-  }
 }
 
 function waitForCompleteOrDnsError(tabId: number) {

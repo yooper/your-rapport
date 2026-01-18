@@ -40,34 +40,13 @@ export async function capture(
       deepSave
     );
 
-
-    if(bulkAutomation)
-    {
-      // assign the bulk automation if one has been
-      record.bulkAutomation = bulkAutomation;
-      const scheduledAutomation = record.bulkAutomation?.scheduledAutomation ?? null;
-
-      if(scheduledAutomation && scheduledAutomation.onlySaveOnChange)
-      {
-        const previousRapports: Rapport[]|undefined = await db.rapport
-            .where("domain")
-            .equals(record.domain)
-            .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
-            .sortBy('createdOn')
-
-        const previousRapport: Rapport|null = previousRapports.at(-1) ?? null;
-
-        if(previousRapports.length > 0 && areEqual(record, previousRapport, ['hash'])){
-          // should be using the latest save
-          debug('only save on change -> change not detected, ignore', {scheduledAutomation, rapport:record, previousRapport})
-          ExtensionPin.setDefault();
-          throw new NoChangeDetectedError();
-          return;
-        }
-
-        record.tags = [new Tag('change-detected')];
-      }
+    record.bulkAutomation = bulkAutomation
+    await applyBackgroundJobs(record, 'preCreate')
+    if(!record){
+      debug('preCreate plugin rejected saving the rapport')
+      return;
     }
+
 
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
