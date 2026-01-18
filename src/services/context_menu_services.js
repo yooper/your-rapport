@@ -16,6 +16,7 @@ import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
 import { waitForPageInfo } from '../backgrounds/automation-runner';
 import { db } from '../models/db/dexieDb';
+import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
 
 /**
  * Add the selectors as menu items
@@ -130,9 +131,8 @@ export async function initializeContextMenus() {
             linkUrl: info.linkUrl,
             frameUrl: info.frameUrl,
             pageUrl: info.pageUrl,
-          });
-          const record = await BulkAutomationUrl.createBulkAutomationJob(urlLink);
-          await db.bulkAutomation.add(record);
+          })
+          await ScheduledAutomation.addMonitor(urlLink);
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;

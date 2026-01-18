@@ -174,30 +174,29 @@ export class Rapport {
    * Centralize adding rapports in the db
    * @param rapport
    */
-  static async add(rapport: Rapport) : Promise<Rapport>
+  static async add(rapport: Rapport)
   {
     await db.rapport.add(rapport);
     // Queue up the background jobs (fire-and-forget; log when done)
-    await applyBackgroundJobs(rapport, 'create').then(() => {
-      debug('preCreate background job completed', rapport)
+    applyBackgroundJobs(rapport, 'create').then(() => {
+      debug('background job completed', rapport);
+      Rapport.sync(rapport);
     });
-    return rapport
   }
 
   /**
    * Centralize updating rapports in the db
    * @param rapport
    */
-  static async put(rapport: Rapport) : Promise<Rapport>
+  static async put(rapport: Rapport)
   {
     // TODO: there is a bug with duplication,
     await db.rapport.put(rapport)
     // Queue up the background jobs (fire-and-forget; log when done)
-    await applyBackgroundJobs(rapport, 'update').then(() => {
+    applyBackgroundJobs(rapport, 'update').then(() => {
       debug('background job completed', rapport);
       Rapport.sync(rapport);
     });
-    return rapport
   }
 
   /**

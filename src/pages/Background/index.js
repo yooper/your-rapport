@@ -22,7 +22,6 @@ import { debug } from '../../services/logger_services';
 import { JobQueue } from '../../models/schemas/JobQueue';
 
 import { initializeAutomationRunner, waitForPageInfo } from '../../backgrounds/automation-runner';
-import { addRecord } from '../../models/db/local';
 import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
@@ -52,6 +51,7 @@ chrome.commands.onCommand.addListener(async(command) => {
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
       chrome.sidePanel.open({ tabId: tabs[0].id })
     })
+    return;
   }
 
   await debug(`Command ${command} received`)

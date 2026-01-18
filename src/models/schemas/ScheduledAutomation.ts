@@ -1,6 +1,7 @@
 import { getUtcNow } from '../../utilities/transformers';
 import { ChangeDetection } from '../../types';
 import { DiscoveryPlugin } from './DiscoveryPlugin';
+import { db } from '../db/dexieDb';
 
 export class ScheduledAutomation {
   uuid: string;
@@ -42,6 +43,11 @@ export class ScheduledAutomation {
     this.tags = []
   }
 
-  static async addMonitor()
+  static async addMonitor(url: string){
+    const scheduledAutomation = new ScheduledAutomation();
+    scheduledAutomation.url = url;
+    scheduledAutomation.crontab = '0 * * * * *';
+    await db.scheduledAutomation.add(scheduledAutomation);
+  }
 
 }

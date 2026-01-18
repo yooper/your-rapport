@@ -47,7 +47,7 @@ export async function capture(
       return;
     }
 
-    // there is an issue with duplicated being generated, this mitigates the issue.
+    // there is an issue with duplicated records being generated, this mitigates the issue.
     if(_lastRapport && _lastRapport.hash === record.hash){
       debug('Duplicate detected, skipping', {_lastRapport, currentRapport:record});
       return;
