@@ -17,6 +17,7 @@ export class ScheduledAutomation {
   changeDetectors: ChangeDetection[];
   enableImageChangeDetector: boolean;
   enableSelectorChangeDetector: boolean;
+  enableTextChangeDetector: boolean;
   onlySaveOnChange: boolean;
   lastRanOn: number | null;
   lastError: string | null;
@@ -35,6 +36,7 @@ export class ScheduledAutomation {
     this.onlySaveOnChange = true;
     this.enableImageChangeDetector = true;
     this.enableSelectorChangeDetector = true;
+    this.enableTextChangeDetector = true;
     this.lastRanOn = null;
     this.runInServiceWorker = false;
     this.lastError = null
@@ -43,10 +45,15 @@ export class ScheduledAutomation {
     this.tags = []
   }
 
-  static async addMonitor(url: string){
+  /**
+   * The default runs every minute
+   * @param url
+   * @param crontab
+   */
+  static async addMonitor(url: string, crontab: string = '0 * * * * *'){
     const scheduledAutomation = new ScheduledAutomation();
     scheduledAutomation.url = url;
-    scheduledAutomation.crontab = '0 * * * * *';
+    scheduledAutomation.crontab = crontab;
     await db.scheduledAutomation.add(scheduledAutomation);
   }
 

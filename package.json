@@ -23,7 +23,7 @@
     "dexie-react-hooks": "^4.2.0",
     "fflate": "^0.8.2",
     "jmespath": "^0.16.0",
-    "mailparser": "^3.9.1",
+    "mhtml-to-html": "^2.0.1",
     "monaco-editor": "^0.55.1",
     "mui-datatables": "^4.3.0",
     "mustache": "^4.2.0",
@@ -33,7 +33,6 @@
     "react18-json-view": "^0.2.9",
     "styled-components": "^6.1.0",
     "validator": "^13.15.0",
-    "view-json-react": "^1.1.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {

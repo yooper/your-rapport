@@ -1,12 +1,9 @@
 import * as React from "react";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
-import RefreshIcon from '@mui/icons-material/Refresh';
 import QueueIcon from '@mui/icons-material/Queue';
 import { IExtractedData } from '../types';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
-import { BULK_AUTOMATION, UUID } from '../services/constants';
-import { addRecord} from '../models/db/local';
 import { createTab, processNotification } from '../utilities/loaders';
 import Stack from "@mui/material/Stack";
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';

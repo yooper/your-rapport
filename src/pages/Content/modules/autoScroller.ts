@@ -74,20 +74,6 @@ function setAutomation(msg: AutoScrollerMessage): void {
   }
 }
 
-async function safeUpdateAutomation(partial: Partial<BulkAutomationRecord>): Promise<void> {
-  try {
-    Object.assign(automation, partial);
-    await db.bulkAutomation.put(automation);
-    await updateRecord(BULK_AUTOMATION, UUID, automation);
-  } catch (e) {
-    // Don’t crash the scroller if persistence fails.
-    await debug("Failed to update automation record", {
-      error: e instanceof Error ? e.message : String(e),
-      partial,
-    });
-  }
-}
-
 async function safeSendMessage<T = unknown>(payload: AnyRecord): Promise<T | null> {
   try {
     const res = (await chrome.runtime.sendMessage(payload)) as T;

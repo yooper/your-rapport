@@ -42,13 +42,11 @@ export async function takeNext(): Promise<BulkAutomationUrl | null> {
 }
 
 export async function complete(queuedJob: BulkAutomationUrl) {
-  if (queuedJob) {
-    queuedJob.status = 'done';
-    queuedJob.leaseUntil = null;
-    queuedJob.completedOn = new Date().getTime();
-    queuedJob.description = 'Completed Successfully'
-    await db.bulkAutomation.put(queuedJob);
-  }
+  queuedJob.status = 'done';
+  queuedJob.leaseUntil = null;
+  queuedJob.completedOn = new Date().getTime();
+  queuedJob.description = 'Completed Successfully: '+ queuedJob.description ?? '';
+  await db.bulkAutomation.put(queuedJob);
 }
 
 export async function fail(queuedJob: BulkAutomationUrl, reason: string) {

@@ -23,6 +23,7 @@ import { addRecord} from './../models/db/local';
 import { areEqual } from './change_detection_services';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { Tag } from '../models/schemas/Tag';
+import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
 
 
 /**
@@ -369,10 +370,8 @@ function _buildBodyAndHeaders(
     if (v instanceof File) {
       fd.append(k, v, v.name);
     } else if (Array.isArray(v)) {
-      // Append arrays with index: field[0], field[1], ...
       v.forEach((item, idx) => fd.append(`${k}[${idx}]`, item ?? ''));
     } else if (v !== null && typeof v === 'object') {
-      // For objects, append as JSON string
       fd.append(k, JSON.stringify(v));
     } else {
       fd.append(k, String(v ?? ''));
@@ -417,9 +416,9 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       label: 'Download Record',
       pluginType: 'content',
       description: 'Download a JSON file that has all the metadata. Great for sharing with others.',
-      onClick: (record: IRapport) =>
+      onClick: (rapport: IRapport) =>
       {
-        downloadJsonData(record, `your.rapport.dp.${record.uuid}.json`);
+        downloadJsonData(rapport, `your.rapport.dp.${rapport.uuid}.json`);
       }
     }),
     new DiscoveryPlugin({
@@ -427,11 +426,22 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       label: 'Download Screenshot',
       pluginType: 'content',
       description: 'Download the screenshot to your computer.',
-      onClick: (record: IRapport) =>
+      onClick: (rapport: IRapport) =>
       {
-        if(record.screenshot){
-          downloadBase64Image(record.screenshot, `${record.uuid}.png`);
+        if(rapport.screenshot){
+          downloadBase64Image(rapport.screenshot, `${rapport.uuid}.png`);
         }
+      }
+    }),
+    new DiscoveryPlugin({
+      uuid: '0d18fd15-4bb0-4861-ad7f-02a672c8ac21',
+      label: 'Monitor(Hourly) ',
+      pluginType: 'url',
+      description: 'Open this web page every hour and scan for changes.',
+      groupName: 'Default',
+      onClick: async(rapport: IRapport) =>
+      {
+        await ScheduledAutomation.addMonitor(rapport.url)
       }
     }),
     new DiscoveryPlugin({
@@ -439,9 +449,9 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       label: 'Print Rapport',
       pluginType: 'content',
       description: 'Print a PDF report that includes the metadata',
-      onClick: (record: IRapport) =>
+      onClick: (rapport: IRapport) =>
       {
-        printPdfReport('basic', { records: [record] });
+        printPdfReport('basic', { records: [rapport] });
       }
     }),
     new DiscoveryPlugin({
@@ -450,10 +460,10 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       pluginType: 'url',
       description: 'Queue the url / hyperlink for collection',
       groupName: 'Default',
-      onClick: async(record: IRapport) =>
+      onClick: async(rapport: IRapport) =>
       {
-          const automation = BulkAutomationUrl.createBulkAutomationJob(record.url);
-          await db.bulkAutomation.add(record);
+          const automation = BulkAutomationUrl.createBulkAutomationJob(rapport.url);
+          await db.bulkAutomation.add(automation);
       }
     })
   ]
@@ -479,12 +489,10 @@ export async function applyBackgroundJobs(rapport: Rapport, eventType: string) :
 
 
 async function preCreate(rapport: Rapport){
-  if(rapport.bulkAutomation)
-  {
+  if(rapport.bulkAutomation) {
     const scheduledAutomation = rapport.bulkAutomation?.scheduledAutomation ?? null;
 
-    if(scheduledAutomation && scheduledAutomation.onlySaveOnChange)
-    {
+    if(scheduledAutomation && scheduledAutomation.onlySaveOnChange) {
       if(!scheduledAutomation.enableImageChangeDetector && !scheduledAutomation.enableSelectorChangeDetector){
         // odd case where both the detection algorithms are off
         debug('change detection algorithms disabled', {rapport})
@@ -514,6 +522,24 @@ async function preCreate(rapport: Rapport){
         // detect if selectors are on the page
         if(selectors.length > 0){
           rapport.tags = [new Tag('selectors-detected')];
+        }
+      }
+
+      if(scheduledAutomation.enableTextChangeDetector){
+        const previousRapports: Rapport[]|undefined = await db.rapport
+            .where("domain")
+            .equals(rapport.domain)
+            .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
+            .sortBy('createdOn')
+
+        const matchFound: Rapport|null = previousRapports.reverse().find(r => areEqual(rapport, r, ['text'])) ?? null
+
+        if(matchFound){
+          // should be using the latest save
+          debug('only save on change -> change not detected, ignore', {scheduledAutomation, rapport, matchFound})
+        }
+        else{
+          rapport.tags = [new Tag('text-change-detected')];
         }
       }
 

@@ -80,12 +80,12 @@ export async function capture(
         record.artifacts.push(Artifact.getAttachment(htmlArtifact));
 
       } catch (e) {
-        await debug(String(e));
+        await debug(String(e))
+        return;
       }
     }
     // persist the record
     await Rapport.add(record);
-
     _lastRapport = record;
 
     // update the configuration last saved on metadata

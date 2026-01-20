@@ -29,6 +29,7 @@ type FormState = Pick<
 > &
   Partial<Pick<ScheduledAutomation, "onlySaveOnChange" | "changeDetectors" | "enableImageChangeDetector" | "enableSelectorChangeDetector">>;
 
+// every minute
 const DEFAULT_CRONTAB = "0 * * * * *";
 
 const toNullIfBlank = (v: string) => {
@@ -53,6 +54,7 @@ export default function ScheduleAutomationDialog({
     changeDetectors: initialValues?.changeDetectors ?? [],
     enableImageChangeDetector: initialValues?.enableImageChangeDetector ?? true,
     enableSelectorChangeDetector: initialValues?.enableSelectorChangeDetector ?? true,
+    enableTextChangeDetector: initialValues?.enableTextChangeDetector ?? true,
 
   });
 
@@ -70,6 +72,7 @@ export default function ScheduleAutomationDialog({
       changeDetectors: initialValues?.changeDetectors ?? [],
       enableImageChangeDetector: initialValues?.enableImageChangeDetector ?? true,
       enableSelectorChangeDetector: initialValues?.enableSelectorChangeDetector ?? true,
+      enableTextChangeDetector: initialValues?.enableTextChangeDetector ?? true,
     });
   }, [open, initialValues]);
 
@@ -198,6 +201,24 @@ export default function ScheduleAutomationDialog({
                     <HelperPopover message="Save the page when selectors exist" />
                   </IconButton>
                   <span>Detect Selector Change</span>
+                </>
+                }
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!values.enableTextChangeDetector}
+                    onChange={(e) =>
+                      setField("enableTextChangeDetector")(e.target.checked)
+                    }
+                  />
+                }
+                label={
+                <>
+                  <IconButton>
+                    <HelperPopover message="Save the page when text is different, useful static web sites or json" />
+                  </IconButton>
+                  <span>Detect Text Change</span>
                 </>
                 }
               />

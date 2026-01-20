@@ -17,7 +17,7 @@ let processing: boolean = false;
 
 export function initializeAutomationRunner() {
   // add default set of tags used in the automations
-  db.tag.bulkPut([new Tag('change-detected'), new Tag('selectors-detected')]);
+  db.tag.bulkPut([new Tag('change-detected'), new Tag('selectors-detected'), new Tag('text-change-detected')]);
 
   // periodic tick to recover & continue
   chrome.alarms.create('yr_queue_tick', { periodInMinutes: 1 });
@@ -46,8 +46,10 @@ async function queueScheduledAutomations(){
   // upon trigger, we need to check for any active scheduled automations that must be run by checking their crontab evaluation and generate
   // any associated bulk automations
   try {
+    processing = true;
     const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
     const utcNow: Date = new Date();
+    debug('Scheduling automations', {scheduledAutomations});
     utcNow.setSeconds(0, 0);
     const automations: BulkAutomationUrl[] = [];
     for (const scheduledAutomation of scheduledAutomations) {
@@ -67,10 +69,16 @@ async function queueScheduledAutomations(){
       }
     }
 
-    await db.bulkAutomation.bulkPut(automations);
+    debug('Scheduled Automations Created', {automations});
+    await db.bulkAutomation.bulkAdd(automations);
   }
   catch(e){
     debug('Error creating bulk automation from schedule automation')
+  }
+  finally {
+    processing = false;
+    // start processing the scheduled jobs immediately
+    trigger();
   }
 }
 
@@ -151,7 +159,7 @@ async function processQueue() {
       } catch (e: any) {
         if (e instanceof NoChangeDetectedError) {
           ; // do nothing, no change was detected
-          job.description = job.description + ' No Change Detected';
+          job.description = 'No Change Detected';
           await complete(job)
         } else {
           await fail(job, String(e?.message ?? e));

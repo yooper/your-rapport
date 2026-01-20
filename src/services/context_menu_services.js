@@ -43,7 +43,7 @@ export async function initializeContextMenus() {
 
   // add link to bulk capture for future research
   chrome.contextMenus.create({
-    id: 'monitorUrl',
+    id: 'monitorUrlHourly',
     title: 'Monitor (Hourly)',
     contexts: ['link'],
   });
@@ -125,14 +125,14 @@ export async function initializeContextMenus() {
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;
-      case 'monitorHourly':
+      case 'monitorUrlHourly':
         (async () => {
           const urlLink = selectCorrectLink({
             linkUrl: info.linkUrl,
             frameUrl: info.frameUrl,
             pageUrl: info.pageUrl,
           })
-          await ScheduledAutomation.addMonitor(urlLink);
+          await ScheduledAutomation.addMonitor(urlLink, '0 0 1 * * *');
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;

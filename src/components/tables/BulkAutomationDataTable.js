@@ -177,10 +177,18 @@ export default function BulkAutomationTable(props) {
       name: 'createdOn',
       label: 'CREATED ON',
       options: {
-        display: false,
+        display: "excluded",
         filter: false,
         sort: true,
-      },
+        searchable: false,
+        customBodyRenderLite: (dataIndex) => {
+          if (!rows[dataIndex].createdOn) {
+            return <div></div>;
+          }
+          const date = new Date(parseInt(rows[dataIndex].createdOn));
+          return <div>{date.toLocaleString()}</div>;
+        },
+      }
     },
     {
       name: 'screenShotsCollected',
