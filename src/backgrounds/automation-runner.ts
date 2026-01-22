@@ -45,41 +45,44 @@ export function initializeAutomationRunner() {
 async function queueScheduledAutomations(){
   // upon trigger, we need to check for any active scheduled automations that must be run by checking their crontab evaluation and generate
   // any associated bulk automations
-  try {
-    processing = true;
-    const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
-    const utcNow: Date = new Date();
-    debug('Scheduling automations', {scheduledAutomations});
-    utcNow.setSeconds(0, 0);
-    const automations: BulkAutomationUrl[] = [];
-    for (const scheduledAutomation of scheduledAutomations) {
-      const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
-      if(interval.includesDate(utcNow)){
-        // TODO: queue the job
-        const automation = BulkAutomationUrl.createBulkAutomationJob(scheduledAutomation.url, {
-          keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
-          isDeepSave: scheduledAutomation.isDeepSave ?? true,
-          scheduledAutomation: scheduledAutomation ?? null,
-          unitDefault: scheduledAutomation.unit ?? 'count',
-          unitValue: scheduledAutomation.value ?? 100
-        });
-        // MUST be set to active to trigger running in the automation queue
-        automation.active = true;
-        automations.push(automation)
+  db.transaction('rw', db.bulkAutomation, db.scheduledAutomation, async () => {
+      processing = true;
+      const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
+      const utcNow: Date = new Date();
+      debug('Scheduling automations', {scheduledAutomations});
+      utcNow.setSeconds(0, 0);
+      const automations: BulkAutomationUrl[] = [];
+      for (const scheduledAutomation of scheduledAutomations) {
+        const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
+        if(interval.includesDate(utcNow)){
+          // TODO: queue the job
+          const automation = BulkAutomationUrl.createBulkAutomationJob(scheduledAutomation.url, {
+            keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
+            isDeepSave: scheduledAutomation.isDeepSave ?? true,
+            scheduledAutomation: scheduledAutomation ?? null,
+            unitDefault: scheduledAutomation.unit ?? 'count',
+            unitValue: scheduledAutomation.value ?? 100
+          });
+          // MUST be set to active to trigger running in the automation queue
+          automation.active = true;
+          automations.push(automation)
+          if(automations.length > 0){
+            debug('Scheduled Automations Created', {automations});
+            await db.bulkAutomation.bulkAdd(automations);
+          }
+          return automations
+        }
       }
-    }
-
-    debug('Scheduled Automations Created', {automations});
-    await db.bulkAutomation.bulkAdd(automations);
-  }
-  catch(e){
-    debug('Error creating bulk automation from schedule automation')
-  }
-  finally {
-    processing = false;
-    // start processing the scheduled jobs immediately
-    trigger();
-  }
+    }).then((automations) => {
+      if(automations?.length ?? [].length > 0){
+        debug('The following bulk automations were scheduled', {automations})
+      }
+    }).catch(error => {
+      debug('queueScheduledAutomations::error ' + String(error));
+    }).finally(() => {
+      processing = false;
+      trigger();
+  })
 }
 
 async function trigger() {

@@ -41,24 +41,25 @@ export async function initializeContextMenus() {
     contexts: ['page', 'image', 'video', 'audio'],
   });
 
-  // add link to bulk capture for future research
+  // Add right click for capturing these other types of contexts
   chrome.contextMenus.create({
-    id: 'monitorUrlHourly',
+    id: 'deepSave',
+    title: 'Deep Save',
+    contexts: ['page', 'image', 'video', 'audio'],
+  });
+
+
+  // add option for monitoring
+  chrome.contextMenus.create({
+    id: 'monitorHourly',
     title: 'Monitor (Hourly)',
-    contexts: ['link'],
+    contexts: ['link', 'page'],
   });
 
   chrome.contextMenus.create({
     id: 'addBulkAutomationUrl',
     title: 'Add URL to Automation Queue',
     contexts: ['link'],
-  });
-
-  // Add right click for capturing these other types of contexts
-  chrome.contextMenus.create({
-    id: 'deepSave',
-    title: 'Deep Save',
-    contexts: ['page', 'image', 'video', 'audio'],
   });
 
   // add a seperator
@@ -125,14 +126,14 @@ export async function initializeContextMenus() {
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;
-      case 'monitorUrlHourly':
+      case 'monitorHourly':
         (async () => {
           const urlLink = selectCorrectLink({
             linkUrl: info.linkUrl,
             frameUrl: info.frameUrl,
             pageUrl: info.pageUrl,
           })
-          await ScheduledAutomation.addMonitor(urlLink, '0 0 1 * * *');
+          await ScheduledAutomation.addMonitor(urlLink, '0 0 * * * *');
           ExtensionPin.setTemporaryPin('SAVD');
         })();
         break;

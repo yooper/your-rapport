@@ -25,6 +25,7 @@ import { initializeAutomationRunner, waitForPageInfo } from '../../backgrounds/a
 import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
+import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
 
 /**
  * Initialize services when the extension is installed / activated
@@ -212,13 +213,16 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           break;
         case 'ping':
           sendResponse({completed: true});
+          break;
+        case 'monitorHourly':
+          await ScheduledAutomation.addMonitor(message.url, '0 0 * * * *');
+          break;
         default:
           return false;
       }
     })()
     return false;
   } catch (e) {
-
     debug('onMessageExternal:failure', { message, sender })
   }
 })

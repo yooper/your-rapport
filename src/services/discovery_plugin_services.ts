@@ -441,7 +441,7 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       groupName: 'Default',
       onClick: async(rapport: IRapport) =>
       {
-        await ScheduledAutomation.addMonitor(rapport.url)
+        await ScheduledAutomation.addMonitor(rapport.url, '0 0 * * * *');
       }
     }),
     new DiscoveryPlugin({

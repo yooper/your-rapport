@@ -1,11 +1,3 @@
-import {
-
-  getLocalItem,
-  setLocalItem,
-} from '../db/local';
-import {
-  RAPPORT,
-} from '../../services/constants';
 import { Configuration } from './Configuration';
 import { IRapport, ISelector } from '../../types';
 import { db } from '../db/dexieDb';
@@ -13,6 +5,7 @@ import { findAllMatches, getUtcNow } from '../../utilities/transformers';
 import { SelectorSchema } from '../validators/Selector.validator';
 import { debug } from '../../services/logger_services';
 import { Rapport } from './Rapport';
+import { Tag } from './Tag';
 
 /**
  * Represents a single Selector used for tagging or filtering records.
@@ -23,6 +16,7 @@ export class Selector implements ISelector {
   description: string | null;
   count: number;
   active: boolean;
+  tags: Tag[];
 
   constructor(
     name: string,
@@ -35,6 +29,7 @@ export class Selector implements ISelector {
     this.description = description;
     this.count = 0;
     this.active = active;
+    this.tags = []
   }
 
   /**
@@ -56,8 +51,6 @@ export class Selector implements ISelector {
       // silence duplicate errors
       await debug(String(e));
     }
-
-
   }
 
   /**
@@ -84,7 +77,6 @@ export class Selector implements ISelector {
     configuration.updatedOn = getUtcNow();
     await Configuration.setConfiguration(configuration);
   }
-
 
   /**
    *

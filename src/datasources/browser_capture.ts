@@ -7,6 +7,7 @@ import { Artifact } from '../models/schemas/Artifact';
 import { getUtcNow } from '../utilities/transformers';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { applyBackgroundJobs } from '../services/discovery_plugin_services';
+import { convert } from 'mhtml-to-html';
 
 
 let _lastRapport: Rapport|null = null;
@@ -69,8 +70,10 @@ export async function capture(
         // attach reference to record
         record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
 
+        const html = await convert(await (await blob).text());
+
         const htmlArtifact = await Artifact.create(
-          new Blob([pageInfo.html], { type: 'text/html' }),
+          new Blob([html.data], { type: 'text/html' }),
           record.uuid,
           record.url,
           'text/html'
@@ -105,6 +108,6 @@ export async function capture(
     setTimeout(() => {
       ExtensionPin.setDefault(tab);
     }, 3000);
-    // TODO: additional post-processing
+
   }
 }

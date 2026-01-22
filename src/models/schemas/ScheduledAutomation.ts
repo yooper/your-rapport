@@ -23,6 +23,7 @@ export class ScheduledAutomation {
   lastError: string | null;
   discoveryPlugin: DiscoveryPlugin | null;
   tags: string[];
+  caseManagementUuid: string;
 
   constructor() {
     this.uuid = crypto.randomUUID();
@@ -42,7 +43,8 @@ export class ScheduledAutomation {
     this.lastError = null
     this.crontab = '0 * * * * *';
     this.discoveryPlugin = null;
-    this.tags = []
+    this.tags = [];
+    this.caseManagementUuid = "30583002-f730-4383-bf28-fdd8aadcf387"
   }
 
   /**

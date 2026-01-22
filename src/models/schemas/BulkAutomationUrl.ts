@@ -24,6 +24,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
   leaseUntil: number | null;
   status: 'queued' | 'running' | 'done' | 'failed';
   scheduledAutomation: ScheduledAutomation | null;
+  caseManagementUuid: string;
 
   constructor() {
     this.uuid = crypto.randomUUID();
@@ -46,6 +47,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
     this.leaseUntil = null;
     this.status = 'queued';
     this.scheduledAutomation = null;
+    this.caseManagementUuid = "30583002-f730-4383-bf28-fdd8aadcf387"
   }
 
   static createBulkAutomationJob(

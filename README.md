@@ -4,17 +4,17 @@
 
 # Your Rapport – Collect, Reflect, and Collaborate.
 
-
 Your Rapport is an open source digital archiving platform that runs within your browser. It uses plugins written in json
-to provide additional functionality. The functionality aids in adding flexibility without introducing lots of custom code.
+to provide additional functionality. The functionality aids in adding flexibility without introducing lots of custom code
+or complexity.
 
-These different stages are processes within a standard ETL pipeline. This system is designed to run entirely within the 
-chrome extension. The "Discovery Plugins" enable connecting events to actions. An example would be, you 
-save a web page, mhtml, image, javascript code, etc and you want to have it scanned by remote software for all "People, 
-Places, or Names" in the text or maybe you are using an image and want that text extracted. This software will collect
-the data using your browser and save it locally. When connecting data to a remove service it is an option to save the 
-response from the remote service into your local Your App. Here is a breakdown of the different stages for processing
-online data onto your system. 
+Below are the stages used to process captured information, commonly referred to as an ETL pipeline. This workflow is 
+designed to run entirely inside a Chrome extension. Discovery Plugins connect events to actions. For example, you might 
+save a web page, an MHTML file, an image, or a snippet of JavaScript and then trigger a scan by a remote service to 
+extract people, places, or names from the text, or run OCR to pull text from an image. The extension collects the 
+content through your browser and stores it locally. When you choose to send data to a remote service, you can also store
+the response locally so it becomes part of your archive. Below is a breakdown of each stage involved in processing 
+online content within the Chrome extension.
 
 * Collecting
   * Media Types
@@ -36,7 +36,7 @@ online data onto your system.
     * Uploading Dialog
     * Auto Sync (Not Available, yet)
   * Exporting
-    * Sync to Local Disk
+    * Sync to Local Disk (Pro Feature)
     * Sync to Remote Source
     * Export to File
   * Change Data Capture
@@ -66,6 +66,18 @@ online data onto your system.
       * Create
       * Update
       * Delete
+    * Actions
+      * Create Tab
+      * Submit Form
+      * Foreground Runner
+      * Background Runner
+  * Case Management (Not Available, yet)
+    * Create
+    * Update
+    * Delete
+  * Reporting
+    * Basic Reports
+    * Dashboard Reports (Not Available, yet)
   * Simplified Export (For AI Tools)
 
 Your Rapport is an Open Source tool that implements the best practices for 
@@ -79,20 +91,20 @@ Consider supporting this project for $3 a month, available through stripe [pro l
 
 [Wiki Docs](https://github.com/yooper/your-rapport/wiki)
 
-Check out the wiki for more in depth information. Our review the source in the github repo. 
+Check out the wiki for more in depth information. Or review the source code in the github repo. 
 
 ### Getting Started 
 After installing the Chrome extension from https://chromewebstore.google.com/detail/your-rapport/clkaalonjdkliiaadkgodlfbiipidjmn, 
 "Your Rapport" will automatically be ready to collect.
 
-After installing, click the "Your Rapport" pin in your extension tab and select the action you want performed.  
+After installing, click the "Your Rapport" pin in your extension tab and select the action you want performed or,  
 
 There are several options and actions available when archiving data:
  * `Alt+S` collects a single screenshot and deep copy which is a mhtml file and a html version of the web page.
  * `Alt+A` autoscroll and collect multiple screenshots, or stop the autoscroll.
  * `Alt+X` opens up the dashboard where you can search, print, share, or delete your collection. 
  * `Alt+Q` quick scan opens a sub-panel that displays data extracted insights from the live web page. 
- * `Mouse - Right Click` and select the **Autoscroll Collect** menu option with the "Your Rapport" logo
+ * `Mouse - Right Click` gives several options depending upon what you click on within a web page
 
 Your Rapport is an open source commercial tool for the following reasons:
  * Transparency in how software works and where the data goes is an important security and privacy concern to all of us
@@ -105,6 +117,6 @@ Your Rapport is an open source commercial tool for the following reasons:
 # Key Features
 * Mostly Free
 * Archive thousands of web pages, images, articles, recipes, or other content from the web. 
-* Search using text, tags, selectors or dates
+* Search using text, tags, selectors or dates to filter and dive into your digital archives.
 * Source code is Open Source
 
