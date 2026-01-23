@@ -151,9 +151,17 @@ export default function SearchDataTable(props) {
                           iconType={'AttachmentIcon'}
                           defaultHeaders={attachmentHeaders}
                           defaultRecords={record.artifacts?.map(a => {
+
+                            if(a.mimeType === 'multipart/related') {
+                              return {
+                                ...a,
+                                'view': `chrome-extension://${chrome.runtime.id}/api.html?format=html&uuid=${a.uuid}`
+                              }
+                            }
+
                             return {
                               ...a,
-                              'view': `chrome-extension://${chrome.runtime.id}/api.html?format=file&uuid=${a.uuid}`
+                              'view': `chrome-extension://${chrome.runtime.id}/api.html?format=txt&uuid=${a.uuid}`
                             }
                           })}
                         />

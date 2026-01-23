@@ -9,6 +9,9 @@ import { processApiRequest } from "../../services/api_services";
 import { db } from "../../models/db/dexieDb";
 import { Artifact } from "../../models/schemas/Artifact";
 import { initExtensionPage } from '../../services/init_services';
+import { hideLoader, showLoader } from '../../utilities/loaders';
+import { convert } from 'mhtml-to-html';
+import { debug } from '../../services/logger_services';
 
 
 type ViewMode = "json" | "artifact";
@@ -161,41 +164,62 @@ const ApiRequestViewer: React.FC<Props> = ({ autoRun = true, pretty = 2 }) => {
   );
 };
 
-const ArtifactLoader: React.FC<{ uuid: string }> = ({ uuid }) => {
-  const [artifact, setArtifact] = useState<Artifact | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-
-    async function fetchData()
+async function render(artifact: Artifact, format: string)
+{
+  // artifacts and format can be incompatible in unexpected ways
+  try{
+    switch(format)
     {
-      setArtifact(await db.artifact.get(uuid) ?? null)
+      case 'html':
+        if(artifact.mimeType === 'multipart/related')
+        {
+          // TODO: Offer rendering engine option for converting
+          const html = await convert(await (await artifact.data).text());
+          _documentWrite(html.data);
+        }
+        else{
+          const text = await artifact.data.text();
+          _documentWrite(`${text}`);
+        }
+        break;
+      case 'json':
+      default:
+        const text = await artifact.data.text();
+        _documentWrite(`<pre>${text}</pre>`);
     }
-    fetchData();
-  }, []);
-
-  if(isLoading){
-    return <div></div>
   }
+  catch(e){
+    debug('error rending the data', {format, artifact});
+  }
+}
 
-  return <ArtifactViewer artifact={artifact} />;
-};
+
+const _documentWrite = (value: string) => {
+  document.body.innerHTML = value;
+}
 
 const App: React.FC = () => {
   const params = new URLSearchParams(window.location.search);
-  const format = (params.get("format") ?? "json").toLowerCase();
-  const uuid = params.get("uuid") ?? "";
-  const [isLoading, setIsLoading] = useState<boolean>();
-  const [artifact, setArtifact] = useState<Artifact|null>();
-  const [text, setText] = useState<string|null>()
+
+  const format: string = (params.get("format") ?? "json").toLowerCase();
+  const uuid:string = params.get("uuid") ?? "";
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   useEffect(() => {
 
     async function fetchData(){
+      showLoader();
       setIsLoading(true);
-      setArtifact(await db.artifact.get(uuid));
-      setText(await artifact?.data.text())
+      const artifact: Artifact|null = await db.artifact.get(uuid) ?? null;
+      if(!artifact){
+        document.body.innerHTML = 'Artifact Not Found'
+        return;
+      }
+
+      await render(artifact, format);
       setIsLoading(false);
+      hideLoader();
     }
 
     fetchData();
@@ -203,22 +227,9 @@ const App: React.FC = () => {
   }, [])
 
   if(isLoading){
-    return <div></div>
+    return <div>Loading...</div>
   }
-  else if(!isLoading && !artifact && !text){
-    return <div>Artifact cannot be rendered.</div>
-  }
-
-  return (
-    <pre>
-      { }
-    </pre>
-
-  )
-
 };
 
 const container = document.getElementById("app-container");
-if (!container) throw new Error('Missing root element with id="app-container".');
-
 createRoot(container).render(<App />);
