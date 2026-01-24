@@ -22,7 +22,9 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AttachmentIcon from "@mui/icons-material/Attachment";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
-import { hideLoader, showLoader } from "../../utilities/loaders";
+import { createTab, hideLoader, showLoader } from '../../utilities/loaders';
+import { CloudDownload } from '@mui/icons-material';
+import { downloadJsonData } from '../../utilities/transformers';
 
 type IconName =
   | "HelpOutlineIcon"
@@ -150,14 +152,25 @@ function RenderActions<T extends RecordType>(props: {
 
   if (header === "view") {
     return (
-      <Tooltip title="View">
+      <Tooltip title="View the record">
         <IconButton size="small" onClick={onView}>
-          <OpenInNewIcon fontSize="small" />
+          <OpenInNewIcon fontSize="small" onClick={() => createTab(record[header])} />
         </IconButton>
       </Tooltip>
     );
   }
-
+  else if(header === 'download') {
+    return (
+      <Tooltip title="Download the data to a file">
+        <IconButton size="small" onClick={onView}>
+          <CloudDownload fontSize="small" onClick={() => {
+            alert('TODO://')
+          }}
+          />
+        </IconButton>
+      </Tooltip>
+    );
+  }
   return formatCellValue((record as any)[header]);
 }
 

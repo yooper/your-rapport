@@ -12,6 +12,7 @@ import { initExtensionPage } from '../../services/init_services';
 import { hideLoader, showLoader } from '../../utilities/loaders';
 import { convert } from 'mhtml-to-html';
 import { debug } from '../../services/logger_services';
+import { blobToBase64Image } from '../../utilities/transformers';
 
 
 type ViewMode = "json" | "artifact";
@@ -165,12 +166,20 @@ const ApiRequestViewer: React.FC<Props> = ({ autoRun = true, pretty = 2 }) => {
 };
 
 
+/**
+ * TODO: support more than export exporting the artifacts into multiple views
+ * @param artifact
+ * @param format
+ */
 async function render(artifact: Artifact, format: string)
 {
   // artifacts and format can be incompatible in unexpected ways
   try{
     switch(format)
     {
+      case 'image':
+        const image = await blobToBase64Image(artifact.data);
+        return _documentWrite(`<img src='${image}`);
       case 'html':
         if(artifact.mimeType === 'multipart/related')
         {

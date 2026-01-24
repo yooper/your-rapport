@@ -152,13 +152,20 @@ export default function SearchDataTable(props) {
                           defaultHeaders={attachmentHeaders}
                           defaultRecords={record.artifacts?.map(a => {
 
-                            if(a.mimeType === 'multipart/related') {
+                            if(a.mimeType.startsWith('image')){
+                              return {
+                                ...a,
+                                'view': `chrome-extension://${chrome.runtime.id}/api.html?format=image&uuid=${a.uuid}`
+                              }
+                            }
+                            else if(a.mimeType === 'multipart/related') {
                               return {
                                 ...a,
                                 'view': `chrome-extension://${chrome.runtime.id}/api.html?format=html&uuid=${a.uuid}`
                               }
                             }
                             return {
+                              // default view template
                               ...a,
                               'view': `chrome-extension://${chrome.runtime.id}/api.html?format=txt&uuid=${a.uuid}`
                             }

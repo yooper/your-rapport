@@ -10,7 +10,7 @@ import { Configuration } from '../models/schemas/Configuration';
 export async function debug(
   message: string,
   data: any = {},
-  includeTrace = false
+  includeTrace = true
 ): Promise<void> {
   try {
     const value: boolean = await Configuration.getConfigurationValue<boolean>(
@@ -21,6 +21,9 @@ export async function debug(
       console.trace(message, data);
     } else if (value) {
       console.log(message, data);
+    }
+    else{
+      // debug is off
     }
   } catch (err) {
     console.error('Failed to retrieve debug configuration:', err);

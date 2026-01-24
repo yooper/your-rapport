@@ -73,6 +73,8 @@ export class Artifact implements IArtifact {
     URL.revokeObjectURL(url);
   }
 
+
+
   static async serialize(artifact: Artifact)
   {
     return {
