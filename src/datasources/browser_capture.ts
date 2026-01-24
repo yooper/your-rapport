@@ -55,7 +55,7 @@ export async function capture(
 
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
-      // implement retry strategy to mitigate errors when saving
+      // TODO: implement retry strategy to mitigate errors when saving
       try {
         const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
         const mhtmlArtifact = await Artifact.create(

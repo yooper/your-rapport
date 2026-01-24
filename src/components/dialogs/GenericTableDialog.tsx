@@ -5,6 +5,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import {
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -18,12 +19,16 @@ import {
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { hideLoader, showLoader, createTab } from '../../utilities/loaders'
-import AttachmentIcon from '@mui/icons-material/Attachment';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import AttachmentIcon from "@mui/icons-material/Attachment";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
+import { hideLoader, showLoader } from "../../utilities/loaders";
 
-type IconName = "HelpOutlineIcon" | "InfoOutlinedIcon" | "VisibilityOutlinedIcon" | "AttachmentIcon";
+type IconName =
+  | "HelpOutlineIcon"
+  | "InfoOutlinedIcon"
+  | "VisibilityOutlinedIcon"
+  | "AttachmentIcon";
 
 type RecordType = Record<string, unknown>;
 
@@ -35,6 +40,7 @@ interface GenericTableDialogProps<T extends RecordType = RecordType> {
   lazyLoad?: boolean;
   defaultHeaders?: string[];
   defaultRecords?: T[];
+  onViewRow?: (record: T) => void; // optional hook
 }
 
 const GenericTableDialog = <T extends RecordType = RecordType>({
@@ -42,34 +48,33 @@ const GenericTableDialog = <T extends RecordType = RecordType>({
   iconType = "VisibilityOutlinedIcon",
   defaultHeaders = [],
   defaultRecords = [],
-
+  onViewRow,
 }: GenericTableDialogProps<T>) => {
   const [open, setOpen] = useState(false);
   const [headers, setHeaders] = useState<string[]>([]);
-  const [records, setRecords] = useState<T[] | null>(null);
-  const [color, setColor] = useState<string>("white");
+  const [records, setRecords] = useState<T[]>([]);
+  // const [color, setColor] = useState<string>("white"); // unused
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
       showLoader();
-      setHeaders(defaultHeaders);
-      setRecords(defaultRecords ?? []);
-      hideLoader()
+      try {
+        setHeaders(defaultHeaders);
+        setRecords(defaultRecords ?? []);
+      } finally {
+        hideLoader();
+      }
     };
     fetchData();
-  }, []);
-
+  }, [defaultHeaders, defaultRecords]);
 
   const handleClose = () => setOpen(false);
-
-  const handleClick = async () => {
-    setOpen(true);
-  };
+  const handleClick = () => setOpen(true);
 
   const getIconComponent = (): React.ElementType => {
     switch (iconType) {
       case "AttachmentIcon":
-        return AttachmentIcon
+        return AttachmentIcon;
       case "HelpOutlineIcon":
         return HelpOutlineIcon;
       case "InfoOutlinedIcon":
@@ -84,7 +89,7 @@ const GenericTableDialog = <T extends RecordType = RecordType>({
 
   return (
     <>
-      <Icon onClick={handleClick} />
+      <Icon onClick={handleClick} style={{ cursor: "pointer" }} />
       <Dialog
         open={open}
         onClose={handleClose}
@@ -93,6 +98,7 @@ const GenericTableDialog = <T extends RecordType = RecordType>({
         maxWidth="lg"
       >
         <DialogTitle id="generic-table-dialog">{title}</DialogTitle>
+
         <DialogContent>
           <Paper>
             <TableContainer sx={{ maxHeight: 400 }} component={Paper}>
@@ -104,14 +110,17 @@ const GenericTableDialog = <T extends RecordType = RecordType>({
                     ))}
                   </TableRow>
                 </TableHead>
+
                 <TableBody>
-                  {records?.map((record, rowIdx) => (
+                  {records.map((record, rowIdx) => (
                     <TableRow key={`row-${rowIdx}`}>
                       {headers.map((h) => (
                         <TableCell key={`cell-${rowIdx}-${h}`}>
-                          {h === 'view' ? <OpenInNewIcon
-                            onClick={() => {createTab(record[h])}} />
-                            : formatCellValue((record as RecordType)[h])}
+                          <RenderActions
+                            header={h}
+                            record={record}
+                            onView={() => onViewRow?.(record)}
+                          />
                         </TableCell>
                       ))}
                     </TableRow>
@@ -121,6 +130,7 @@ const GenericTableDialog = <T extends RecordType = RecordType>({
             </TableContainer>
           </Paper>
         </DialogContent>
+
         <DialogActions>
           <Button onClick={handleClose} color="primary" variant="contained">
             Okay
@@ -131,17 +141,43 @@ const GenericTableDialog = <T extends RecordType = RecordType>({
   );
 };
 
-export default GenericTableDialog;
+function RenderActions<T extends RecordType>(props: {
+  header: string;
+  record: T;
+  onView?: () => void;
+}): React.ReactNode {
+  const { header, record, onView } = props;
+
+  if (header === "view") {
+    return (
+      <Tooltip title="View">
+        <IconButton size="small" onClick={onView}>
+          <OpenInNewIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    );
+  }
+
+  return formatCellValue((record as any)[header]);
+}
 
 /** Render values safely for the cell */
 function formatCellValue(value: unknown): React.ReactNode {
   if (value == null) return "";
+
   if (typeof value === "object") {
     try {
-      return <code style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(value, null, 2)}</code>;
+      return (
+        <code style={{ whiteSpace: "pre-wrap" }}>
+          {JSON.stringify(value, null, 2)}
+        </code>
+      );
     } catch {
       return String(value);
     }
   }
+
   return String(value);
 }
+
+export default GenericTableDialog;

@@ -28,6 +28,7 @@ export class Artifact implements IArtifact {
       mimeType: artifact.mimeType,
       size: artifact.size,
       url: artifact.url,
+      hash: artifact.hash
     };
   }
 

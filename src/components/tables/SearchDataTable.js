@@ -36,7 +36,7 @@ export default function SearchDataTable(props) {
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
   let lastModified = localStorage.getItem('lastModified') ? parseInt(localStorage.getItem('lastModified')) : getUtcNow();
-  const attachmentHeaders = ['view', 'uuid', 'mimeType', 'size', 'url']
+  const attachmentHeaders = ['view', 'download', 'uuid', 'mimeType', 'size', 'url', 'hash'];
 
 
   /**
@@ -158,7 +158,6 @@ export default function SearchDataTable(props) {
                                 'view': `chrome-extension://${chrome.runtime.id}/api.html?format=html&uuid=${a.uuid}`
                               }
                             }
-
                             return {
                               ...a,
                               'view': `chrome-extension://${chrome.runtime.id}/api.html?format=txt&uuid=${a.uuid}`

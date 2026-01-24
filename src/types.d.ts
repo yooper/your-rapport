@@ -146,6 +146,7 @@ export type Attachment = {
   mimeType: string;
   size: number;
   url: string;
+  hash: string;
 };
 
 interface TabPanelProps {
