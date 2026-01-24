@@ -2,6 +2,7 @@ import { getUtcNow } from '../../utilities/transformers';
 import { ChangeDetection } from '../../types';
 import { DiscoveryPlugin } from './DiscoveryPlugin';
 import { db } from '../db/dexieDb';
+import { debug } from '../../services/logger_services';
 
 export class ScheduledAutomation {
   uuid: string;
@@ -52,11 +53,21 @@ export class ScheduledAutomation {
    * @param url
    * @param crontab
    */
-  static async addMonitor(url: string, crontab: string = '0 * * * * *'){
+  static async addMonitor(url: string, crontab: string = "0 * * * * *") {
+    await debug("Scheduling an automation", { url, crontab });
+
     const scheduledAutomation = new ScheduledAutomation();
     scheduledAutomation.url = url;
     scheduledAutomation.crontab = crontab;
-    await db.scheduledAutomation.add(scheduledAutomation);
-  }
 
+    await db.transaction("rw", db.scheduledAutomation, async () => {
+      try {
+        await db.scheduledAutomation.add(scheduledAutomation);
+        await debug("addMonitor:completed", { scheduledAutomation });
+      } catch (e) {
+        await debug("addMonitor:error " + String(e), { scheduledAutomation });
+        throw e;
+      }
+    });
+  }
 }

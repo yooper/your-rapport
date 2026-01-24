@@ -79,9 +79,9 @@ async function _capture(
   bulkAutomation: BulkAutomationUrl | null = null
 ): Promise<Rapport> {
 
+  const tab = await getActiveTab();
   try {
 
-    const tab = await getActiveTab();
 
     let configuration = await Configuration.getConfiguration();
     // search the saved record for keywords
