@@ -115,8 +115,8 @@ function LargeButtonGrid() {
         }),
     },
     {
-      title: 'Documentation',
-      toolTipTitle: `The wiki docs for this product and its source code.`,
+      title: 'Change Log',
+      toolTipTitle: `The change log for Your Rapport.`,
       onClick: () => window.open('https://github.com/yooper/your-rapport/wiki'),
     },
     {

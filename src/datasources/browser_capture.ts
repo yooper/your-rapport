@@ -33,16 +33,14 @@ export async function capture(
   chrome.sidePanel.close({tabId: tab.id});
 
   do {
-    _lastRapport = null
     try {
-      // always reset
-      await _capture(tab, pageInfo, deepSave, bulkAutomation);
+      // call the get active tab in _capture
+      await _capture(pageInfo, deepSave, bulkAutomation);
       processing = false;
     }
     catch (err) {
       if (err instanceof FastDrawError) {
         // TODO: ?
-        await sleep(1000);
       }
       else if (err instanceof DeepSaveError) {
         // TODO: ?
@@ -50,11 +48,16 @@ export async function capture(
       else if(err instanceof NotFoundError) {
         // TODO: ?
       }
-
-      processing = true;
-      await debug('introduce retry')
-      await sleep(1000);
-
+      else if(err instanceof DuplicateDetectedError) {
+        // TODO: Improve duplicate logic
+        processing = false;
+        break;
+      }
+      else{
+        processing = true;
+        await debug('capture:retrying', {pageInfo, deepSave, bulkAutomation})
+        await sleep(1000);
+      }
     } finally {
       counter++
     }
@@ -71,22 +74,21 @@ export async function capture(
 
 /**
  * Capture the tab and persist it into local storage.
+ * TODO: the wrong screen is captured if the end user toggles too quick between the tabs
  */
 async function _capture(
-  tab1: chrome.tabs.Tab,
   pageInfo: any = {},
   deepSave = false,
   bulkAutomation: BulkAutomationUrl | null = null
 ): Promise<Rapport> {
 
   const tab = await getActiveTab();
-  try {
 
+  try {
 
     let configuration = await Configuration.getConfiguration();
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
-
     await debug('Calling screenshot capture', { tab, pageInfo });
 
     // Screenshot of the visible tab; returns a data URL (string)
@@ -137,10 +139,11 @@ async function _capture(
           record.url,
           'text/html'
         );
+        // save the original html from the web page
         await db.artifact.add(htmlArtifact);
         // attach reference
         record.artifacts.push(Artifact.getAttachment(htmlArtifact));
-        await debug('saveHTML:starting');
+        await debug('saveHTML:completed');
 
       } catch (e) {
         await debug(String(e))

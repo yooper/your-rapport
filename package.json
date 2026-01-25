@@ -21,7 +21,6 @@
     "dexie": "^4.2.0",
     "dexie-cloud-addon": "^4.2.0",
     "dexie-react-hooks": "^4.2.0",
-    "fflate": "^0.8.2",
     "jmespath": "^0.16.0",
     "mhtml-to-html": "^2.0.1",
     "monaco-editor": "^0.55.1",
@@ -30,7 +29,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-notifications-component": "^4.0.1",
-    "react18-json-view": "^0.2.9",
     "styled-components": "^6.1.0",
     "validator": "^13.15.0",
     "zod": "^4.1.12"

@@ -32,7 +32,7 @@ import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
  */
 await initializeContextMenus();
 initializeAutomationRunner();
-// upon startup update or install discovery plugins
+// Upon startup update or install discovery plugins
 await fetchPackages();
 
 let _jobQueue = null;
