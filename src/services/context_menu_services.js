@@ -2,7 +2,7 @@ import { getSelectorTypeMap } from '../utilities/loaders';
 import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
 import {
-  ACTIVATE_CAPTURE, BULK_AUTOMATION,
+  ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO,
   UUID,
 } from './constants';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
@@ -104,10 +104,12 @@ export async function initializeContextMenus() {
         })();
         break;
       case 'deepSave':
-        ExtensionPin.setTemporaryPin('SAVG');
-        waitForPageInfo(tab.id).then(pageInfo => {
-          capture(tab, pageInfo, true);
-        });
+        (async() => {
+          ExtensionPin.setTemporaryPin('SAVG');
+          const response = await chrome.tabs.sendMessage(tab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
+          const { pageInfo } = response
+          await capture(tab, pageInfo, true);
+        })()
         break;
       case 'autocollectPage':
         // start the autoscroll

@@ -116,7 +116,6 @@ chrome.runtime.onMessage.addListener((msg: any, sender, sendResponse) => {
 
 });
 
-
 const signInHandler = (): void => {
   const links = document.querySelectorAll<HTMLAnchorElement>('.yr-sign-in-link');
   links.forEach((link) => {
@@ -132,5 +131,3 @@ const signInHandler = (): void => {
 if (window.location.hostname === "bakerstreet.llc") {
     signInHandler();
 }
-
-

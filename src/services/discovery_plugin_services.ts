@@ -514,7 +514,7 @@ async function preCreate(rapport: Rapport){
           debug('only save on change -> change not detected, ignore', {scheduledAutomation, rapport, matchFound})
         }
         else{
-          rapport.tags = [new Tag('change-detected')];
+          rapport.tags = [new Tag('img-change-detected')];
         }
       }
       if(scheduledAutomation.enableSelectorChangeDetector){

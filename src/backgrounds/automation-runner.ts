@@ -17,14 +17,20 @@ let processing: boolean = false;
 
 export function initializeAutomationRunner() {
   // add default set of tags used in the automations
-  db.tag.bulkPut([new Tag('change-detected'), new Tag('selectors-detected'), new Tag('text-change-detected')]);
+  db.tag.bulkPut([new Tag('img-change-detected'), new Tag('selectors-detected'), new Tag('text-change-detected')]);
 
   // periodic tick to recover & continue
   chrome.alarms.create('yr_queue_tick', { periodInMinutes: 1 });
   chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_queue_tick') trigger(); });
 
   chrome.alarms.create('yr_scheduled_automations', { periodInMinutes: 1 });
-  chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_scheduled_automations') queueScheduledAutomations(); });
+
+  chrome.alarms.onAlarm.addListener(a => {
+    if (a.name === 'yr_scheduled_automations'){
+      debug('yr_scheduled_automations:starting')
+      queueScheduledAutomations();
+      debug('yr_scheduled_automations:completed')
+    } });
 
   // resume on startup / install
   chrome.runtime.onStartup.addListener(() => { recoverExpiredLeases().then(trigger); });
@@ -66,12 +72,12 @@ async function queueScheduledAutomations(){
           // MUST be set to active to trigger running in the automation queue
           automation.active = true;
           automations.push(automation)
-          if(automations.length > 0){
-            debug('Scheduled Automations Created', {automations});
-            await db.bulkAutomation.bulkAdd(automations);
-          }
-          return automations
         }
+      }
+      if(automations.length > 0){
+        await debug('Scheduled Automations Created', {automations});
+        await db.bulkAutomation.bulkAdd(automations);
+        return automations
       }
     }).then((automations) => {
       if(automations?.length ?? [].length > 0){
@@ -95,88 +101,88 @@ async function trigger() {
 }
 
 async function processQueue() {
-    while (true) {
-      const job = await takeNext();
-      if (!job) {
-        return;
+  do {
+    const job = await takeNext();
+    if (!job) {
+      return;
+    }
+    ExtensionPin.setAutomationRunning(await getQueue());
+    job.ranOn = new Date().getTime()
+    await db.bulkAutomation.put(job);
+    let tabId: number | null = null;
+    try {
+      const tab = await chrome.tabs.create({ url: job.url, active: false });
+
+      if (!tab.id) {
+        await debug('failed to open tab', job)
+        throw new Error('failed to open tab');
       }
-      ExtensionPin.setAutomationRunning(await getQueue());
-      job.ranOn = new Date().getTime()
-      await db.bulkAutomation.put(job);
-      let tabId: number | null = null;
-      try {
-        const tab = await chrome.tabs.create({ url: job.url, active: false });
+      tabId = tab.id;
 
-        if (!tab.id) {
-          await debug('failed to open tab', job)
-          throw new Error('failed to open tab');
-        }
-        tabId = tab.id;
+      // Wait for load or DNS failure (ERR_NAME_NOT_RESOLVED)
+      await waitForCompleteOrDnsError(tabId);
+      const response = await chrome.tabs.sendMessage(tabId, { cmd: PAGE_INFO });
+      const { pageInfo } = response
+      await focusTab(tabId);
 
-        // Wait for load or DNS failure (ERR_NAME_NOT_RESOLVED)
-        await waitForCompleteOrDnsError(tabId);
-        const response = await chrome.tabs.sendMessage(tabId, { cmd: PAGE_INFO });
-        const { pageInfo } = response
-        await focusTab(tabId);
+      // wait for the page to finish loading
+      // TODO: add configurable delay
+      await sleep(2000)
 
-        // wait for the page to finish loading
-        // TODO: add configurable delay
-        await sleep(3000)
+      // the automation requires scrolling through the page
+      if (!job.isDeepSave) {
+        chrome.tabs.sendMessage(tabId, { cmd: ACTIVATE_CAPTURE, automation: job })
+          .then(response => {
+            debug(ACTIVATE_CAPTURE + ':', response);
+          })
+        do {
 
-        // the automation requires scrolling through the page
-        if (!job.isDeepSave) {
-          chrome.tabs.sendMessage(tabId, { cmd: ACTIVATE_CAPTURE, automation: job })
-            .then(response => {
-              debug(ACTIVATE_CAPTURE + ':', response);
-            })
-          do {
+          await sleep(1000)
+          const refreshedJob = await db.bulkAutomation.get(job.uuid)
 
-            await sleep(2000)
-            const refreshedJob = await db.bulkAutomation.get(job.uuid)
-
-            if (!refreshedJob) {
-              throw Error('Unknown job')
-            }
-
-            job.completedOn = refreshedJob.completedOn;
-            job.status = refreshedJob.status
-
-            if (job.screenShotsCollected === refreshedJob.screenShotsCollected) {
-              // screen is not scrolling
-              job.completedOn = new Date().getTime()
-              job.status = "done";
-              job.description = 'scrolling stopped';
-              break;
-            }
-            job.screenShotsCollected = refreshedJob.screenShotsCollected
-            ExtensionPin.setAutomationRunning(await getQueue());
-            await sleep(3000);
+          if (!refreshedJob) {
+            throw Error('Unknown job')
           }
-          while (['running', 'queued'].includes(job.status));
-        }
-        // deep save
-        else {
-          await capture(tab, pageInfo, true, job as BulkAutomationUrl);
-        }
-        await complete(job);
-      } catch (e: any) {
-        if (e instanceof NoChangeDetectedError) {
-          ; // do nothing, no change was detected
-          job.description = 'No Change Detected';
-          await complete(job)
-        } else {
-          await fail(job, String(e?.message ?? e));
-        }
-      } finally {
-        if (!job.keepTabOpen && job.status !== 'failed' && tabId) {
-          try {
-            await chrome.tabs.remove(tabId);
-          } catch {
 
+          job.completedOn = refreshedJob.completedOn;
+          job.status = refreshedJob.status
+
+          if (job.screenShotsCollected === refreshedJob.screenShotsCollected) {
+            // screen is not scrolling
+            job.completedOn = new Date().getTime()
+            job.status = "done";
+            job.description = 'scrolling stopped';
+            break;
           }
+          job.screenShotsCollected = refreshedJob.screenShotsCollected
+          ExtensionPin.setAutomationRunning(await getQueue());
+          await sleep(1000);
+        }
+        while (['running', 'queued'].includes(job.status));
+      }
+      // deep save
+      else {
+        await capture(tab, pageInfo, true, job as BulkAutomationUrl);
+      }
+      await complete(job);
+    } catch (e: any) {
+      if (e instanceof NoChangeDetectedError) {
+        ; // do nothing, no change was detected
+        job.description = 'No Change Detected';
+        await complete(job)
+      } else {
+        await fail(job, String(e?.message ?? e));
+      }
+    } finally {
+      if (!job.keepTabOpen && job.status !== 'failed' && tabId) {
+        try {
+          await chrome.tabs.remove(tabId);
+        } catch {
+
         }
       }
     }
+  } while (true);
 }
 
 function waitForCompleteOrDnsError(tabId: number) {
@@ -207,7 +213,7 @@ export function waitForPageInfo(tabId: number) {
       }, 5000);
     const onMsg = (msg: any, sender: chrome.runtime.MessageSender) => {
       if (sender.tab?.id === tabId && msg?.cmd === PAGE_INFO) {
-        debug(PAGE_INFO+' return ', msg?.pageInfo)
+        debug(PAGE_INFO+': return ', msg?.pageInfo)
         const pageInfo = { ...msg.pageInfo}
         clearTimeout(timer);
         chrome.runtime.onMessage.removeListener(onMsg);
@@ -222,7 +228,9 @@ export function waitForPageInfo(tabId: number) {
 
 async function focusTab(tabId: number) {
   const tab = await chrome.tabs.get(tabId);
-  if (tab.windowId != null) await chrome.windows.update(tab.windowId, { focused: true });
+  if (tab.windowId != null) {
+    await chrome.windows.update(tab.windowId, { focused: true });
+  }
   await chrome.tabs.update(tabId, { active: true });
 }
 
