@@ -3,12 +3,6 @@ import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
 import {
-  deleteRecord,
-  getLocalItem,
-  setLocalItem,
-  updateRecord,
-} from '../../models/db/local';
-import {
   hideLoader,
   processNotification,
   showLoader,
@@ -20,13 +14,12 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
 import {
-  BULK_AUTOMATION,
-  UUID,
+  UUID
 } from '../../services/constants';
 import { debug } from '../../services/logger_services';
-import ExtensionPin from '../../utilities/ExtensionPin';
 import { sortByField } from '../../utilities/transformers';
 import { db } from '../../models/db/dexieDb';
+import ExtensionPin from '../../utilities/ExtensionPin';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);

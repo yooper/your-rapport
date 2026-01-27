@@ -26,6 +26,7 @@ import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
 import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
+import { DeepSaveError } from '../../errors/DeepSaveError';
 
 /**
  * Initialize services when the extension is installed / activated
@@ -103,15 +104,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
       const activeTab = await getActiveTab();
+      ExtensionPin.setDefaultNotSaved(activeTab);
       const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO', requestId: crypto.randomUUID() });
       await capture(activeTab, pageInfo, true);
       sendResponse({ completed: true, deepSave: true, pageInfo });
-    } catch (e) {
+      ExtensionPin.setDefaultSaved(activeTab);
+    }
+    catch (e)
+    {
       await debug('deep save failed.')
+      ExtensionPin.setTempErrorPin(message, sender.tab);
       sendResponse({
         completed: false,
         deepSave: true,
-        error: e instanceof Error ? e.message : String(e),
+        error: e instanceof Error ? e.message : String(e)
       });
     }
   })();
