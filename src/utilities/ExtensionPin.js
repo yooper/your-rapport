@@ -81,12 +81,11 @@ export default class ExtensionPin {
 
   /**
    * Show the percent left of automations
-   * TODO: Fix the percent so it counts from zero to a hundred
    * @param automations
    */
   static setAutomationRunning = (automations) => {
     const percent = Math.round(100 *
-      (automations.filter(a => !a.ranOn && a.active).length / automations.filter(a => a.active).length));
+      (automations.filter(a => a.ranOn && a.active).length / automations.filter(a => a.active).length));
     ExtensionPin.showNumber(percent + '%');
   }
 }

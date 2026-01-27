@@ -509,11 +509,17 @@ export const PRE_EXISTING_FILTERS: PreExistingFilter[] = [
  * - safe errors
  */
 export async function processHtmlString(html: string, filterId: string, baseUrl: string): Promise<IExtractedData[]> {
-  if (!filterId) return [];
-  if (!html?.trim()) return [];
+  if (!filterId){
+    return [];
+  }
+  if (!html?.trim()) {
+    return [];
+  }
 
   const filter = PRE_EXISTING_FILTERS.find((f) => f.id === filterId);
-  if (!filter) return [];
+  if (!filter) {
+    return [];
+  }
 
   try {
     const $ = cheerio.load(html);
@@ -521,7 +527,8 @@ export async function processHtmlString(html: string, filterId: string, baseUrl:
 
     const extracted = await filter.extractor(ctx) ?? [];
     return summarizeExtractedData(extracted);
-  } catch {
+  }
+  catch {
     return [];
   }
 }

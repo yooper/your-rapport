@@ -14,14 +14,16 @@ export async function debug(
 ): Promise<void> {
   try {
 
+    const tsMessage = `[${new Date().toISOString()}] `+message
+
     const value: boolean = await Configuration.getConfigurationValue<boolean>(
       'debugMessagesEnabled',
       true
     ) ?? false;
     if (value && includeTrace) {
-      console.trace(message, data);
+      console.trace(tsMessage, data);
     } else if (value) {
-      console.log(message, data);
+      console.log(tsMessage, data);
     }
     else{
       // debug is off

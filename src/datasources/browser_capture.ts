@@ -65,7 +65,8 @@ export async function capture(
 
   // indicate to the end user the save failed
   if(processing && counter >= retryLimit){
-    ExtensionPin.setBgColorAndText('red', 'ERR', tab);
+    await debug('capture:error', {pageInfo, deepSave, bulkAutomation});
+    ExtensionPin.setTempErrorPin({pageInfo, deepSave, bulkAutomation})
   }
   else {
     ExtensionPin.setDefaultSaved(tab);

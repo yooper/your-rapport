@@ -2,19 +2,16 @@ import { getSelectorTypeMap } from '../utilities/loaders';
 import { Configuration } from '../models/schemas/Configuration';
 import ExtensionPin from '../utilities/ExtensionPin';
 import {
-  ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO,
+  ACTIVATE_CAPTURE, PAGE_INFO,
   UUID,
 } from './constants';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { Selector } from '../models/schemas/Selector';
-import { addRecord } from '../models/db/local';
 import { getUtcNow, selectCorrectLink } from '../utilities/transformers';
 import { Rapport } from '../models/schemas/Rapport';
 import { fetchBlob } from './image_loading_services';
-import { applyBackgroundJobs } from './discovery_plugin_services';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
-import { waitForPageInfo } from '../backgrounds/automation-runner';
 import { db } from '../models/db/dexieDb';
 import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
 

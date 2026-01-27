@@ -21,12 +21,11 @@ import { debug } from '../../services/logger_services';
 
 import { JobQueue } from '../../models/schemas/JobQueue';
 
-import { initializeAutomationRunner, waitForPageInfo } from '../../backgrounds/automation-runner';
+import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
 import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
 import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
-import { DeepSaveError } from '../../errors/DeepSaveError';
 
 /**
  * Initialize services when the extension is installed / activated

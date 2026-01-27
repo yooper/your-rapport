@@ -2,7 +2,7 @@
 import { takeNext, complete, fail, recoverExpiredLeases, getQueue } from './automation-queue';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
-import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, PAGE_INITIALIZED } from '../services/constants';
+import { ACTIVATE_CAPTURE, PAGE_INFO, PAGE_INITIALIZED } from '../services/constants';
 import { sleep } from '../utilities/loaders';
 import  ExtensionPin from '../utilities/ExtensionPin';
 import { CronExpressionParser } from 'cron-parser';
@@ -201,28 +201,6 @@ function waitForCompleteOrDnsError(tabId: number) {
     }
     chrome.tabs.onUpdated.addListener(onUpdated);
     chrome.webNavigation.onErrorOccurred.addListener(onErr);
-  });
-}
-
-
-export function waitForPageInfo(tabId: number) {
-  return new Promise<any>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      chrome.runtime.onMessage.removeListener(onMsg);
-      reject(new Error('content handshake timeout'));
-      }, 5000);
-    const onMsg = (msg: any, sender: chrome.runtime.MessageSender) => {
-      if (sender.tab?.id === tabId && msg?.cmd === PAGE_INFO) {
-        debug(PAGE_INFO+': return ', msg?.pageInfo)
-        const pageInfo = { ...msg.pageInfo}
-        clearTimeout(timer);
-        chrome.runtime.onMessage.removeListener(onMsg);
-        resolve(pageInfo);
-      }
-    };
-    // send the initialization message to the content script
-    chrome.runtime.onMessage.addListener(onMsg);
-    chrome.tabs.sendMessage(tabId, { cmd: PAGE_INITIALIZED });
   });
 }
 
