@@ -11,6 +11,7 @@ import { db } from '../models/db/dexieDb';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { Tag } from '../models/schemas/Tag';
+import { getUtcNow } from '../utilities/transformers';
 
 
 let processing: boolean = false;
@@ -72,6 +73,8 @@ async function queueScheduledAutomations(){
           // MUST be set to active to trigger running in the automation queue
           automation.active = true;
           automations.push(automation)
+          scheduledAutomation.lastRanOn = getUtcNow();
+          await db.scheduledAutomation.put(scheduledAutomation)
         }
       }
       if(automations.length > 0){
