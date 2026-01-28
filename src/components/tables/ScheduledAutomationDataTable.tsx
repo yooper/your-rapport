@@ -14,7 +14,7 @@ import {
 import IconButton from "@mui/material/IconButton";
 import { FormControlLabel, Switch, Tooltip } from "@mui/material";
 import HelperPopover from "../HelperPopover";
-import { BULK_AUTOMATION, UUID } from "../../services/constants";
+import { UUID } from "../../services/constants";
 import { debug } from "../../services/logger_services";
 import { db } from '../../models/db/dexieDb';
 import AlarmAddIcon from '@mui/icons-material/AlarmAdd';
@@ -110,7 +110,11 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
           searchable: true,
           customBodyRender: (value: unknown) => {
             const v = typeof value === "string" ? value : "";
-            return <div>{v}</div>;
+            return <div>
+              <Tooltip title={'crontab is a common format for sheduling automated jobs.'}>
+                {v}
+              </Tooltip>
+            </div>;
           },
         },
       },
@@ -125,6 +129,43 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
               {rows[dataIndex].url}
             </>
           ),
+        },
+      },
+      {
+        label: "SAVE ON CHANGE",
+        name: "onlySaveOnChange",
+        options: {
+          display: true,
+          filter: false,
+          sort: false,
+          customBodyRender: (
+            value: any,
+            tableMeta: any,
+            updateValue: any
+          ) => {
+            const record = getRecord(tableMeta.rowData);
+
+            return (
+              <FormControlLabel
+                control={
+                  <Switch
+                    color="primary"
+                    checked={value}
+                    onChange={async (_e, nextChecked) => {
+                      updateValue(nextChecked);
+                      record.onlySaveOnChange = nextChecked;
+                      await db.scheduledAutomation.put(record);
+                    }}
+                  />
+                }
+                label={
+                  <IconButton>
+                    <HelperPopover message="When off, the page is always collected, when on, it compares the images to detect a change" />
+                  </IconButton>
+                }
+              />
+            );
+          },
         },
       },
       {
@@ -223,30 +264,20 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                   <EditIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title={'Test Automation'}>
+              <Tooltip title={'Test Automation Details'}>
                 <IconButton
                   disabled={true}
                   onClick={async () => {
                     try {
                       const now = new Date()
-                      now.setUTCSeconds(0, 0);
                       const interval = CronExpressionParser.parse(record.crontab);
-                      console.log(interval.fields.minute);
+                      debug(interval.fields.minute);
                       if(interval.includesDate(now)){
-                        console.log('now '+ now.toISOString());
+                        debug('now '+ now.toISOString());
                       }
-                      console.log('Prev:', interval.prev().toString());
-                      // Get next 3 dates
-                      console.log(
-                        'Next 3:',
-                        interval.take(3).map((date) => date.toString()),
-                      );
-                      // Get previous date
-                      console.log('Previous:', interval.prev().toString());
                     } catch (err) {
-                      console.log('Error:', err.message);
+                      debug('Error:', err.message);
                     }
-
                   }}
                 >
                   <DirectionsRunIcon />
@@ -288,12 +319,22 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
           },
         },
       },
+      {
+        name: "enableImageChangeDetector",
+        label: "enableImageChangeDetector",
+        options: { display: "excluded", filter: false, sort: false },
+      },
+      {
+        name: "enableSelectorChangeDetector",
+        label: "enableSelectorChangeDetector",
+        options: { display: "excluded", filter: false, sort: false },
+      },
     ];
       // eslint-disable-next-line react-hooks/exhaustive-deps
     const options: MUIDataTableOptions = {
         rowsPerPage: 50,
         rowsPerPageOptions: [20, 50],
-        searchAlwaysOpen: true,
+        searchAlwaysOpen: false,
         onRowsDelete: async (deleteInfo: any) => {
           setIsLoading(true);
           showLoader();
@@ -343,7 +384,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
         setTableProps: () => ({ size: "small" as const }),
         print: false,
         filter: false,
-        download: false,
+        download: true,
     };
 
   if (isLoading){

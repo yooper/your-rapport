@@ -3,12 +3,6 @@ import Box from '@mui/material/Box';
 import { useEffect, useState } from 'react';
 import MUIDataTable from 'mui-datatables';
 import {
-  deleteRecord,
-  getLocalItem,
-  setLocalItem,
-  updateRecord,
-} from '../../models/db/local';
-import {
   hideLoader,
   processNotification,
   showLoader,
@@ -20,10 +14,11 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { FormControlLabel, Switch, Tooltip } from '@mui/material';
 import HelperPopover from '../HelperPopover';
 import {
-  BULK_AUTOMATION,
-  UUID,
+  UUID
 } from '../../services/constants';
 import { debug } from '../../services/logger_services';
+import { sortByField } from '../../utilities/transformers';
+import { db } from '../../models/db/dexieDb';
 import ExtensionPin from '../../utilities/ExtensionPin';
 
 export default function BulkAutomationTable(props) {
@@ -35,7 +30,7 @@ export default function BulkAutomationTable(props) {
       showLoader();
       setIsLoading(true);
       const start = performance.now();
-      const data = await getLocalItem(BULK_AUTOMATION);
+      const data = await db.bulkAutomation.toArray();
       if (data.length !== rows.length) {
         setRows(data);
       }
@@ -62,7 +57,7 @@ export default function BulkAutomationTable(props) {
    */
   async function startAutomationProcess() {
 
-    const automations = await getLocalItem(BULK_AUTOMATION);
+    const automations = await db.bulkAutomation.toArray();
     automations.forEach(a => {
       if(!a.active && !a.ranOn){
         a.active = true;
@@ -80,7 +75,7 @@ export default function BulkAutomationTable(props) {
       return;
     }
 
-    await setLocalItem(BULK_AUTOMATION, automations);
+    await db.bulkAutomation.bulkPut(automations);
     await ExtensionPin.setAutomationRunning(automations);
     chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
     processNotification({
@@ -104,9 +99,10 @@ export default function BulkAutomationTable(props) {
     async function fetchData() {
       showLoader();
       setIsLoading(true);
-      const records = (await getLocalItem(BULK_AUTOMATION)) ?? [];
+      const records = await db.bulkAutomation.toArray() ?? [];
+      sortByField(records, 'createdOn')
       if (records.length !== rows.length) {
-        setRows(records);
+        setRows(records.reverse());
       }
       setIsLoading(false);
       hideLoader();
@@ -171,6 +167,23 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
+      name: 'createdOn',
+      label: 'CREATED ON',
+      options: {
+        display: "excluded",
+        filter: false,
+        sort: true,
+        searchable: false,
+        customBodyRenderLite: (dataIndex) => {
+          if (!rows[dataIndex].createdOn) {
+            return <div></div>;
+          }
+          const date = new Date(parseInt(rows[dataIndex].createdOn));
+          return <div>{date.toLocaleString()}</div>;
+        },
+      }
+    },
+    {
       name: 'screenShotsCollected',
       label: '# SCREENSHOTS',
       options: {
@@ -210,7 +223,7 @@ export default function BulkAutomationTable(props) {
               onChange={async(event) => {
                 updateValue(event.target.checked);
                 record.isDeepSave = event.target.checked;
-                await updateRecord(BULK_AUTOMATION, UUID, record);
+                await db.bulkAutomation.put(record);
               }}
             />
           );
@@ -248,7 +261,7 @@ export default function BulkAutomationTable(props) {
               onChange={async(event) => {
                 updateValue(event.target.checked);
                 record.keepTabOpen = event.target.checked;
-                await updateRecord(BULK_AUTOMATION, UUID, record);
+                await db.bulkAutomation.put(record);
               }}
             />
           );
@@ -272,7 +285,7 @@ export default function BulkAutomationTable(props) {
       },
     },
     {
-      name: 'CompletedOn',
+      name: 'completedOn',
       label: 'COMPLETED',
       options: {
         filter: false,
@@ -313,20 +326,23 @@ export default function BulkAutomationTable(props) {
             <Tooltip title={'Re run the automation on this url'}>
               <IconButton
                 onClick={async () => {
-                  let copy = {...record};
-                  copy.active = true;
-                  copy.ranOn = null;
-                  copy.status = 'queued';
-                  copy.completedOn = null;
-                  copy.description = 'Manually run'
-                  await ExtensionPin.setAutomationRunning([copy]);
-                  setRows(await updateRecord(BULK_AUTOMATION, UUID, copy));
-                  chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE'});
-                  processNotification({
-                    title: 'Restarting Automation',
-                    message:
-                      "Automation job is restarting, and may take a couple seconds. Don't Spam the button!",
-                    type: 'success',
+                  db.transaction('rw', db.bulkAutomation, async () => {
+                    const automation = await db.bulkAutomation.get(record.uuid);
+                    automation.active = true;
+                    automation.ranOn = null;
+                    automation.status = 'queued';
+                    automation.completedOn = null;
+                    automation.description = 'Manually run'
+                    await ExtensionPin.setAutomationRunning([automation]);
+                    await db.bulkAutomation.put(automation);
+                    setRows(await db.bulkAutomation.toArray());
+                    const response = await chrome.runtime.sendMessage({ cmd: 'AUTOMATIONS_ENQUEUE' });
+                    processNotification({
+                      title: 'Restarting Automation',
+                      message:
+                        "Automation job is restarting, and may take a couple seconds. Don't Spam the button!",
+                      type: 'success',
+                    });
                   });
                 }}
               >
@@ -347,9 +363,9 @@ export default function BulkAutomationTable(props) {
       setIsLoading(true);
       showLoader();
       for (const [idx, value] of Object.entries(records.lookup)) {
-        await deleteRecord(BULK_AUTOMATION, UUID, rows[idx]);
+        await db.bulkAutomation.delete(rows[idx].uuid);
       }
-      setRows(await getLocalItem(BULK_AUTOMATION));
+      setRows(await db.bulkAutomation.toArray());
       setIsLoading(false);
       hideLoader();
     },
@@ -378,14 +394,14 @@ export default function BulkAutomationTable(props) {
           >
             <IconButton onClick={async () => {
               showLoader()
-              const automations = await getLocalItem(BULK_AUTOMATION);
+              const automations = await db.bulkAutomation.toArray();
               automations.forEach(a => {
                 // flagged to run
                 if(a.active && !a.ranOn){
                   a.active = false;
                 }
               })
-              await setLocalItem(BULK_AUTOMATION, automations);
+              await db.bulkAutomation.bulkPut(automations);
               hideLoader()
               processNotification({
                 title: 'Automations Queuing Stopped',

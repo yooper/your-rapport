@@ -3,7 +3,13 @@ import { createTab, processNotification } from '../utilities/loaders';
 import { getUser } from '../models/schemas/User';
 import { DiscoveryPlugin } from '../models/schemas/DiscoveryPlugin';
 import { ApiKey, IRapport } from '../types';
-import { base64ToFile, downloadBase64Image, downloadJsonData, safeJsonParse } from '../utilities/transformers';
+import {
+  base64ToFile,
+  downloadBase64Image,
+  downloadJsonData,
+  findAllMatches,
+  safeJsonParse,
+} from '../utilities/transformers';
 import { printPdfReport } from '../utilities/print_service';
 import { db } from '../models/db/dexieDb';
 import { debug } from './logger_services';
@@ -14,6 +20,10 @@ import { Configuration } from '../models/schemas/Configuration';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { BULK_AUTOMATION, UUID } from './constants';
 import { addRecord} from './../models/db/local';
+import { areEqual } from './change_detection_services';
+import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
+import { Tag } from '../models/schemas/Tag';
+import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
 
 
 /**
@@ -360,10 +370,8 @@ function _buildBodyAndHeaders(
     if (v instanceof File) {
       fd.append(k, v, v.name);
     } else if (Array.isArray(v)) {
-      // Append arrays with index: field[0], field[1], ...
       v.forEach((item, idx) => fd.append(`${k}[${idx}]`, item ?? ''));
     } else if (v !== null && typeof v === 'object') {
-      // For objects, append as JSON string
       fd.append(k, JSON.stringify(v));
     } else {
       fd.append(k, String(v ?? ''));
@@ -408,9 +416,9 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       label: 'Download Record',
       pluginType: 'content',
       description: 'Download a JSON file that has all the metadata. Great for sharing with others.',
-      onClick: (record: IRapport) =>
+      onClick: (rapport: IRapport) =>
       {
-        downloadJsonData(record, `your.rapport.dp.${record.uuid}.json`);
+        downloadJsonData(rapport, `your.rapport.dp.${rapport.uuid}.json`);
       }
     }),
     new DiscoveryPlugin({
@@ -418,11 +426,22 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       label: 'Download Screenshot',
       pluginType: 'content',
       description: 'Download the screenshot to your computer.',
-      onClick: (record: IRapport) =>
+      onClick: (rapport: IRapport) =>
       {
-        if(record.screenshot){
-          downloadBase64Image(record.screenshot, `${record.uuid}.png`);
+        if(rapport.screenshot){
+          downloadBase64Image(rapport.screenshot, `${rapport.uuid}.png`);
         }
+      }
+    }),
+    new DiscoveryPlugin({
+      uuid: '0d18fd15-4bb0-4861-ad7f-02a672c8ac21',
+      label: 'Monitor(Hourly) ',
+      pluginType: 'url',
+      description: 'Open this web page every hour and scan for changes.',
+      groupName: 'Default',
+      onClick: async(rapport: IRapport) =>
+      {
+        await ScheduledAutomation.addMonitor(rapport.url, '0 0 * * * *');
       }
     }),
     new DiscoveryPlugin({
@@ -430,9 +449,9 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       label: 'Print Rapport',
       pluginType: 'content',
       description: 'Print a PDF report that includes the metadata',
-      onClick: (record: IRapport) =>
+      onClick: (rapport: IRapport) =>
       {
-        printPdfReport('basic', { records: [record] });
+        printPdfReport('basic', { records: [rapport] });
       }
     }),
     new DiscoveryPlugin({
@@ -441,33 +460,93 @@ export function getIntegratedPlugins() : DiscoveryPlugin[]
       pluginType: 'url',
       description: 'Queue the url / hyperlink for collection',
       groupName: 'Default',
-      onClick: async(record: IRapport) =>
+      onClick: async(rapport: IRapport) =>
       {
-          const unitDefault = await Configuration.getConfigurationValue(
-            'automationUnitDefault',
-            'count'
-          ) ?? 'count';
-          const valueDefault = await Configuration.getConfigurationValue(
-            'automationValueDefault',
-            100
-          ) ?? 100;
-          const automation = BulkAutomationUrl.createBulkAutomationJob(record.url);
-          await addRecord(BULK_AUTOMATION, UUID, record);
+          const automation = BulkAutomationUrl.createBulkAutomationJob(rapport.url);
+          await db.bulkAutomation.add(automation);
       }
     })
   ]
 }
 
 /**
- * Once a rapport is saved, iterate through the active background runners and queue
- * them for running
  * @param rapport
  * @param eventType
  */
 export async function applyBackgroundJobs(rapport: Rapport, eventType: string) : Promise<void> {
+  if(eventType === 'preCreate'){
+    // throws an error
+    await preCreate(rapport);
+  }
+
+  // these jobs cannot be queued, they must be run in serial
   const plugins = await db.discoveryPlugin.filter(dp => dp.active && dp.action === 'BackgroundRunner' && dp.eventType === eventType).toArray();
   for ( const discoveryPlugin of plugins){
     await debug('Queuing job', {discoveryPlugin, rapport});
     getJobQueue().enqueue({ discoveryPlugin, rapport })
+  }
+}
+
+
+async function preCreate(rapport: Rapport){
+  if(rapport.bulkAutomation) {
+    const scheduledAutomation = rapport.bulkAutomation?.scheduledAutomation ?? null;
+
+    if(scheduledAutomation && scheduledAutomation.onlySaveOnChange) {
+      if(!scheduledAutomation.enableImageChangeDetector && !scheduledAutomation.enableSelectorChangeDetector){
+        // odd case where both the detection algorithms are off
+        debug('change detection algorithms disabled', {rapport})
+        return;
+      }
+
+      // use image hashtag comparison
+      if(scheduledAutomation.enableImageChangeDetector){
+        const previousRapports: Rapport[]|undefined = await db.rapport
+            .where("domain")
+            .equals(rapport.domain)
+            .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
+            .sortBy('createdOn')
+
+        const matchFound: Rapport|null = previousRapports.reverse().find(r => areEqual(rapport, r, ['hash'])) ?? null
+
+        if(matchFound){
+          // should be using the latest save
+          debug('only save on change -> change not detected, ignore', {scheduledAutomation, rapport, matchFound})
+        }
+        else{
+          rapport.tags = [new Tag('img-change-detected')];
+        }
+      }
+      if(scheduledAutomation.enableSelectorChangeDetector){
+        const selectors = findAllMatches(rapport.text, await db.selector.toArray(), 1)
+        // detect if selectors are on the page
+        if(selectors.length > 0){
+          rapport.tags = [new Tag('selectors-detected')];
+        }
+      }
+
+      if(scheduledAutomation.enableTextChangeDetector){
+        const previousRapports: Rapport[]|undefined = await db.rapport
+            .where("domain")
+            .equals(rapport.domain)
+            .filter(r => r.bulkAutomation?.scheduledAutomation?.uuid === scheduledAutomation.uuid)
+            .sortBy('createdOn')
+
+        const matchFound: Rapport|null = previousRapports.reverse().find(r => areEqual(rapport, r, ['text'])) ?? null
+
+        if(matchFound){
+          // should be using the latest save
+          debug('only save on change -> change not detected, ignore', {scheduledAutomation, rapport, matchFound})
+        }
+        else{
+          rapport.tags = [new Tag('text-change-detected')];
+        }
+      }
+
+      if(rapport.tags.length === 0){
+        throw new NoChangeDetectedError();
+      }
+      debug('Changes detected', {rapport});
+    }
   }
 }

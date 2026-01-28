@@ -13,6 +13,8 @@ import { applyBackgroundJobs } from '../../services/discovery_plugin_services';
 import { debug } from '../../services/logger_services';
 import { Configuration } from './Configuration';
 import BulkAutomationUrl from './BulkAutomationUrl';
+import { Selector } from './Selector';
+import { Tag } from './Tag';
 
 /**
  * If you have a real Tab type from chrome, prefer that:
@@ -52,7 +54,7 @@ export interface RapportInit {
   length: number;
   attributes: RapportAttributes;
   selectors: unknown[]; // tighten if you have a Selector type
-  tags: string[];
+  tags: Tag[];
   caseManagementUuid: string | null;
   note: string | null;
   isImportant: boolean;
@@ -78,7 +80,7 @@ export class Rapport {
   length: number;
   attributes: RapportAttributes;
   selectors: unknown[];
-  tags: string[];
+  tags: Tag[];
   caseManagementUuid: string | null;
   note: string | null;
   isImportant: boolean;
@@ -127,7 +129,7 @@ export class Rapport {
     tab: ChromeTabLike,
     pageInfo: PageInfo,
     screenshotBase64: string,
-    selectors: unknown[],
+    selectors: Selector[],
     deepSave: boolean
   ): Promise<Rapport> {
     const uuid = crypto.randomUUID();
@@ -141,6 +143,8 @@ export class Rapport {
       Rapport.getText(pageInfo, deepSave);
 
     const matchedSelectors = findAllMatches(combinedText, selectors, 1);
+    const tags: Tag[] = []
+    matchedSelectors.forEach((s => { tags.concat(s.tags)}));
 
     return new Rapport({
       uuid,
@@ -158,7 +162,7 @@ export class Rapport {
       length: screenshotBase64?.length ?? 0,
       attributes: { tab },
       selectors: matchedSelectors,
-      tags: [],
+      tags: tags,
       caseManagementUuid: "30583002-f730-4383-bf28-fdd8aadcf387",
       note: null,
       isImportant: false,
@@ -176,12 +180,13 @@ export class Rapport {
    */
   static async add(rapport: Rapport)
   {
-    await db.rapport.add(rapport)
+    await db.rapport.add(rapport);
     // Queue up the background jobs (fire-and-forget; log when done)
     applyBackgroundJobs(rapport, 'create').then(() => {
       debug('background job completed', rapport);
       Rapport.sync(rapport);
-    });  }
+    });
+  }
 
   /**
    * Centralize updating rapports in the db

@@ -36,7 +36,7 @@ export default function SearchDataTable(props) {
   const [tags, setTags] = useState([]);
   const [discoveryPlugins, setDiscoveryPlugins] = useState(null);
   let lastModified = localStorage.getItem('lastModified') ? parseInt(localStorage.getItem('lastModified')) : getUtcNow();
-  const attachmentHeaders = ['view', 'uuid', 'mimeType', 'size', 'url']
+  const attachmentHeaders = ['view', 'download', 'uuid', 'mimeType', 'size', 'url', 'hash'];
 
 
   /**
@@ -151,9 +151,23 @@ export default function SearchDataTable(props) {
                           iconType={'AttachmentIcon'}
                           defaultHeaders={attachmentHeaders}
                           defaultRecords={record.artifacts?.map(a => {
+
+                            if(a.mimeType.startsWith('image')){
+                              return {
+                                ...a,
+                                'view': `chrome-extension://${chrome.runtime.id}/api.html?format=image&uuid=${a.uuid}`
+                              }
+                            }
+                            else if(a.mimeType === 'multipart/related') {
+                              return {
+                                ...a,
+                                'view': `chrome-extension://${chrome.runtime.id}/api.html?format=html&uuid=${a.uuid}`
+                              }
+                            }
                             return {
+                              // default view template
                               ...a,
-                              'view': `chrome-extension://${chrome.runtime.id}/api.html?format=file&uuid=${a.uuid}`
+                              'view': `chrome-extension://${chrome.runtime.id}/api.html?format=txt&uuid=${a.uuid}`
                             }
                           })}
                         />

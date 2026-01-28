@@ -371,3 +371,10 @@ export function safeJsonParse<T = unknown>(text: string): { ok: true; value: T }
     return { ok: false, error: err as Error };
   }
 }
+
+export function getUniqueListBy<T extends Record<PropertyKey, unknown>, K extends keyof T>(
+  arr: readonly T[],
+  key: K
+): T[] {
+  return [...new Map(arr.map((item) => [item[key], item] as const)).values()];
+}

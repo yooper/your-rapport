@@ -1,3 +1,5 @@
+import { debug } from '../services/logger_services';
+
 export default class ExtensionPin {
   /**
    *
@@ -63,18 +65,27 @@ export default class ExtensionPin {
       ExtensionPin.setDefault(activeTab);
     }, 3000);
   };
+
+
+  static setTempErrorPin = (message, activeTab = null) => {
+    ExtensionPin.setBgColorAndText('red', 'ERR', activeTab);
+    debug('setTempErrorPin', {message});
+    setTimeout(() => {
+      ExtensionPin.setDefault(activeTab);
+    }, 3000);
+  }
+
   static showNumber = (number, activeTab) => {
     ExtensionPin.setBgColorAndText('#E86E69', '' + number, activeTab);
   };
 
   /**
    * Show the percent left of automations
-   * TODO: Fix the percent so it counts from zero to a hundred
    * @param automations
    */
   static setAutomationRunning = (automations) => {
     const percent = Math.round(100 *
-      (automations.filter(a => !a.ranOn && a.active).length / automations.filter(a => a.active).length));
+      (automations.filter(a => a.ranOn && a.active).length / automations.filter(a => a.active).length));
     ExtensionPin.showNumber(percent + '%');
   }
 }

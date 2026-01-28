@@ -76,8 +76,6 @@ export class DiscoveryPlugin {
     this.script = init.script ?? null;
     this.extractionRules = init.extractionRules ?? []
     this.eventType = init.eventType ?? null;
-
-
   }
 
   /** Increment access count and mark last accessed time */

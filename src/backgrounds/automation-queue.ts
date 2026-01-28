@@ -2,19 +2,22 @@
 import { getLocalItem, setLocalItem, updateRecord } from '../models/db/local';
 import { processNotification } from '../utilities/loaders';
 import { IBulkAutomationRecord } from '../types';
-import { BULK_AUTOMATION, UUID } from '../services/constants';
 import { debug } from '../services/logger_services';
+import { db } from '../models/db/dexieDb';
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 
 
 const LEASE_MS = 15 * 60_000; // 15 minutes
 
-export async function getQueue(): Promise<IBulkAutomationRecord[]> {
-  return (await getLocalItem(BULK_AUTOMATION)) ?? [];
+export async function getQueue(): Promise<BulkAutomationUrl[]> {
+  return db.bulkAutomation.toArray();
 }
 
-async function setQueue(q: IBulkAutomationRecord[]) { await setLocalItem(BULK_AUTOMATION, q); }
+async function setQueue(q: BulkAutomationUrl[]) {
+  await db.bulkAutomation.bulkPut(q);
+}
 
-export async function takeNext(): Promise<IBulkAutomationRecord | null> {
+export async function takeNext(): Promise<BulkAutomationUrl | null> {
   const q = await getQueue();
 
   // a job is already running, skip action
@@ -32,28 +35,27 @@ export async function takeNext(): Promise<IBulkAutomationRecord | null> {
   queuedJob.attempts += 1;
   queuedJob.leaseUntil = Date.now() + LEASE_MS;
   queuedJob.ranOn = new Date().getTime()
-  await setQueue(q);
+
+  await db.bulkAutomation.put(queuedJob);
   await debug('takeNext: next job queued', queuedJob);
   return queuedJob;
 }
 
-export async function complete(queuedJob: IBulkAutomationRecord) {
-  if (queuedJob) {
-    queuedJob.status = 'done';
-    queuedJob.leaseUntil = null;
-    queuedJob.completedOn = new Date().getTime();
-    queuedJob.description = 'Completed Successfully'
-    await updateRecord(BULK_AUTOMATION, UUID, queuedJob);
-  }
+export async function complete(queuedJob: BulkAutomationUrl) {
+  queuedJob.status = 'done';
+  queuedJob.leaseUntil = null;
+  queuedJob.completedOn = new Date().getTime();
+  queuedJob.description = 'Completed Successfully: '+ queuedJob.description ?? '';
+  await db.bulkAutomation.put(queuedJob);
 }
 
-export async function fail(queuedJob: IBulkAutomationRecord, reason: string) {
+export async function fail(queuedJob: BulkAutomationUrl, reason: string) {
   if (queuedJob) {
     queuedJob.status = 'failed';
     queuedJob.failReason = reason;
     queuedJob.leaseUntil = null;
     await debug(`automation job failed`, queuedJob);
-    await updateRecord(BULK_AUTOMATION, UUID, queuedJob)
+    await db.bulkAutomation.put(queuedJob);
 
     processNotification(
       {title:'Automation failed', message:`Automation failed ${queuedJob.url}\n${reason}`, type: 'danger'});
@@ -71,5 +73,7 @@ export async function recoverExpiredLeases() {
       changed = true;
     }
   }
-  if (changed) await setQueue(q);
+  if (changed){
+    await setQueue(q);
+  }
 }

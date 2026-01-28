@@ -28,16 +28,6 @@ type Command =
   | typeof BULK_AUTOMATION
   | typeof AUTOMATION_RUNNING;
 
-export interface AutomationPayload {
-  // Expand with your actual automation fields
-  [key: string]: unknown;
-}
-
-export interface BaseMessage {
-  cmd: Command;
-  [key: string]: unknown; // extra fields allowed
-}
-
 
 // --- State ------------------------------------------------------------------
 
@@ -126,7 +116,6 @@ chrome.runtime.onMessage.addListener((msg: any, sender, sendResponse) => {
 
 });
 
-
 const signInHandler = (): void => {
   const links = document.querySelectorAll<HTMLAnchorElement>('.yr-sign-in-link');
   links.forEach((link) => {
@@ -142,13 +131,3 @@ const signInHandler = (): void => {
 if (window.location.hostname === "bakerstreet.llc") {
     signInHandler();
 }
-
-
-/**
- * POC work..
- */
-(async () => {
-  //await startLinkPlus();
-})();
-
-

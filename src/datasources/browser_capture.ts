@@ -4,40 +4,92 @@ import { Configuration } from '../models/schemas/Configuration';
 import { db } from '../models/db/dexieDb';
 import { debug } from '../services/logger_services';
 import { Artifact } from '../models/schemas/Artifact';
-import { applyBackgroundJobs } from '../services/discovery_plugin_services';
 import { getUtcNow } from '../utilities/transformers';
+import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
+import { applyBackgroundJobs } from '../services/discovery_plugin_services';
+import { DeepSaveError } from '../errors/DeepSaveError';
+import { FastDrawError } from '../errors/FastDrawError';
+import { getActiveTab, sleep } from '../utilities/loaders';
+import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
+import { DuplicateDetectedError } from '../errors/DuplicateDetectedError';
 
-// ----- Types ---------------------------------------------------------------
 
-export interface CaptureAutomation {
-  uuid: string;
-  [key: string]: unknown;
-}
+let _lastRapport: Rapport|null = null;
 
-export interface CaptureMessage {
-  sequence?: number;
-  automation?: CaptureAutomation | null;
-  text?: string;
-  visibleText?: string;
-  [key: string]: unknown;
+
+export async function capture(
+  tab: chrome.tabs.Tab,
+  pageInfo: any = {},
+  deepSave = false,
+  bulkAutomation: BulkAutomationUrl | null = null
+): Promise<void> {
+
+  let processing: boolean = true;
+  let counter: number = 0;
+  let retryLimit: number = 3;;
+
+  ExtensionPin.setDefaultNotSaved(tab);
+  // always force close the sidePanel upon save
+  chrome.sidePanel.close({tabId: tab.id});
+
+  do {
+    try {
+      // call the get active tab in _capture
+      await _capture(pageInfo, deepSave, bulkAutomation);
+      processing = false;
+    }
+    catch (err) {
+      if (err instanceof FastDrawError) {
+        // TODO: ?
+      }
+      else if (err instanceof DeepSaveError) {
+        // TODO: ?
+      }
+      else if(err instanceof NotFoundError) {
+        // TODO: ?
+      }
+      else if(err instanceof DuplicateDetectedError) {
+        // TODO: Improve duplicate logic
+        processing = false;
+        break;
+      }
+      else{
+        processing = true;
+        await debug('capture:retrying', {pageInfo, deepSave, bulkAutomation})
+        await sleep(1000);
+      }
+    } finally {
+      counter++
+    }
+  }while(processing && counter <= retryLimit);
+
+  // indicate to the end user the save failed
+  if(processing && counter >= retryLimit){
+    await debug('capture:error', {pageInfo, deepSave, bulkAutomation});
+    ExtensionPin.setTempErrorPin({pageInfo, deepSave, bulkAutomation})
+  }
+  else {
+    ExtensionPin.setDefaultSaved(tab);
+  }
 }
 
 /**
  * Capture the tab and persist it into local storage.
+ * TODO: the wrong screen is captured if the end user toggles too quick between the tabs
  */
-export async function capture(
-  tab: chrome.tabs.Tab,
+async function _capture(
   pageInfo: any = {},
-  deepSave = false
-): Promise<void> {
+  deepSave = false,
+  bulkAutomation: BulkAutomationUrl | null = null
+): Promise<Rapport> {
+
+  const tab = await getActiveTab();
+
   try {
-    ExtensionPin.setDefaultNotSaved(tab);
+
     let configuration = await Configuration.getConfiguration();
-    // always force close the sidePanel upon save
-    chrome.sidePanel.close({tabId: tab.id});
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
-
     await debug('Calling screenshot capture', { tab, pageInfo });
 
     // Screenshot of the visible tab; returns a data URL (string)
@@ -50,69 +102,72 @@ export async function capture(
       deepSave
     );
 
+    record.bulkAutomation = bulkAutomation
+    await applyBackgroundJobs(record, 'preCreate')
+    if(!record){
+      await debug('preCreate plugin rejected saving the rapport')
+      throw new NoChangeDetectedError('No Change Detected or PreCreate plugin filtered the record');
+    }
+
+    // there is an issue with duplicated records being generated, this mitigates the issue.
+    if(_lastRapport && _lastRapport.hash === record.hash){
+      await debug('Duplicate detected, skipping', {_lastRapport, currentRapport:record});
+      throw new DuplicateDetectedError();
+    }
+
     // save the mhtml artifact (deepSave)
     if (deepSave && tab.id != null) {
-      // implement retry strategy to mitigate errors when saving
-      let retryCounter = 0;
-      let isSaved = false;
+      // TODO: implement retry strategy to mitigate errors when saving
+      try {
+        record.artifacts = []
+        await debug('saveAsMHTML:starting');
+        const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
+        const mhtmlArtifact = await Artifact.create(
+          blob,
+          record.uuid,
+          record.url,
+          'multipart/related'
+        );
+        await db.artifact.add(mhtmlArtifact);
+        // attach reference to record
+        record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
+        await debug('saveAsMHTML:completed');
 
-      do {
-        try {
-          const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({tabId: tab.id});
-          const mhtmlArtifact = await Artifact.create(
-            blob,
-            record.uuid,
-            record.url,
-            'multipart/related'
-          );
+        await debug('saveHTML:starting');
+        const htmlArtifact = await Artifact.create(
+          new Blob([pageInfo.html], { type: 'text/html' }),
+          record.uuid,
+          record.url,
+          'text/html'
+        );
+        // save the original html from the web page
+        await db.artifact.add(htmlArtifact);
+        // attach reference
+        record.artifacts.push(Artifact.getAttachment(htmlArtifact));
+        await debug('saveHTML:completed');
 
-          // persist artifact (Dexie)
-          await db.artifact.add(mhtmlArtifact);
-          // attach reference to record
-          record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
-
-          const htmlArtifact = await Artifact.create(
-            new Blob([pageInfo.html], { type: 'text/html' }),
-            record.uuid,
-            record.url,
-            'text/html'
-          );
-          await db.artifact.add(htmlArtifact);
-          record.artifacts.push(Artifact.getAttachment(htmlArtifact));
-          isSaved = true;
-
-        } catch (e) {
-          await debug(String(e));
-        } finally {
-          retryCounter++;
-        }
-      } while (!isSaved && retryCounter < 3);
-
-      if(isSaved){
-        await Rapport.add(record);
+      } catch (e) {
+        await debug(String(e))
+        throw new DeepSaveError();
       }
     }
-    else{
-      await Rapport.add(record);
-    }
+    // persist the record
+    await Rapport.add(record);
+    _lastRapport = record;
 
     // update the configuration last saved on metadata
     configuration.updatedOn = getUtcNow();
     configuration.screenShotCount++;
-
     await Configuration.setConfiguration(configuration);
-    ExtensionPin.setDefaultSaved(tab);
-  } catch (error) {
-    // TODO: ERROR handling for too many captures
-    if (error) {
+    return record;
+  }
+  catch (error) {
       await debug(String(error));
-    }
-    ExtensionPin.setBgColorAndText('red', 'ERR', tab);
-
-  } finally {
+      throw new FastDrawError();
+  }
+  finally {
     setTimeout(() => {
       ExtensionPin.setDefault(tab);
     }, 3000);
-    // TODO: additional post-processing
   }
 }

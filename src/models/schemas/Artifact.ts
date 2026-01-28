@@ -28,6 +28,7 @@ export class Artifact implements IArtifact {
       mimeType: artifact.mimeType,
       size: artifact.size,
       url: artifact.url,
+      hash: artifact.hash
     };
   }
 
@@ -72,6 +73,8 @@ export class Artifact implements IArtifact {
     URL.revokeObjectURL(url);
   }
 
+
+
   static async serialize(artifact: Artifact)
   {
     return {
@@ -90,14 +93,12 @@ export class Artifact implements IArtifact {
 
   /**
    * When data is transported between systems we need to hydrate the data
-   * object correctly for persisting. This is a pro feature
-   * Validation happens outside this method
+   * object correctly for persisting.
    * @param artifact
    */
   static async deserialize(artifact: any)
   {
     let base64Data = artifact.data.split(',')[1];
-    // Add padding '=' characters until the length is a multiple of 4
     while (base64Data.length % 4 !== 0) {
       base64Data += '=';
     }

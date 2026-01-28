@@ -11,6 +11,8 @@ import {
   Stack,
 } from "@mui/material";
 import type { ScheduledAutomation } from "../../../models/schemas/ScheduledAutomation";
+import IconButton from '@mui/material/IconButton';
+import HelperPopover from '../../HelperPopover';
 
 type Props = {
   open: boolean;
@@ -25,9 +27,10 @@ type FormState = Pick<
   ScheduledAutomation,
   "url" | "keepTabOpen" | "isDeepSave" | "crontab"
 > &
-  Partial<Pick<ScheduledAutomation, "onlySaveOnChange" | "changeDetectors">>;
+  Partial<Pick<ScheduledAutomation, "onlySaveOnChange" | "changeDetectors" | "enableImageChangeDetector" | "enableSelectorChangeDetector">>;
 
-const DEFAULT_CRONTAB = "* * * * * *";
+// every minute
+const DEFAULT_CRONTAB = "0 * * * * *";
 
 const toNullIfBlank = (v: string) => {
   const s = v.trim();
@@ -47,20 +50,29 @@ export default function ScheduleAutomationDialog({
     keepTabOpen: initialValues?.keepTabOpen ?? false,
     isDeepSave: initialValues?.isDeepSave ?? true,
     crontab: initialValues?.crontab ?? DEFAULT_CRONTAB,
-    onlySaveOnChange: initialValues?.onlySaveOnChange ?? false,
+    onlySaveOnChange: initialValues?.onlySaveOnChange ?? true,
     changeDetectors: initialValues?.changeDetectors ?? [],
+    enableImageChangeDetector: initialValues?.enableImageChangeDetector ?? true,
+    enableSelectorChangeDetector: initialValues?.enableSelectorChangeDetector ?? true,
+    enableTextChangeDetector: initialValues?.enableTextChangeDetector ?? true,
+
   });
 
   React.useEffect(() => {
-    if (!open) return;
+    if (!open){
+      return;
+    }
 
     setValues({
       url: initialValues?.url ?? null,
       keepTabOpen: initialValues?.keepTabOpen ?? false,
       isDeepSave: initialValues?.isDeepSave ?? true,
       crontab: initialValues?.crontab ?? DEFAULT_CRONTAB,
-      onlySaveOnChange: initialValues?.onlySaveOnChange ?? false,
+      onlySaveOnChange: initialValues?.onlySaveOnChange ?? true,
       changeDetectors: initialValues?.changeDetectors ?? [],
+      enableImageChangeDetector: initialValues?.enableImageChangeDetector ?? true,
+      enableSelectorChangeDetector: initialValues?.enableSelectorChangeDetector ?? true,
+      enableTextChangeDetector: initialValues?.enableTextChangeDetector ?? true,
     });
   }, [open, initialValues]);
 
@@ -107,53 +119,122 @@ export default function ScheduleAutomationDialog({
             label="Crontab"
             value={values.crontab ?? DEFAULT_CRONTAB}
             onChange={(e) => setField("crontab")(e.target.value)}
-            placeholder="* * * * * *"
+            placeholder="0 * * * * *"
             helperText='6-field cron: "sec min hour dom month dow" (e.g., "* 9 * * 1-5"). Default will run once a minute, because of chrome limits.'
             fullWidth
           />
 
-          <FormControlLabel
-            control={
-              <Switch
-                disabled={true}
-                checked={!!values.isDeepSave}
-                onChange={(e) => setField("isDeepSave")(e.target.checked)}
-              />
-            }
-            label="Deep Save"
-          />
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={!!values.keepTabOpen}
-                onChange={(e) => setField("keepTabOpen")(e.target.checked)}
+              <FormControlLabel
+                control={
+                  <Switch
+                    disabled={true}
+                    checked={!!values.isDeepSave}
+                    onChange={(e) => setField("isDeepSave")(e.target.checked)}
+                  />
+                }
+                label="Deep Save"
               />
-            }
-            label="Keep tab open"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                disabled={true}
-                checked={!!values.onlySaveOnChange}
-                onChange={(e) =>
-                  setField("onlySaveOnChange")(e.target.checked)
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!values.keepTabOpen}
+                    onChange={(e) => setField("keepTabOpen")(e.target.checked)}
+                  />
+                }
+                label="Keep tab open"
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!values.onlySaveOnChange}
+                    onChange={(e) => {
+                      setField("onlySaveOnChange")(e.target.checked);
+                      setField("enableImageChangeDetector")(e.target.checked);
+                      setField("enableSelectorChangeDetector")(e.target.checked);
+                    }}
+                  />
+                }
+                label={
+                <>
+                  <IconButton>
+                    <HelperPopover message="Enable the change detection algorithms" />
+                  </IconButton>
+                  <span>Save On Change</span>
+                </>
                 }
               />
-            }
-            label="Only save when changes detected"
-          />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!values.enableImageChangeDetector}
+                    onChange={(e) =>
+                      setField("enableImageChangeDetector")(e.target.checked)
+                    }
+                  />
+                }
+                label={
+                <>
+                  <IconButton>
+                    <HelperPopover message="A screenshot comparison is performed. If the screenshots differ the web page is saved." />
+                  </IconButton>
+                  <span>Detect Image Change</span>
+                </>
+                }
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!values.enableSelectorChangeDetector}
+                    onChange={(e) =>
+                      setField("enableSelectorChangeDetector")(e.target.checked)
+                    }
+                  />
+                }
+                label={
+                <>
+                  <IconButton>
+                    <HelperPopover message="Save the page when selectors exist" />
+                  </IconButton>
+                  <span>Detect Selector Change</span>
+                </>
+                }
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!!values.enableTextChangeDetector}
+                    onChange={(e) =>
+                      setField("enableTextChangeDetector")(e.target.checked)
+                    }
+                  />
+                }
+                label={
+                <>
+                  <IconButton>
+                    <HelperPopover message="Save the page when text is different, useful static web sites or json" />
+                  </IconButton>
+                  <span>Detect Text Change</span>
+                </>
+                }
+              />
+
+
+
         </Stack>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} variant="text">
-          Cancel
-        </Button>
-        <Button onClick={handleSave} variant="contained" disabled={!canSave}>
-          Save
-        </Button>
+          <Button onClick={onClose} color="cancel" variant={'contained'}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} color="secondary" variant={'contained'}>
+            Save
+          </Button>
       </DialogActions>
     </Dialog>
   );

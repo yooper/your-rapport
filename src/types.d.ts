@@ -77,7 +77,7 @@ export interface IRapport
   isImportant: boolean | false;
   text?: string;
   selectors: Array<Selector>;
-  tags: Array<string>;
+  tags: Array<Tag>;
   artifacts: Array<Attachment>;
   extractedUrls: Array<string>;
   extractedDomains: Array<string>;
@@ -146,6 +146,7 @@ export type Attachment = {
   mimeType: string;
   size: number;
   url: string;
+  hash: string;
 };
 
 interface TabPanelProps {

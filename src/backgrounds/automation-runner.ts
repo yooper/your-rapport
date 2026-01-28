@@ -2,23 +2,36 @@
 import { takeNext, complete, fail, recoverExpiredLeases, getQueue } from './automation-queue';
 import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
-import { updateRecord, getLocalItem, setLocalItem } from '../models/db/local'
-import { ACTIVATE_CAPTURE, BULK_AUTOMATION, PAGE_INFO, PAGE_INITIALIZED, UUID } from '../services/constants';
-import { IBulkAutomationRecord } from '../types';
+import { ACTIVATE_CAPTURE, PAGE_INFO, PAGE_INITIALIZED } from '../services/constants';
 import { sleep } from '../utilities/loaders';
 import  ExtensionPin from '../utilities/ExtensionPin';
 import { CronExpressionParser } from 'cron-parser';
 import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
 import { db } from '../models/db/dexieDb';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
+import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
+import { Tag } from '../models/schemas/Tag';
+import { getUtcNow } from '../utilities/transformers';
 
 
 let processing: boolean = false;
 
 export function initializeAutomationRunner() {
+  // add default set of tags used in the automations
+  db.tag.bulkPut([new Tag('img-change-detected'), new Tag('selectors-detected'), new Tag('text-change-detected')]);
+
   // periodic tick to recover & continue
   chrome.alarms.create('yr_queue_tick', { periodInMinutes: 1 });
   chrome.alarms.onAlarm.addListener(a => { if (a.name === 'yr_queue_tick') trigger(); });
+
+  chrome.alarms.create('yr_scheduled_automations', { periodInMinutes: 1 });
+
+  chrome.alarms.onAlarm.addListener(a => {
+    if (a.name === 'yr_scheduled_automations'){
+      debug('yr_scheduled_automations:starting')
+      queueScheduledAutomations();
+      debug('yr_scheduled_automations:completed')
+    } });
 
   // resume on startup / install
   chrome.runtime.onStartup.addListener(() => { recoverExpiredLeases().then(trigger); });
@@ -36,41 +49,52 @@ export function initializeAutomationRunner() {
   });
 }
 
-
-
-
-async function trigger() {
+async function queueScheduledAutomations(){
   // upon trigger, we need to check for any active scheduled automations that must be run by checking their crontab evaluation and generate
   // any associated bulk automations
-  try {
-    const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
-    const utcNow: Date = new Date();
-    utcNow.setUTCSeconds(0, 0);
-    const automations: BulkAutomationUrl[] = [];
-    for (const scheduledAutomation of scheduledAutomations) {
-      const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
-      if(interval.includesDate(utcNow)){
-        // TODO: queue the job
-        const automation = BulkAutomationUrl.createBulkAutomationJob(scheduledAutomation.url, {
-          keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
-          isDeepSave: scheduledAutomation.isDeepSave ?? true,
-          scheduledAutomation: scheduledAutomation ?? null,
-          unitDefault: scheduledAutomation.unit,
-          unitValue: scheduledAutomation.value
-        });
-        // MUST be set to active to trigger running in the automation queue
-        automation.active = true;
-        automations.push(automation)
+  db.transaction('rw', db.bulkAutomation, db.scheduledAutomation, async () => {
+      processing = true;
+      const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
+      const utcNow: Date = new Date();
+      debug('Scheduling automations', {scheduledAutomations});
+      utcNow.setSeconds(0, 0);
+      const automations: BulkAutomationUrl[] = [];
+      for (const scheduledAutomation of scheduledAutomations) {
+        const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
+        if(interval.includesDate(utcNow)){
+          // TODO: queue the job
+          const automation = BulkAutomationUrl.createBulkAutomationJob(scheduledAutomation.url, {
+            keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
+            isDeepSave: scheduledAutomation.isDeepSave ?? true,
+            scheduledAutomation: scheduledAutomation ?? null,
+            unitDefault: scheduledAutomation.unit ?? 'count',
+            unitValue: scheduledAutomation.value ?? 100
+          });
+          // MUST be set to active to trigger running in the automation queue
+          automation.active = true;
+          automations.push(automation)
+          scheduledAutomation.lastRanOn = getUtcNow();
+          await db.scheduledAutomation.put(scheduledAutomation);
+        }
       }
-    }
-    const items: BulkAutomationUrl[] = await getLocalItem(BULK_AUTOMATION);
-    await setLocalItem(BULK_AUTOMATION, items.concat(automations));
+      if(automations.length > 0){
+        await debug('Scheduled Automations Created', {automations});
+        await db.bulkAutomation.bulkAdd(automations);
+        return automations
+      }
+    }).then((automations) => {
+      if(automations?.length ?? [].length > 0){
+        debug('The following bulk automations were scheduled', {automations})
+      }
+    }).catch(error => {
+      debug('queueScheduledAutomations::error ' + String(error));
+    }).finally(() => {
+      processing = false;
+      trigger();
+  })
+}
 
-  }
-  catch(e){
-    debug('Error creating bulk automation from schedule automation')
-  }
-
+async function trigger() {
 
   if (processing){
     return;
@@ -80,14 +104,14 @@ async function trigger() {
 }
 
 async function processQueue() {
-  while (true) {
+  do {
     const job = await takeNext();
-    if (!job){
+    if (!job) {
       return;
     }
     ExtensionPin.setAutomationRunning(await getQueue());
     job.ranOn = new Date().getTime()
-    await updateRecord(BULK_AUTOMATION, UUID, job);
+    await db.bulkAutomation.put(job);
     let tabId: number | null = null;
     try {
       const tab = await chrome.tabs.create({ url: job.url, active: false });
@@ -106,19 +130,18 @@ async function processQueue() {
 
       // wait for the page to finish loading
       // TODO: add configurable delay
-      await sleep(3000)
+      await sleep(2000)
 
       // the automation requires scrolling through the page
-      if(!job.isDeepSave){
-          chrome.tabs.sendMessage(tabId, { cmd: ACTIVATE_CAPTURE, automation: job })
-            .then(response => {
-              debug(ACTIVATE_CAPTURE + ':', response);
-            })
+      if (!job.isDeepSave) {
+        chrome.tabs.sendMessage(tabId, { cmd: ACTIVATE_CAPTURE, automation: job })
+          .then(response => {
+            debug(ACTIVATE_CAPTURE + ':', response);
+          })
         do {
 
           await sleep(1000)
-          const refreshedJob = (await getLocalItem(BULK_AUTOMATION))
-            .find((j: IBulkAutomationRecord) => j.uuid === job.uuid)
+          const refreshedJob = await db.bulkAutomation.get(job.uuid)
 
           if (!refreshedJob) {
             throw Error('Unknown job')
@@ -127,7 +150,7 @@ async function processQueue() {
           job.completedOn = refreshedJob.completedOn;
           job.status = refreshedJob.status
 
-          if(job.screenShotsCollected === refreshedJob.screenShotsCollected){
+          if (job.screenShotsCollected === refreshedJob.screenShotsCollected) {
             // screen is not scrolling
             job.completedOn = new Date().getTime()
             job.status = "done";
@@ -136,23 +159,33 @@ async function processQueue() {
           }
           job.screenShotsCollected = refreshedJob.screenShotsCollected
           ExtensionPin.setAutomationRunning(await getQueue());
-          await sleep(3000);
+          await sleep(1000);
         }
-        while(['running', 'queued'].includes(job.status));
+        while (['running', 'queued'].includes(job.status));
       }
       // deep save
       else {
-        await capture(tab, pageInfo, true);
+        await capture(tab, pageInfo, true, job as BulkAutomationUrl);
       }
       await complete(job);
     } catch (e: any) {
-      await fail(job, String(e?.message ?? e));
+      if (e instanceof NoChangeDetectedError) {
+        ; // do nothing, no change was detected
+        job.description = 'No Change Detected';
+        await complete(job)
+      } else {
+        await fail(job, String(e?.message ?? e));
+      }
     } finally {
-      if(!job.keepTabOpen && job.status !== 'failed' && tabId){
-        try { await chrome.tabs.remove(tabId); } catch {}
+      if (!job.keepTabOpen && job.status !== 'failed' && tabId) {
+        try {
+          await chrome.tabs.remove(tabId);
+        } catch {
+
+        }
       }
     }
-  }
+  } while (true);
 }
 
 function waitForCompleteOrDnsError(tabId: number) {
@@ -174,31 +207,11 @@ function waitForCompleteOrDnsError(tabId: number) {
   });
 }
 
-
-export function waitForPageInfo(tabId: number) {
-  return new Promise<any>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      chrome.runtime.onMessage.removeListener(onMsg);
-      reject(new Error('content handshake timeout'));
-      }, 5000);
-    const onMsg = (msg: any, sender: chrome.runtime.MessageSender) => {
-      if (sender.tab?.id === tabId && msg?.cmd === PAGE_INFO) {
-        debug(PAGE_INFO+' return ', msg?.pageInfo)
-        const pageInfo = { ...msg.pageInfo}
-        clearTimeout(timer);
-        chrome.runtime.onMessage.removeListener(onMsg);
-        resolve(pageInfo);
-      }
-    };
-    // send the initialization message to the content script
-    chrome.runtime.onMessage.addListener(onMsg);
-    chrome.tabs.sendMessage(tabId, { cmd: PAGE_INITIALIZED });
-  });
-}
-
 async function focusTab(tabId: number) {
   const tab = await chrome.tabs.get(tabId);
-  if (tab.windowId != null) await chrome.windows.update(tab.windowId, { focused: true });
+  if (tab.windowId != null) {
+    await chrome.windows.update(tab.windowId, { focused: true });
+  }
   await chrome.tabs.update(tabId, { active: true });
 }
 

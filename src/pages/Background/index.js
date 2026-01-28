@@ -7,8 +7,6 @@ import {
 import BulkAutomationUrl from '../../models/schemas/BulkAutomationUrl'
 import { initializeContextMenus } from '../../services/context_menu_services';
 import ExtensionPin from '../../utilities/ExtensionPin';
-import { scanPage } from '../../utilities/transformers';
-import { Configuration } from '../../models/schemas/Configuration';
 import {
   ACTIVATE_CAPTURE,
   AUTO_COLLECT_STARTING,
@@ -23,18 +21,18 @@ import { debug } from '../../services/logger_services';
 
 import { JobQueue } from '../../models/schemas/JobQueue';
 
-import { initializeAutomationRunner, waitForPageInfo } from '../../backgrounds/automation-runner';
-import { addRecord } from '../../models/db/local';
+import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
 import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
+import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
 
 /**
  * Initialize services when the extension is installed / activated
  */
 await initializeContextMenus();
 initializeAutomationRunner();
-// upon startup update or install discovery plugins
+// Upon startup update or install discovery plugins
 await fetchPackages();
 
 let _jobQueue = null;
@@ -54,6 +52,7 @@ chrome.commands.onCommand.addListener(async(command) => {
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
       chrome.sidePanel.open({ tabId: tabs[0].id })
     })
+    return;
   }
 
   await debug(`Command ${command} received`)
@@ -104,15 +103,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
       const activeTab = await getActiveTab();
+      ExtensionPin.setDefaultNotSaved(activeTab);
       const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO', requestId: crypto.randomUUID() });
       await capture(activeTab, pageInfo, true);
       sendResponse({ completed: true, deepSave: true, pageInfo });
-    } catch (e) {
+      ExtensionPin.setDefaultSaved(activeTab);
+    }
+    catch (e)
+    {
       await debug('deep save failed.')
+      ExtensionPin.setTempErrorPin(message, sender.tab);
       sendResponse({
         completed: false,
         deepSave: true,
-        error: e instanceof Error ? e.message : String(e),
+        error: e instanceof Error ? e.message : String(e)
       });
     }
   })();
@@ -154,7 +158,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    */
   else if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
-      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false);
+      await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false, message.pageInfo.automation ?? null);
+      // update the screenshot count
+      if(message.pageInfo.automation){
+        const automation = message.pageInfo.automation;
+        const record = await db.bulkAutomation.get(automation.uuid);
+        record.screenShotsCollected = message.pageInfo.sequence;
+        await db.bulkAutomation.put(record);
+      }
       sendResponse({ completed: true });
     })();
     return true;
@@ -203,17 +214,20 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
         case ENQUEUE_BULK_AUTOMATION_URL:
         case 'enqueueBulkAutomation':
           const record = await BulkAutomationUrl.createBulkAutomationJob(message.url);
-          await addRecord(BULK_AUTOMATION, UUID, record);
+          await db.bulkAutomation.add(record);
           break;
         case 'ping':
           sendResponse({completed: true});
+          break;
+        case 'monitorHourly':
+          await ScheduledAutomation.addMonitor(message.url, '0 0 * * * *');
+          break;
         default:
           return false;
       }
     })()
     return false;
   } catch (e) {
-
     debug('onMessageExternal:failure', { message, sender })
   }
 })
