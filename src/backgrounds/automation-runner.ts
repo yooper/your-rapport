@@ -74,7 +74,7 @@ async function queueScheduledAutomations(){
           automation.active = true;
           automations.push(automation)
           scheduledAutomation.lastRanOn = getUtcNow();
-          await db.scheduledAutomation.put(scheduledAutomation)
+          await db.scheduledAutomation.put(scheduledAutomation);
         }
       }
       if(automations.length > 0){
