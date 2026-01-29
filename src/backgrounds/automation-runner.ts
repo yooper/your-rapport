@@ -182,7 +182,9 @@ async function processQueue() {
         ; // do nothing, no change was detected
         job.description = 'No Change Detected';
         await complete(job)
-      } else {
+      }
+      else {
+        await ('automationRunner:failed ' + String(e), {job})
         await fail(job, String(e?.message ?? e));
       }
     } finally {

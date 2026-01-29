@@ -15,7 +15,6 @@ export async function debug(
   try {
 
     const tsMessage = `[${new Date().toISOString()}] `+message
-
     const value: boolean = await Configuration.getConfigurationValue<boolean>(
       'debugMessagesEnabled',
       true

@@ -1,6 +1,7 @@
 import { IBulkAutomationRecord } from '../../types';
 import { ScheduledAutomation } from './ScheduledAutomation';
 import { DiscoveryPlugin } from './DiscoveryPlugin';
+import { getUtc, getUtcNow } from '../../utilities/transformers';
 
 export default class BulkAutomationUrl implements IBulkAutomationRecord {
   uuid: string;
@@ -9,7 +10,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
   value: number;
   screenShotsCollected: number;
   keepTabOpen: boolean;
-  createdOn: Date;
+  createdOn: number;
   ranOn: number | null;
   completedOn: number | null;
   description: string | null;
@@ -33,7 +34,7 @@ export default class BulkAutomationUrl implements IBulkAutomationRecord {
     this.value = 0;                // sane default
     this.screenShotsCollected = 0;
     this.keepTabOpen = false;
-    this.createdOn = new Date();   // matches type Date
+    this.createdOn = getUtcNow();
     this.ranOn = null;
     this.completedOn = null;
     this.description = null;

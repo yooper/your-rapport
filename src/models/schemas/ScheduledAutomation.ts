@@ -33,7 +33,7 @@ export class ScheduledAutomation {
     this.unit = 'count';
     this.value = 100;
     this.keepTabOpen = false;
-    this.createdOn = getUtcNow();   // matches type Date
+    this.createdOn = getUtcNow();
     this.active = true;
     this.isDeepSave = true;
     this.changeDetectors = [];
