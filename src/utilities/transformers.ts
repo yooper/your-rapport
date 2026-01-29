@@ -72,6 +72,10 @@ export function getUtcNow() : number{
   return Math.floor(Date.now() / 1000);
 }
 
+export function getUtc(date: Date) : number {
+  return Math.floor(date.getTime() / 1000);
+}
+
 // Utility: Download base64-encoded image
 export function downloadBase64Image(
   base64Data: string,

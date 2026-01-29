@@ -11,7 +11,7 @@ import { db } from '../models/db/dexieDb';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { Tag } from '../models/schemas/Tag';
-import { getUtcNow } from '../utilities/transformers';
+import { getUtc, getUtcNow } from '../utilities/transformers';
 
 
 let processing: boolean = false;
@@ -50,19 +50,20 @@ export function initializeAutomationRunner() {
 }
 
 async function queueScheduledAutomations(){
+
   // upon trigger, we need to check for any active scheduled automations that must be run by checking their crontab evaluation and generate
   // any associated bulk automations
   db.transaction('rw', db.bulkAutomation, db.scheduledAutomation, async () => {
       processing = true;
       const scheduledAutomations: ScheduledAutomation[] = await db.scheduledAutomation.filter(scheduled => scheduled.active).toArray();
-      const utcNow: Date = new Date();
+      const utcNow: number = getUtcNow();
       debug('Scheduling automations', {scheduledAutomations});
-      utcNow.setSeconds(0, 0);
       const automations: BulkAutomationUrl[] = [];
       for (const scheduledAutomation of scheduledAutomations) {
         const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
-        if(interval.includesDate(utcNow)){
-          // TODO: queue the job
+        // run automation
+        if(!scheduledAutomation?.nextRunOn || scheduledAutomation.nextRunOn <= utcNow) {
+          // add bulk automation url
           const automation = BulkAutomationUrl.createBulkAutomationJob(scheduledAutomation.url, {
             keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
             isDeepSave: scheduledAutomation.isDeepSave ?? true,
@@ -73,7 +74,14 @@ async function queueScheduledAutomations(){
           // MUST be set to active to trigger running in the automation queue
           automation.active = true;
           automations.push(automation)
-          scheduledAutomation.lastRanOn = getUtcNow();
+          scheduledAutomation.prevRanOn = utcNow;
+          if(interval.hasNext()){
+            scheduledAutomation.nextRunOn = getUtc(interval.next().toDate());
+          }
+          else{
+            // deactivate the scheduled automation if no future time exists
+            scheduledAutomation.active = false;
+          }
           await db.scheduledAutomation.put(scheduledAutomation);
         }
       }
@@ -82,6 +90,7 @@ async function queueScheduledAutomations(){
         await db.bulkAutomation.bulkAdd(automations);
         return automations
       }
+      return []
     }).then((automations) => {
       if(automations?.length ?? [].length > 0){
         debug('The following bulk automations were scheduled', {automations})

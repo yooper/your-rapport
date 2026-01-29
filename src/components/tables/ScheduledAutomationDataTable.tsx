@@ -271,6 +271,7 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
                     try {
                       const now = new Date()
                       const interval = CronExpressionParser.parse(record.crontab);
+                      scheduledAutomation.nextRunOn = interval.next().getTime();
                       debug(interval.fields.minute);
                       if(interval.includesDate(now)){
                         debug('now '+ now.toISOString());

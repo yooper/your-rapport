@@ -1,8 +1,9 @@
-import { getUtcNow } from '../../utilities/transformers';
+import { getUtc, getUtcNow } from '../../utilities/transformers';
 import { ChangeDetection } from '../../types';
 import { DiscoveryPlugin } from './DiscoveryPlugin';
 import { db } from '../db/dexieDb';
 import { debug } from '../../services/logger_services';
+import { CronExpressionParser } from 'cron-parser';
 
 export class ScheduledAutomation {
   uuid: string;
@@ -20,7 +21,8 @@ export class ScheduledAutomation {
   enableSelectorChangeDetector: boolean;
   enableTextChangeDetector: boolean;
   onlySaveOnChange: boolean;
-  lastRanOn: number | null;
+  prevRanOn: number | null;
+  nextRunOn: number | null;
   lastError: string | null;
   discoveryPlugin: DiscoveryPlugin | null;
   tags: string[];
@@ -39,10 +41,11 @@ export class ScheduledAutomation {
     this.enableImageChangeDetector = true;
     this.enableSelectorChangeDetector = true;
     this.enableTextChangeDetector = true;
-    this.lastRanOn = null;
+    this.prevRanOn = null;
+    this.nextRunOn = null;
     this.runInServiceWorker = false;
     this.lastError = null
-    this.crontab = '0 * * * * *';
+    this.crontab = '0 0 * * * *';
     this.discoveryPlugin = null;
     this.tags = [];
     this.caseManagementUuid = "30583002-f730-4383-bf28-fdd8aadcf387"
@@ -59,6 +62,11 @@ export class ScheduledAutomation {
     const scheduledAutomation = new ScheduledAutomation();
     scheduledAutomation.url = url;
     scheduledAutomation.crontab = crontab;
+    const interval = CronExpressionParser.parse(crontab);
+
+    if(interval.hasNext()){
+      scheduledAutomation.nextRunOn = getUtc(interval.next().toDate());
+    }
 
     await db.transaction("rw", db.scheduledAutomation, async () => {
       try {
