@@ -300,9 +300,9 @@ export interface IBulkAutomationRecord {
   value: number;
   screenShotsCollected: number;
   keepTabOpen: boolean;
-  createdOn: Date;
-  ranOn: number | null;            // epoch ms or null
-  completedOn: number | null;      // epoch ms or null
+  createdOn: number;
+  ranOn: number | null;
+  completedOn: number | null;
   description: string | null;
   active: boolean;
   tabId: number | null;

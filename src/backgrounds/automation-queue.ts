@@ -45,7 +45,7 @@ export async function complete(queuedJob: BulkAutomationUrl) {
   queuedJob.status = 'done';
   queuedJob.leaseUntil = null;
   queuedJob.completedOn = new Date().getTime();
-  queuedJob.description = 'Completed Successfully: '+ queuedJob.description ?? '';
+  queuedJob.description = 'Completed Successfully';
   await db.bulkAutomation.put(queuedJob);
 }
 
