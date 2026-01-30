@@ -9,6 +9,12 @@ in json to provide additional functionality. The functionality aids in adding fl
 custom code or complexity. This product is meant to simplify digital archiving by providing tools that can automate most
 of the collection process. 
 
+# Privacy Policy
+We do not collect your data, share your data , store your data or even handle your data. All your data stays on your computer. Please see our privacy policy and feel free to reach 
+out with any suggestions on improvements. https://bakerstreet.llc/your-rapport-privacy-policy/
+
+**This is an open source project, which strives to prioritize your privacy.**
+
 ### Getting Started 
 After installing the Chrome extension from https://chromewebstore.google.com/detail/your-rapport/clkaalonjdkliiaadkgodlfbiipidjmn, 
 "Your Rapport" will automatically be ready to collect.
@@ -40,7 +46,7 @@ Check out the wiki for more in depth information. Or review the source code in t
 
 # Technical and Product Roadmap 
 
-Below are the stages used to process collected information, commonly referred to as an ETL pipeline. This workflow is 
+Below are the stages used to process collected information, that stays locally on your machine, commonly referred to as an ETL pipeline. This workflow is 
 designed to run entirely inside a Chrome extension. Discovery Plugins connect events to actions. For example, you might 
 save a web page, an MHTML file, an image, or a snippet of JavaScript and then trigger a scan by a remote service to 
 extract people, places, or names from the text, or run OCR to pull text from an image. The extension collects the 
