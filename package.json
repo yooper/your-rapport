@@ -1,6 +1,6 @@
 {
   "name": "your-rapport",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "A chrome extension for saving screenshots and making them searchable.",
   "license": "Commercial",
   "scripts": {
@@ -12,7 +12,6 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.8",
-    "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^5.14.14",
     "@mui/material": "^5.14.14",
     "@mui/styled-engine-sc": "^6.0.0-alpha.2",
@@ -23,7 +22,6 @@
     "dexie-react-hooks": "^4.2.0",
     "jmespath": "^0.16.0",
     "mhtml-to-html": "^2.0.1",
-    "monaco-editor": "^0.55.1",
     "mui-datatables": "^4.3.0",
     "mustache": "^4.2.0",
     "react": "^18.2.0",
