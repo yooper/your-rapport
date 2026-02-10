@@ -135,7 +135,7 @@ export default function BulkAutomationAddDialog(props) {
           <Button onClick={handleClose} color="cancel" variant={'contained'}>
             Cancel
           </Button>
-          <Button onClick={handleSave} color="secondary" variant={'contained'}>
+          <Button onClick={handleSave} color="primary" variant={'contained'}>
             Save
           </Button>
         </DialogActions>

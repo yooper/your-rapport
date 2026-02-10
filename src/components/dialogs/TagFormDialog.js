@@ -69,7 +69,7 @@ export default function TagFormDialog(props) {
   return (
     <Fragment>
       <IconButton
-        color="white"
+        color="primary"
         id={'Add'}
         aria-controls="applications-menu"
         aria-haspopup="true"
