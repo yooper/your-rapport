@@ -180,6 +180,7 @@ export default function Login() {
                 type="submit"
                 fullWidth
                 variant="contained"
+                color='primary'
                 sx={{ mt: 3, mb: 2 }}
               >
                 Sign In
@@ -191,6 +192,7 @@ export default function Login() {
                 variant="contained"
                 sx={{ mt: 3, mb: 2 }}
                 onClick={() => { createTab('https://buy.stripe.com/4gM5kDbRcgWW8d7gLedAk00')}}
+                color={'info'}
               >
                 Buy a Pro License
               </Button>

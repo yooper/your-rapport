@@ -43,3 +43,10 @@ body {
 .page_title {
   font-weight: bolder;
 }
+
+.thumb {
+  width: 175px;
+  height: 125px;
+  object-fit: cover;
+  object-position: center;
+}

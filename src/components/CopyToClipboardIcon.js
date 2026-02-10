@@ -16,7 +16,7 @@ const CopyToClipboardIcon = (props) => {
 
   return (
     <>
-      <ContentCopyIcon onClick={handleClick} />
+      <ContentCopyIcon onClick={handleClick} color={props.color}/>
     </>
   );
 };

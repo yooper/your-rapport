@@ -632,6 +632,7 @@ export default function SearchDataTable(props) {
         setSelectedRows={setSelectedRows}
         rows={rows}
         onRowsDelete={rowsDelete}
+        refreshRows={refreshRows}
       />
     ),
   };

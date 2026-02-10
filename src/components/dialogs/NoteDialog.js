@@ -8,7 +8,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import { TextareaAutosize } from '@mui/material';
 import { showLoader } from '../../utilities/loaders';
 import { getUtcNow } from '../../utilities/transformers';
-import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
 
 export default function NotesDialog(props) {
@@ -48,7 +47,7 @@ export default function NotesDialog(props) {
 
   return (
     <Fragment>
-      <EditIcon onClick={() => setOpen(true)} />
+      <EditIcon color={'primary'} onClick={() => setOpen(true)} />
       <Dialog
         open={open}
         onClose={handleClose}
@@ -76,10 +75,10 @@ export default function NotesDialog(props) {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} color="cancel" variant={'contained'}>
+          <Button onClick={handleClose} color="error" variant={'contained'}>
             Cancel
           </Button>
-          <Button onClick={handleSave} color="secondary" variant={'contained'}>
+          <Button onClick={handleSave} color="primary" variant={'contained'}>
             Save
           </Button>
         </DialogActions>

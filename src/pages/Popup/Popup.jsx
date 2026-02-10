@@ -147,7 +147,7 @@ function LargeButtonGrid() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                color: '#ffe88b',
+                color: '#fff',
                 p: 2,
               }}
             >

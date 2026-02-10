@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { withStyles } from 'tss-react/mui';
@@ -8,14 +8,15 @@ import {
   downloadBase64Image,
   downloadJsonData,
 } from '../../../utilities/transformers';
-import { RAPPORT } from '../../../services/constants';
-import { getLocalItem } from '../../../models/db/local';
 import BurstModeIcon from '@mui/icons-material/BurstMode';
 import { mergeImagesVertically } from '../../../services/image_loading_services';
 import { hideLoader, showLoader } from '../../../utilities/loaders';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import { db } from '../../../models/db/dexieDb';
 import { Artifact } from '../../../models/schemas/Artifact';
+import TagIcon from '@mui/icons-material/Tag';
+import AddTagsMultiplFormDialog from '../../dialogs/search_dashboard/AddTagsMultipleFormDialog';
+
 
 const defaultToolbarSelectStyles = (theme) => ({
   root: {
@@ -48,7 +49,10 @@ const defaultToolbarSelectStyles = (theme) => ({
 });
 
 function SearchDataTableToolbarSelect(props) {
-  const { classes, selectedRows, displayData, columns, rows } = props;
+  const { classes, selectedRows, displayData, columns, rows, refreshRows } = props;
+  const [openAddTagDialog, setOpenAddTagDialog] = useState(false);
+  const [rapports, setRapports] = useState([])
+
   /**
    * @param {number[]} selectedRows Array of rows indexes that are selected, e.g. [0, 2] will select first and third rows in table
    */
@@ -75,6 +79,30 @@ function SearchDataTableToolbarSelect(props) {
   return (
     <Fragment>
       <span style={{ justifyContent: 'right' }}>
+        <Tooltip title={'Add multiple tags to the selected records.'}>
+          <span>
+            <IconButton>
+              <TagIcon onClick={() => {
+                const orderedIndex = selectedRows.data.map(
+                  (sr) => sr.dataIndex
+                );
+                const orderedRapports = [];
+                for (let idx of orderedIndex) {
+                  orderedRapports.push(rows[idx]);
+                }
+                setRapports(orderedRapports)
+                setOpenAddTagDialog(true)
+              }}
+              />
+            </IconButton>
+            <AddTagsMultiplFormDialog
+              isOpen={openAddTagDialog}
+              setIsOpen={setOpenAddTagDialog}
+              rapports={rapports}
+              refreshRows={refreshRows}
+            />
+          </span>
+        </Tooltip>
         <Tooltip title={'Merge multiple screenshots and download the image.'}>
           <span>
             <IconButton>
@@ -158,6 +186,7 @@ function SearchDataTableToolbarSelect(props) {
         </Tooltip>
       </span>
     </Fragment>
+
   );
 }
 

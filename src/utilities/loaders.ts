@@ -78,17 +78,39 @@ export function processNotification(
 export function getDarkTheme(): ThemeOptions {
   return {
     palette: {
-      mode: 'dark',
+      mode: "dark",
       primary: {
-        main: '#ffe88b',
+        main: '#fff',
       },
       secondary: {
-        main: '#619657',
+        main: "#619657",
       },
+
+      success: {
+        main: "#4CAF50",
+        light: "#81C784",
+        dark: "#2E7D32",
+      },
+      warning: {
+        main: "#FFB74D",
+        light: "#FFD54F",
+        dark: "#F57C00",
+      },
+      error: {
+        main: "#F44336",
+        light: "#E57373",
+        dark: "#D32F2F",
+      },
+      info: {
+        main: "#29B6F6",
+        light: "#81D4FA",
+        dark: "#0288D1",
+      },
+
       // custom key used in your app
       // @ts-expect-error - non-standard palette key
       cancel: {
-        main: '#E86E69',
+        main: "#E86E69", // your existing coral
       },
     },
   };

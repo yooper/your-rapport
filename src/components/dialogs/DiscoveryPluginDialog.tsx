@@ -191,6 +191,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
           aria-haspopup="true"
           onClick={() => setOpen(true)}
           size="large"
+          color={'primary'}
         >
           <AppsIcon style={{ zIndex: 1000 }} />
         </IconButton>
@@ -210,7 +211,7 @@ const DiscoveryPluginDialog: React.FC<DiscoveryPluginDialogProps> = ({
           <DialogContentText />
           <form>
             <div>
-              <Typography variant="h5">
+              <Typography variant="h5" color={'primary'}>
                 {selectorValue}
                   <Tooltip title={'Copy the selected selector value into your clip board'}>
                   <CopyToClipboardIcon

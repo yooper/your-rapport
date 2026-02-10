@@ -232,7 +232,7 @@ export default function ScheduleAutomationDialog({
           <Button onClick={onClose} color="cancel" variant={'contained'}>
             Cancel
           </Button>
-          <Button onClick={handleSave} color="secondary" variant={'contained'}>
+          <Button onClick={handleSave} color="primary" variant={'contained'}>
             Save
           </Button>
       </DialogActions>
