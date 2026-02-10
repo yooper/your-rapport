@@ -47,7 +47,6 @@ export default function AddTagsMultiplFormDialog(props) {
   }, [props.isOpen]);
 
 
-
   const handleSave = async () => {
     try {
       showLoader();
