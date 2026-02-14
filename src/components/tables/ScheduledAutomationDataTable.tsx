@@ -336,10 +336,13 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
         rowsPerPage: 50,
         rowsPerPageOptions: [20, 50],
         searchAlwaysOpen: false,
-        onRowsDelete: async (deleteInfo: any) => {
+        onRowsDelete: async (records: any, data: any) => {
           setIsLoading(true);
           showLoader();
-
+          for (const [idx, value] of Object.entries(records.lookup)) {
+            await db.scheduledAutomation.delete(rows[idx].uuid);
+          }
+          setRows(await db.scheduledAutomation.toArray());
           setIsLoading(false);
           hideLoader();
         },
