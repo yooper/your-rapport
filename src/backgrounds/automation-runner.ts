@@ -80,6 +80,7 @@ async function queueScheduledAutomations(){
           if(interval.hasNext()){
             scheduledAutomation.nextRunOn = nextRunOn;
           }
+
           else{
             // deactivate the scheduled automation if no future time exists
             scheduledAutomation.active = false;
