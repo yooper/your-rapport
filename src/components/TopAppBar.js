@@ -15,18 +15,22 @@ import { getUser } from '../models/schemas/User';
 import SyncIcon from '@mui/icons-material/Sync';
 import SyncDisabledIcon from '@mui/icons-material/SyncDisabled';
 import { Configuration } from '../models/schemas/Configuration';
+import TimerOffIcon from '@mui/icons-material/TimerOff';
+import { allSitesAccessApproved, requestAllSitesAccess } from '../services/manifest_permissions';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
   const [auth, setAuth] = React.useState(true);
   const [configuration, setConfiguration] = useState({})
+  const [hasPermission, setHasPermission] = useState(true);
 
   useEffect(() => {
     async function fetchData(){
       const user = await getUser();
       setAuth(user && user.verify() ? true : false);
       setConfiguration(await Configuration.getConfiguration());
+      setHasPermission(await allSitesAccessApproved());
     }
     fetchData();
   }, []);
@@ -106,6 +110,22 @@ export default function TopAppBar() {
           <div>
 
           </div>
+
+          {!hasPermission ? (
+            <Tooltip
+              title={'Enable the extension access to websites. Turning this feature on enables automations and streamlines data extraction processes.'}>
+              <IconButton
+                size="large"
+                aria-label=""
+                color="inherit"
+                onClick={() => requestAllSitesAccess()}
+              >
+                <TimerOffIcon color={'error'}/>
+              </IconButton>
+            </Tooltip>
+          ) : ''
+          }
+
 
           {auth && configuration.syncBackgroundEnabled ? (
             <Tooltip title={'Local data sync is active'}>
