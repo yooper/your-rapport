@@ -85,7 +85,9 @@ export function getDarkTheme(): ThemeOptions {
       secondary: {
         main: "#619657",
       },
-
+      info: {
+        main: "#ffe88b",
+      },
       success: {
         main: "#4CAF50",
         light: "#81C784",
@@ -100,11 +102,6 @@ export function getDarkTheme(): ThemeOptions {
         main: "#F44336",
         light: "#E57373",
         dark: "#D32F2F",
-      },
-      info: {
-        main: "#29B6F6",
-        light: "#81D4FA",
-        dark: "#0288D1",
       },
 
       // custom key used in your app

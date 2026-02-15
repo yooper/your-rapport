@@ -569,7 +569,7 @@ export default function SearchDataTable(props) {
     customSearchRender: rapportDebounceSearchRender(800),
     textLabels: {
       toolbar: {
-        downloadCsv: 'Export as JSON file',
+        downloadCsv: 'Export all rapport records as a JSON file',
       },
     },
     onDownload: (buildHead, buildBody, columns, data) => {

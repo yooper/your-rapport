@@ -12,6 +12,7 @@ import { FastDrawError } from '../errors/FastDrawError';
 import { getActiveTab, sleep } from '../utilities/loaders';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { DuplicateDetectedError } from '../errors/DuplicateDetectedError';
+import { initExtensionPage } from '../services/init_services';
 
 
 let _lastRapport: Rapport|null = null;
@@ -30,7 +31,10 @@ export async function capture(
 
   ExtensionPin.setDefaultNotSaved(tab);
   // always force close the sidePanel upon save
-  chrome.sidePanel.close({tabId: tab.id});
+
+
+  // will close the sidePanel if its open
+  initExtensionPage();
 
   do {
     try {

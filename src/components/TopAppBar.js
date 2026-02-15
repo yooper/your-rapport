@@ -15,18 +15,22 @@ import { getUser } from '../models/schemas/User';
 import SyncIcon from '@mui/icons-material/Sync';
 import SyncDisabledIcon from '@mui/icons-material/SyncDisabled';
 import { Configuration } from '../models/schemas/Configuration';
+import SecurityIcon from '@mui/icons-material/Security';
+import { allSitesAccessApproved, removeAllSitesAccess, requestAllSitesAccess } from '../services/manifest_permissions';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
   const [auth, setAuth] = React.useState(true);
   const [configuration, setConfiguration] = useState({})
+  const [hasPermission, setHasPermission] = useState(true);
 
   useEffect(() => {
     async function fetchData(){
       const user = await getUser();
       setAuth(user && user.verify() ? true : false);
       setConfiguration(await Configuration.getConfiguration());
+      setHasPermission(await allSitesAccessApproved());
     }
     fetchData();
   }, []);
@@ -107,6 +111,28 @@ export default function TopAppBar() {
 
           </div>
 
+          <Tooltip
+            title={ hasPermission ? 'Advanced Scheduled Automations Enabled' : 'Enable the extension access to websites. Turning this feature on enables automations and streamlines data extraction processes.'}>
+            <IconButton
+              size="large"
+              aria-label=""
+              color="inherit"
+              onClick={async() => {
+                if(hasPermission) {
+                  alert('TODO: Find docs to remove permissions.');
+                  setHasPermission(false);
+                }
+                else {
+                  const isPermitted = await requestAllSitesAccess();
+                  setHasPermission(isPermitted);
+                }
+              }}
+            >
+              <SecurityIcon color={ hasPermission ? 'success' : 'error'}/>
+            </IconButton>
+          </Tooltip>
+
+
           {auth && configuration.syncBackgroundEnabled ? (
             <Tooltip title={'Local data sync is active'}>
               <IconButton
@@ -115,7 +141,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
               >
-                <SyncIcon />
+                <SyncIcon color={'success'} />
               </IconButton>
             </Tooltip>
               ) : (
@@ -127,7 +153,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab(`https://github.com/yooper/your-rapport/wiki/Pro-features`)}
               >
-                <SyncDisabledIcon />
+                <SyncDisabledIcon color={'info'} />
               </IconButton>
             </Tooltip>
             )
@@ -140,7 +166,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
               >
-                <PersonIcon />
+                <PersonIcon color={'success'}/>
               </IconButton>
             </Tooltip>
           ) : (
@@ -151,7 +177,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab(`chrome-extension://${chrome.runtime.id}/login.html`)}
               >
-                <PersonOffIcon />
+                <PersonOffIcon color={'info'} />
               </IconButton>
             </Tooltip>
           )}

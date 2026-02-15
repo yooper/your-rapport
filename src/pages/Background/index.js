@@ -17,10 +17,7 @@ import {
 } from '../../services/constants';
 
 import { debug } from '../../services/logger_services';
-
-
 import { JobQueue } from '../../models/schemas/JobQueue';
-
 import { initializeAutomationRunner } from '../../backgrounds/automation-runner';
 import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
@@ -59,6 +56,18 @@ chrome.commands.onCommand.addListener(async(command) => {
   const activeTab = await getActiveTab()
   const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
   const { pageInfo } = response
+  function getTitle() { return document.title; }
+
+  chrome.scripting
+    .executeScript({
+      target : {tabId : activeTab.id, allFrames : true},
+      func : getTitle,
+    })
+    .then(injectionResults => {
+      for (const {frameId, result} of injectionResults) {
+        console.log(`Frame ${frameId} result:`, result);
+      }
+    });
 
   switch (command) {
     case 'deepSave':
@@ -238,7 +247,14 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   // when the tab changes, check if it changes to an extension page and close the side panel
   if(tab.url.startsWith(`chrome://extensions/?id=${chrome.runtime.id}`)){
-    chrome.sidePanel.close({tabId})
+    let gettingContextInfo = chrome.runtime.getContexts({ contextTypes: ['SIDE_PANEL']});
+    gettingContextInfo.then(contexts => {
+      contexts.forEach(c => {
+        if(c.tagId == tabId){
+          chrome.sidePanel.close({tabId})
+        }
+      })
+    })
   }
 
   if (changeInfo.status === 'complete') {

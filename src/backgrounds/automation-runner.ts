@@ -62,7 +62,9 @@ async function queueScheduledAutomations(){
       for (const scheduledAutomation of scheduledAutomations) {
         const interval = CronExpressionParser.parse(scheduledAutomation.crontab);
         // run automation
-        if(!scheduledAutomation?.nextRunOn || scheduledAutomation.nextRunOn <= utcNow) {
+        const nextRunOn = getUtc(interval.next().toDate());
+        // getNextRunTime address a bug when the updated crontab was changed, but the nextRunOn isn't for a while.
+        if(!scheduledAutomation?.nextRunOn || scheduledAutomation.nextRunOn <= utcNow || nextRunOn <= utcNow) {
           // add bulk automation url
           const automation = BulkAutomationUrl.createBulkAutomationJob(scheduledAutomation.url, {
             keepTabOpen: scheduledAutomation.keepTabOpen ?? false,
@@ -76,8 +78,9 @@ async function queueScheduledAutomations(){
           automations.push(automation)
           scheduledAutomation.prevRanOn = utcNow;
           if(interval.hasNext()){
-            scheduledAutomation.nextRunOn = getUtc(interval.next().toDate());
+            scheduledAutomation.nextRunOn = nextRunOn;
           }
+
           else{
             // deactivate the scheduled automation if no future time exists
             scheduledAutomation.active = false;
