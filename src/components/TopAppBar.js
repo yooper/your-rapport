@@ -16,7 +16,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 import SyncDisabledIcon from '@mui/icons-material/SyncDisabled';
 import { Configuration } from '../models/schemas/Configuration';
 import SecurityIcon from '@mui/icons-material/Security';
-import { allSitesAccessApproved, requestAllSitesAccess } from '../services/manifest_permissions';
+import { allSitesAccessApproved, removeAllSitesAccess, requestAllSitesAccess } from '../services/manifest_permissions';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -117,7 +117,16 @@ export default function TopAppBar() {
               size="large"
               aria-label=""
               color="inherit"
-              onClick={async() => await requestAllSitesAccess() ? setHasPermission(true) : setHasPermission(false)}
+              onClick={async() => {
+                if(hasPermission) {
+                  alert('TODO: Find docs to remove permissions.');
+                  setHasPermission(false);
+                }
+                else {
+                  const isPermitted = await requestAllSitesAccess();
+                  setHasPermission(isPermitted);
+                }
+              }}
             >
               <SecurityIcon color={ hasPermission ? 'success' : 'error'}/>
             </IconButton>
