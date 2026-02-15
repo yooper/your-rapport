@@ -15,7 +15,7 @@ import { getUser } from '../models/schemas/User';
 import SyncIcon from '@mui/icons-material/Sync';
 import SyncDisabledIcon from '@mui/icons-material/SyncDisabled';
 import { Configuration } from '../models/schemas/Configuration';
-import TimerOffIcon from '@mui/icons-material/TimerOff';
+import SecurityIcon from '@mui/icons-material/Security';
 import { allSitesAccessApproved, requestAllSitesAccess } from '../services/manifest_permissions';
 
 export default function TopAppBar() {
@@ -111,20 +111,17 @@ export default function TopAppBar() {
 
           </div>
 
-          {!hasPermission ? (
-            <Tooltip
-              title={'Enable the extension access to websites. Turning this feature on enables automations and streamlines data extraction processes.'}>
-              <IconButton
-                size="large"
-                aria-label=""
-                color="inherit"
-                onClick={() => requestAllSitesAccess()}
-              >
-                <TimerOffIcon color={'error'}/>
-              </IconButton>
-            </Tooltip>
-          ) : ''
-          }
+          <Tooltip
+            title={ hasPermission ? 'Advanced Scheduled Automations Enabled' : 'Enable the extension access to websites. Turning this feature on enables automations and streamlines data extraction processes.'}>
+            <IconButton
+              size="large"
+              aria-label=""
+              color="inherit"
+              onClick={async() => await requestAllSitesAccess() ? setHasPermission(true) : setHasPermission(false)}
+            >
+              <SecurityIcon color={ hasPermission ? 'success' : 'error'}/>
+            </IconButton>
+          </Tooltip>
 
 
           {auth && configuration.syncBackgroundEnabled ? (
@@ -135,7 +132,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
               >
-                <SyncIcon />
+                <SyncIcon color={'success'} />
               </IconButton>
             </Tooltip>
               ) : (
@@ -147,7 +144,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab(`https://github.com/yooper/your-rapport/wiki/Pro-features`)}
               >
-                <SyncDisabledIcon />
+                <SyncDisabledIcon color={'info'} />
               </IconButton>
             </Tooltip>
             )
@@ -160,7 +157,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
               >
-                <PersonIcon />
+                <PersonIcon color={'success'}/>
               </IconButton>
             </Tooltip>
           ) : (
@@ -171,7 +168,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab(`chrome-extension://${chrome.runtime.id}/login.html`)}
               >
-                <PersonOffIcon />
+                <PersonOffIcon color={'info'} />
               </IconButton>
             </Tooltip>
           )}

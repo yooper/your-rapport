@@ -1,5 +1,5 @@
 
-export async function requestAllSitesAccess(): Promise<void> {
+export async function requestAllSitesAccess(): Promise<boolean> {
   return chrome.permissions.request({
     origins: ["<all_urls>"]
   });
@@ -15,7 +15,3 @@ export async function allSitesAccessApproved(): Promise<boolean> {
 }
 
 
-document.getElementById("enableAllSites")?.addEventListener("click", async () => {
-  const granted = await requestAllSitesAccess();
-  console.log("All-sites access granted?", granted);
-});

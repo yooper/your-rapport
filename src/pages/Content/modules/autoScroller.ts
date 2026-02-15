@@ -7,12 +7,9 @@ import {
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB,
   NO_VISIBLE_TEXT,
-  UUID,
 } from "../../../services/constants";
 import { getPageInfo } from "../index";
 import { debug } from "../../../services/logger_services";
-import { updateRecord } from "../../../models/db/local";
-import { db } from '../../../models/db/dexieDb';
 
 /** Local state machine */
 const STATE_STOPPED = "stopped" as const;
