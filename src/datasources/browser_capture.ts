@@ -13,6 +13,8 @@ import { getActiveTab, sleep } from '../utilities/loaders';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { DuplicateDetectedError } from '../errors/DuplicateDetectedError';
 import { initExtensionPage } from '../services/init_services';
+import { Tag } from '../models/schemas/Tag';
+import { isAutomationBlockerDetectedFromHtml } from '../pages/Content/modules/automationBlockerDetection';
 
 
 let _lastRapport: Rapport|null = null;
@@ -33,7 +35,7 @@ export async function capture(
   // always force close the sidePanel upon save
 
 
-  // will close the sidePanel if its open
+  // should close the sidePanel if its open
   initExtensionPage();
 
   do {
@@ -155,6 +157,12 @@ async function _capture(
         throw new DeepSaveError();
       }
     }
+
+    // if the rapport wasn't captured correctly, label it with a tag.
+    if(isAutomationBlockerDetectedFromHtml(pageInfo.html, pageInfo.url)){
+      record.tags = [new Tag('automation-blocked')];
+    }
+
     // persist the record
     await Rapport.add(record);
     _lastRapport = record;
