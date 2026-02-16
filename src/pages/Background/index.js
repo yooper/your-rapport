@@ -23,6 +23,7 @@ import { fetchPackages } from '../../models/schemas/Package';
 import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
 import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
+import { getActivePageInfo } from '../Content/scripts/pageInfo';
 
 /**
  * Initialize services when the extension is installed / activated
@@ -54,20 +55,9 @@ chrome.commands.onCommand.addListener(async(command) => {
 
   await debug(`Command ${command} received`)
   const activeTab = await getActiveTab()
-  const response = await chrome.tabs.sendMessage(activeTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
-  const { pageInfo } = response
-  function getTitle() { return document.title; }
+  const pageInfo = getActivePageInfo(activeTab);
 
-  chrome.scripting
-    .executeScript({
-      target : {tabId : activeTab.id, allFrames : true},
-      func : getTitle,
-    })
-    .then(injectionResults => {
-      for (const {frameId, result} of injectionResults) {
-        console.log(`Frame ${frameId} result:`, result);
-      }
-    });
+  //function getTitle() { return document.title; }
 
   switch (command) {
     case 'deepSave':
@@ -100,8 +90,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       try {
         const activeTab = await getActiveTab();
-        const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO', requestId: crypto.randomUUID() });
-        sendResponse(pageInfo);
+        const pageInfo = await getActivePageInfo(activeTab);
       } catch (e) {
         debug(String(e) + ' Slide Panel error');
       }
@@ -112,8 +101,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
       const activeTab = await getActiveTab();
+      const pageInfo = await getActivePageInfo(activeTab);
       ExtensionPin.setDefaultNotSaved(activeTab);
-      const { pageInfo } = await chrome.tabs.sendMessage(activeTab.id, { cmd: 'PAGE_INFO', requestId: crypto.randomUUID() });
       await capture(activeTab, pageInfo, true);
       sendResponse({ completed: true, deepSave: true, pageInfo });
       ExtensionPin.setDefaultSaved(activeTab);
@@ -167,6 +156,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    */
   else if (message.cmd === CAPTURE_VISIBLE_TAB) {
     (async () => {
+
       await capture(sender.tab, message.pageInfo, message.pageInfo.automation?.isDeepSave ?? false, message.pageInfo.automation ?? null);
       // update the screenshot count
       if(message.pageInfo.automation){
@@ -201,13 +191,12 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
         case 'singleCollect': // TODO: Deprecated remove after 1/1/26
         case 'deepSave':
           await createTab(message.url);
-          const activateTab = await getActiveTab();
-          await sleep(3000);
-          const response = await chrome.tabs.sendMessage(activateTab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
-          const { pageInfo } = response
+          const activeTab = await getActiveTab();
           // wait for page contents to load
+          await sleep(3000);
+          const pageInfo = await getActivePageInfo(activeTab);
           // TODO: make this configurable or dynamic based on the domain
-          await capture(activateTab, pageInfo, true);
+          await capture(activeTab, pageInfo, true);
           sendResponse({completed: true})
           break;
         case AUTO_COLLECT_STARTING:

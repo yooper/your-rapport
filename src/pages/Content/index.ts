@@ -75,7 +75,6 @@ export function getPageInfo(): PageInfo {
     html: document.documentElement.innerHTML,
     url: document.URL,
     screenShotCount: 0,
-    isAutomationBlockerDetected: isAutomationBlockerDetected(document),
     visibleText: getVisibleText(),
     visibleHtml: '',
     text: document.documentElement.innerText,
