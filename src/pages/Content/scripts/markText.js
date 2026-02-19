@@ -1,23 +1,6 @@
 import Mark from 'mark.js';
 
 /**
- * Listens for the message specific to mark text
- * @returns {Promise<void>}
- */
-export function initMarkJsHandler() {
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.cmd === 'getFullText') {
-      sendResponse({ text: document.documentElement.innerText.toLowerCase() });
-      return true;
-    }
-    if (message.cmd === 'markText') {
-      markText(message.selectors);
-      return true;
-    }
-  });
-}
-
-/**
  * Highlights selectors found in the page
  * TODO: make the options configurable
  * @param {Array<Selector>} selectors - The selectors found on this page

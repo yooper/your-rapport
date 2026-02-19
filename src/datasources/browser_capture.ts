@@ -19,7 +19,6 @@ import { isAutomationBlockerDetectedFromHtml } from '../pages/Content/modules/au
 
 let _lastRapport: Rapport|null = null;
 
-
 export async function capture(
   tab: chrome.tabs.Tab,
   pageInfo: any = {},
@@ -47,12 +46,15 @@ export async function capture(
     catch (err) {
       if (err instanceof FastDrawError) {
         // TODO: ?
+        await sleep(500);
       }
       else if (err instanceof DeepSaveError) {
         // TODO: ?
+        await sleep(500);
       }
       else if(err instanceof NotFoundError) {
         // TODO: ?
+        await sleep(500);
       }
       else if(err instanceof DuplicateDetectedError) {
         // TODO: Improve duplicate logic
@@ -62,7 +64,7 @@ export async function capture(
       else{
         processing = true;
         await debug('capture:retrying', {pageInfo, deepSave, bulkAutomation})
-        await sleep(1000);
+        await sleep(500);
       }
     } finally {
       counter++

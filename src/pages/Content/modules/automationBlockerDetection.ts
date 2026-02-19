@@ -1,63 +1,101 @@
-/**
- * Check if the page was blocked
- */
-export function isAutomationBlockerDetectedFromHtml(html: string, urlHint?: string): boolean {
-  const doc = parseHtmlToDocument(html, urlHint);
+import * as cheerio from "cheerio";
 
-  return (
-    isCaptchaPresent(doc) ||
-    isCloudflareChallenge(doc) ||
-    isAccessDeniedPage(doc)
-  );
+/**
+ * Check if the page was blocked (service-worker friendly).
+ * Uses Cheerio to parse the HTML string (no DOM / DOMParser needed).
+ */
+export function isAutomationBlockerDetectedFromHtml(
+  html: string,
+  urlHint?: string
+): boolean {
+  const $ = parseHtmlToCheerio(html, urlHint);
+
+  return isCaptchaPresent($) || isCloudflareChallenge($) || isAccessDeniedPage($);
 }
 
-function parseHtmlToDocument(html: string, urlHint?: string): Document {
-  // Parse into an inert Document (not attached to any tab)
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-
-  // Optional: inject a <base> so relative selectors/logic that might rely on baseURI
-  // behave more predictably (this does not fetch anything).
+function parseHtmlToCheerio(html: string, urlHint?: string): cheerio.CheerioAPI {
+  // Cheerio does not fetch anything; it just parses markup.
+  // `baseURI` is not a real concept in cheerio like in DOM, but we can optionally
+  // inject a <base> tag to keep parity with your old logic (useful if you later
+  // resolve relative URLs manually).
   if (urlHint) {
-    const base = doc.createElement("base");
-    base.href = urlHint;
-    doc.head?.prepend(base);
+    const hasHead = /<head[\s>]/i.test(html);
+    const hasBase = /<base[\s>]/i.test(html);
+
+    if (hasHead && !hasBase) {
+      html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}<base href="${escapeAttr(urlHint)}">`);
+    }
+    else if (!hasHead && !hasBase) {
+      // if head is missing, prepend one (best-effort)
+      html = `<head><base href="${escapeAttr(urlHint)}"></head>${html}`;
+    }
   }
 
-  return doc;
+  return cheerio.load(html, {
+    decodeEntities: true,
+  });
 }
 
-function isCaptchaPresent(doc: Document): boolean {
-  // Look for common iframe src patterns and common widget containers
-  const recaptcha = doc.querySelector(
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function isCaptchaPresent($: cheerio.CheerioAPI): boolean {
+  const recaptcha = $(
     'iframe[src*="recaptcha"], .g-recaptcha, [data-sitekey]'
-  );
-  const hcaptcha = doc.querySelector('iframe[src*="hcaptcha"], .h-captcha');
+  ).length > 0;
 
-  // Some sites render “captcha” in ids/classes without iframes
-  const genericCaptcha = doc.querySelector(
-    '[id*="captcha" i], [class*="captcha" i], form[action*="captcha" i]'
-  );
+  const hcaptcha = $('iframe[src*="hcaptcha"], .h-captcha').length > 0;
 
-  return Boolean(recaptcha || hcaptcha || genericCaptcha);
+  // Case-insensitive attribute contains: use lowercasing heuristics because
+  // CSS4 `[attr*="x" i]` is not reliably supported by cheerio/css-select.
+  const genericCaptcha =
+    $('[id], [class], form[action]').toArray().some((el) => {
+      const id = ($(el).attr("id") ?? "").toLowerCase();
+      const cls = ($(el).attr("class") ?? "").toLowerCase();
+      const action =
+        (el.tagName === "form" ? ($(el).attr("action") ?? "") : "").toLowerCase();
+
+      return (
+        id.includes("captcha") ||
+        cls.includes("captcha") ||
+        (action.length > 0 && action.includes("captcha"))
+      );
+    });
+
+  return recaptcha || hcaptcha || genericCaptcha;
 }
 
-function isCloudflareChallenge(doc: Document): boolean {
-  const title = (doc.title || "").toLowerCase();
+function isCloudflareChallenge($: cheerio.CheerioAPI): boolean {
+  const title = ($("title").first().text() || "").toLowerCase();
 
-  // Cloudflare challenge / interstitial patterns
-  const cfTitle = title.includes("just a moment") || title.includes("attention required");
-  const cfWrapper = doc.querySelector('#cf-wrapper, #cf-please-wait, [id^="cf-"]');
-  const cfError = doc.querySelector('div[class*="cf-error"], div[class*="cf-browser-verification"]');
-  const cfChallengeScript = doc.querySelector('script[src*="/cdn-cgi/challenge-platform"]');
+  const cfTitle =
+    title.includes("just a moment") || title.includes("attention required");
 
-  // Sometimes the marker is in meta or inline scripts
-  const cdnCgi = doc.documentElement?.innerHTML.includes("/cdn-cgi/") ?? false;
+  const cfWrapper =
+    $("#cf-wrapper, #cf-please-wait").length > 0 ||
+    // id starts with "cf-"
+    $('[id]').toArray().some((el) => (($(el).attr("id") ?? "").toLowerCase().startsWith("cf-")));
 
-  return Boolean(cfTitle || cfWrapper || cfError || cfChallengeScript || cdnCgi);
+  const cfError =
+    $('div[class]').toArray().some((el) => {
+      const cls = ($(el).attr("class") ?? "").toLowerCase();
+      return cls.includes("cf-error") || cls.includes("cf-browser-verification");
+    });
+
+  const cfChallengeScript =
+    $('script[src*="/cdn-cgi/challenge-platform"]').length > 0;
+
+  const cdnCgiInHtml = $.html()?.includes("/cdn-cgi/") ?? false;
+
+  return Boolean(cfTitle || cfWrapper || cfError || cfChallengeScript || cdnCgiInHtml);
 }
 
-function isAccessDeniedPage(doc: Document): boolean {
+function isAccessDeniedPage($: cheerio.CheerioAPI): boolean {
   const keywords: string[] = [
     "access denied",
     "verify you are human",
@@ -72,16 +110,13 @@ function isAccessDeniedPage(doc: Document): boolean {
     "404",
   ];
 
-  // In a parsed HTML Document, innerText can be flaky because layout isn't computed.
-  // Use textContent which is reliable in an inert DOM.
-  const bodyText = (doc.body?.textContent ?? "").toLowerCase();
+  const titleText = ($("title").first().text() ?? "").toLowerCase();
+  const h1Text = ($("h1").first().text() ?? "").toLowerCase();
 
-  // Also look at title + common headings
-  const titleText = (doc.title ?? "").toLowerCase();
-  const h1Text = (doc.querySelector("h1")?.textContent ?? "").toLowerCase();
+  // Cheerio text() gives you the document text content (no layout required).
+  const bodyText = ($("body").text() ?? "").toLowerCase();
 
   const haystack = `${titleText}\n${h1Text}\n${bodyText}`;
 
   return keywords.some((k) => haystack.includes(k));
 }
-

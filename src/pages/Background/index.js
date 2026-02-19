@@ -44,7 +44,18 @@ export function getJobQueue(){
 /**
  * Add in support for short-cut keys
  */
+let _commandLock = false;
+
 chrome.commands.onCommand.addListener(async(command) => {
+
+  if(_commandLock){
+    debug('Command lock on', {command});
+    return;
+  }
+
+  // resolves multiple commands sent via keyboard
+  setTimeout(() => _commandLock = false, 500);
+
   // This has to be done this way because of way Chrome determines gestures correctly
   if(command === 'initScanPage'){
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
@@ -52,10 +63,9 @@ chrome.commands.onCommand.addListener(async(command) => {
     })
     return;
   }
-
   await debug(`Command ${command} received`)
   const activeTab = await getActiveTab()
-  const pageInfo = getActivePageInfo(activeTab);
+  const pageInfo = await getActivePageInfo(activeTab);
 
   //function getTitle() { return document.title; }
 
@@ -181,9 +191,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 /**
  * Let the 'Who Am I' extension be able to RPC the extension's functionality
  */
-// For a single request:
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-  debug('onMessageExternal', {message, sender});
+  debug('onMessageExternal:start', {message, sender});
 
   try {
     (async () => {
@@ -204,6 +213,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           await createTab(message.url);
           await sleep(3000);
           sendResponse({completed: true})
+
           chrome.tabs.sendMessage((await getActiveTab()).id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
             .then(response => {
               debug(ACTIVATE_CAPTURE + ':', response);
