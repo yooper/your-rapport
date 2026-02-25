@@ -346,7 +346,7 @@ export default function BulkAutomationTable(props) {
                   });
                 }}
               >
-                <DirectionsRunIcon />
+                <DirectionsRunIcon/>
               </IconButton>
             </Tooltip>
           );

@@ -108,6 +108,8 @@ function isAccessDeniedPage($: cheerio.CheerioAPI): boolean {
     "request blocked",
     "forbidden",
     "404",
+    "something went wrong",
+    "page is not found"
   ];
 
   const titleText = ($("title").first().text() ?? "").toLowerCase();

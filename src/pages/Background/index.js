@@ -66,9 +66,7 @@ chrome.commands.onCommand.addListener(async(command) => {
   await debug(`Command ${command} received`)
   const activeTab = await getActiveTab()
   const pageInfo = await getActivePageInfo(activeTab);
-
-  //function getTitle() { return document.title; }
-
+  
   switch (command) {
     case 'deepSave':
       await capture(activeTab, pageInfo, true);
@@ -96,6 +94,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })
     return false;
   }
+
+  else if (message.cmd === 'remoteDebug'){
+    (async () => {
+        await debug(message.message, message.data, false);
+    })();
+    return true;
+  }
+
   else if (message.cmd === 'slidePanelInit'){
     (async () => {
       try {

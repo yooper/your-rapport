@@ -46,15 +46,15 @@ export async function capture(
     catch (err) {
       if (err instanceof FastDrawError) {
         // TODO: ?
-        await sleep(500);
+        await sleep(750);
       }
       else if (err instanceof DeepSaveError) {
         // TODO: ?
-        await sleep(500);
+        await sleep(750);
       }
       else if(err instanceof NotFoundError) {
         // TODO: ?
-        await sleep(500);
+        await sleep(750);
       }
       else if(err instanceof DuplicateDetectedError) {
         // TODO: Improve duplicate logic
@@ -64,7 +64,7 @@ export async function capture(
       else{
         processing = true;
         await debug('capture:retrying', {pageInfo, deepSave, bulkAutomation})
-        await sleep(500);
+        await sleep(750);
       }
     } finally {
       counter++
