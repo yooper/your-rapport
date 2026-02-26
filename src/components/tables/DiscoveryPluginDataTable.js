@@ -17,7 +17,6 @@ import FileCopyIcon from '@mui/icons-material/FileCopy';
 import { DiscoveryPlugin } from '../../models/schemas/DiscoveryPlugin';
 import { downloadJsonData } from '../../utilities/transformers';
 import UploadDataDialog from '../dialogs/UploadDataDialog';
-import { debug } from '../../services/logger_services';
 
 export default function DiscoveryPluginDataTable() {
   const [rows, setRows] = useState([]);

@@ -25,20 +25,23 @@ export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      showLoader();
-      setIsLoading(true);
-      const start = performance.now();
-      const data = await db.bulkAutomation.toArray();
-      if (data.length !== rows.length) {
-        setRows(data);
-      }
-      const elapsed = performance.now() - start;
-      debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-      hideLoader();
-    }
+  async function fetchData() {
+    showLoader();
+    setIsLoading(true);
+    const start = performance.now();
+    const data = await db.bulkAutomation.toArray();
+    sortByField(data, 'createdOn')
 
+    if (data.length !== rows.length) {
+      setRows(data);
+    }
+    const elapsed = performance.now() - start;
+    debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
+    setIsLoading(false)
+    hideLoader();
+  }
+
+  useEffect(() => {
     fetchData();
 
     /**
@@ -46,8 +49,9 @@ export default function BulkAutomationTable(props) {
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-      //await fetchData(); // check for new data every 3 seconds.
-    }, 3000); // wait 3 seconds before re-renders
+      // TODO: improve reload algorithm
+      fetchData();
+    }, 10000); // wait 10 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
 
@@ -94,21 +98,6 @@ export default function BulkAutomationTable(props) {
     }
     return record;
   };
-
-  useEffect(() => {
-    async function fetchData() {
-      showLoader();
-      setIsLoading(true);
-      const records = await db.bulkAutomation.toArray() ?? [];
-      sortByField(records, 'createdOn')
-      if (records.length !== rows.length) {
-        setRows(records.reverse());
-      }
-      setIsLoading(false);
-      hideLoader();
-    }
-    fetchData();
-  }, []);
 
   const columns = [
     {
