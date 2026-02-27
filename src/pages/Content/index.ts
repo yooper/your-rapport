@@ -13,22 +13,11 @@ import {
   BULK_AUTOMATION, PAGE_INFO,
   PAGE_INITIALIZED, STOPPED,
 } from '../../services/constants';
-import { getVisibleText, getVisibleHtml } from './modules/visibleElements';
+import { getVisibleText } from './modules/visibleElements';
 import { IBulkAutomationRecord, PageInfo } from '../../types';
 import { debug } from '../../services/logger_services';
 import { autoScroller } from './modules/autoScroller';
 
-// --- Types ------------------------------------------------------------------
-
-type Command =
-  | typeof PAGE_INITIALIZED
-  | typeof ACTIVATE_AUTOMATION
-  | typeof ACTIVATE_CAPTURE
-  | typeof BULK_AUTOMATION
-  | typeof AUTOMATION_RUNNING;
-
-
-// --- State ------------------------------------------------------------------
 
 export const pageUuid: string = crypto.randomUUID();
 
