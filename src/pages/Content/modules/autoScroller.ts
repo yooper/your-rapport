@@ -18,8 +18,6 @@ const STATE_ACTIVE = "active" as const;
 
 export type AutoScrollState = typeof STATE_STOPPED | typeof STATE_INITIALIZED | typeof STATE_ACTIVE;
 export let state: AutoScrollState = STATE_INITIALIZED;
-import html2canvas from 'html2canvas-pro';
-
 
 type Direction = "down" | "up";
 
@@ -57,17 +55,6 @@ let runToken = 0;
 
 /** Soft-fail counter for transient runtime errors */
 let consecutiveRuntimeErrors = 0;
-
-async function getViewport(): Promise<string> {
-  const canvas = await html2canvas(document.body, {
-    x: window.scrollX,
-    y: window.scrollY,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    scale: 1
-  });
-  return canvas.toDataURL("image/png");
-}
 
 function isObject(v: unknown): v is AnyRecord {
   return typeof v === "object" && v !== null;
@@ -182,7 +169,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
         state = STATE_STOPPED;
         await safeSendMessage({
           cmd: AUTO_COLLECT_SCROLLBAR_STOPPED,
-          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount, screenshot: await getViewport() },
+          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
         await remoteDebug("Automation finished, non-scrollable page");
         return;
@@ -195,7 +182,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
 
         await safeSendMessage({
           cmd: NO_VISIBLE_TEXT,
-          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount++, screenshot: await getViewport() },
+          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount++ },
         });
 
         return;
@@ -204,7 +191,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
       // Capture
       const captureResp = await safeSendMessage({
         cmd: CAPTURE_VISIBLE_TAB,
-        pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount++, screenshot: await getViewport() },
+        pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount++ },
       });
 
       if (!hasCompleted(captureResp)) {
@@ -224,7 +211,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
         state = STATE_STOPPED;
         await safeSendMessage({
           cmd: AUTO_COLLECT_SCROLLBAR_STOPPED,
-          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount, screenshot: await getViewport() },
+          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
         await remoteDebug("Automation finished, reached bottom of page");
         return;
@@ -239,7 +226,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
 
         await safeSendMessage({
           cmd: AUTO_COLLECT_SCROLLBAR_STOPPED,
-          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount, screenshot: await getViewport() },
+          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
 
         await remoteDebug("Automation finished, window not scrolling");
@@ -261,7 +248,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
       if (automation && screenCollectionCount >= Number(automation.value ?? 0)) {
         await safeSendMessage({
           cmd: AUTO_COLLECT_MAX_SCREENSHOTS,
-          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount, screenshot: await getViewport() },
+          pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
         remoteDebug("Max screenshots collected");
         state = STATE_STOPPED;
@@ -284,9 +271,8 @@ export async function remoteDebug(
 ): Promise<void> {
   message = 'contentScript:debug ' + message;
 
-  // dump the error in the content script window
   await debug(message, data)
-  // forward the debug information for improved error tracking
+
   await safeSendMessage({
     cmd: 'remoteDebug',
     message: message,

@@ -47,7 +47,6 @@ function Copyright(props) {
 }
 
 export default function Login() {
-  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
 
   Mustache.escape = function (text) {
@@ -90,7 +89,9 @@ export default function Login() {
       }
       else if(urlParams.has('logout')){
         const user = await getUser();
-        await user.delete();
+        if(user){
+          await user.delete();
+        }
         window.location.replace(`chrome-extension://${chrome.runtime.id}/login.html`);
       }
     }

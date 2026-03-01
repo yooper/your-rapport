@@ -46,15 +46,15 @@ export async function capture(
     catch (err) {
       if (err instanceof FastDrawError) {
         // TODO: ?
-        await sleep(750);
+        await sleep(500);
       }
       else if (err instanceof DeepSaveError) {
         // TODO: ?
-        await sleep(750);
+        await sleep(500);
       }
       else if(err instanceof NotFoundError) {
         // TODO: ?
-        await sleep(750);
+        await sleep(500);
       }
       else if(err instanceof DuplicateDetectedError) {
         // TODO: Improve duplicate logic
@@ -64,7 +64,7 @@ export async function capture(
       else{
         processing = true;
         await debug('capture:retrying', {pageInfo, deepSave, bulkAutomation})
-        await sleep(750);
+        await sleep(500);
       }
     } finally {
       counter++
@@ -74,7 +74,7 @@ export async function capture(
   // indicate to the end user the save failed
   if(processing && counter >= retryLimit){
     await debug('capture:error', {pageInfo, deepSave, bulkAutomation});
-    ExtensionPin.setTempErrorPin({pageInfo, deepSave, bulkAutomation})
+    //ExtensionPin.setTempErrorPin({pageInfo, deepSave, bulkAutomation})
   }
   else {
     ExtensionPin.setDefaultSaved(tab);
