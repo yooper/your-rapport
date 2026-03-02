@@ -128,7 +128,7 @@ export default function TopAppBar() {
                 }
               }}
             >
-              <SecurityIcon color={ hasPermission ? 'success' : 'error'}/>
+              <SecurityIcon color={ hasPermission ? 'primary' : 'error'}/>
             </IconButton>
           </Tooltip>
 
@@ -141,7 +141,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
               >
-                <SyncIcon color={'success'} />
+                <SyncIcon color={'info'} />
               </IconButton>
             </Tooltip>
               ) : (
@@ -166,7 +166,7 @@ export default function TopAppBar() {
                 color="inherit"
                 onClick={() => createTab('https://github.com/yooper/your-rapport/wiki/Pro-features')}
               >
-                <PersonIcon color={'success'}/>
+                <PersonIcon color={'info'}/>
               </IconButton>
             </Tooltip>
           ) : (

@@ -22,7 +22,8 @@ export function initializeAutomationRunner() {
     new Tag('img-change-detected'),
     new Tag('selectors-detected'),
     new Tag('text-change-detected'),
-    new Tag('automation-blocked')
+    new Tag('automation-blocked'),
+    new Tag('deep-save')
   ]);
 
   // periodic tick to recover & continue

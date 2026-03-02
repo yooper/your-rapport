@@ -31,8 +31,6 @@ export async function capture(
   let retryLimit: number = 3;;
 
   ExtensionPin.setDefaultNotSaved(tab);
-  // always force close the sidePanel upon save
-
 
   // should close the sidePanel if its open
   initExtensionPage();
@@ -84,6 +82,7 @@ export async function capture(
 /**
  * Capture the tab and persist it into local storage.
  * TODO: the wrong screen is captured if the end user toggles too quick between the tabs
+ * TODO: wrap in transaction
  */
 async function _capture(
   pageInfo: any = {},
@@ -154,6 +153,7 @@ async function _capture(
         record.artifacts.push(Artifact.getAttachment(htmlArtifact));
         await debug('saveHTML:completed');
 
+        record.tags = [new Tag('deep-save')];
       } catch (e) {
         await debug(String(e))
         throw new DeepSaveError();
@@ -162,7 +162,7 @@ async function _capture(
 
     // if the rapport wasn't captured correctly, label it with a tag.
     if(isAutomationBlockerDetectedFromHtml(pageInfo.html, pageInfo.url)){
-      record.tags = [new Tag('automation-blocked')];
+      record.tags.push(new Tag('automation-blocked'));
     }
 
     // persist the record
