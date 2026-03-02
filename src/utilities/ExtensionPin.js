@@ -28,7 +28,6 @@ export default class ExtensionPin {
       ExtensionPin.setBgColorAndText('#619657', 'SAVD', activeTab);
     } else {
       // globally reset all badges
-      chrome.action.setIcon({ path: '/icon-32.png' });
       ExtensionPin.setBgColorAndText('#619657', '');
     }
   };
@@ -38,7 +37,6 @@ export default class ExtensionPin {
       ExtensionPin.setBgColorAndText('#ffe88b', 'SAVG', activeTab);
     } else {
       // globally reset all badges
-      chrome.action.setIcon({ path: '/icon-32.png' });
       ExtensionPin.setBgColorAndText('#619657', '');
     }
   };
@@ -48,7 +46,6 @@ export default class ExtensionPin {
       ExtensionPin.setBgColorAndText('#E86E69', '', activeTab);
     } else {
       // globally reset all badges
-      chrome.action.setIcon({ path: '/icon-32.png' });
       ExtensionPin.setBgColorAndText('#E86E69', '');
     }
   };

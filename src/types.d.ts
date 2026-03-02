@@ -283,7 +283,6 @@ export interface PageInfo {
   html: string;
   url: string;
   screenShotCount: number;
-  isAutomationBlockerDetected: boolean;
   visibleText: string;
   visibleHtml: string
   text: string;

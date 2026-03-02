@@ -18,7 +18,13 @@ let processing: boolean = false;
 
 export function initializeAutomationRunner() {
   // add default set of tags used in the automations
-  db.tag.bulkPut([new Tag('img-change-detected'), new Tag('selectors-detected'), new Tag('text-change-detected')]);
+  db.tag.bulkPut([
+    new Tag('img-change-detected'),
+    new Tag('selectors-detected'),
+    new Tag('text-change-detected'),
+    new Tag('automation-blocked'),
+    new Tag('deep-save')
+  ]);
 
   // periodic tick to recover & continue
   chrome.alarms.create('yr_queue_tick', { periodInMinutes: 1 });

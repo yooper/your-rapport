@@ -78,7 +78,7 @@ async function safeSendMessage<T = unknown>(payload: AnyRecord): Promise<T | nul
     return res;
   } catch (e) {
     consecutiveRuntimeErrors++;
-    await debug("chrome.runtime.sendMessage failed", {
+    await remoteDebug("chrome.runtime.sendMessage failed", {
       error: e instanceof Error ? e.message : String(e),
       consecutiveRuntimeErrors,
       payload,
@@ -117,7 +117,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
   // Each invocation cancels any previous loop.
   runToken++;
   const myToken = runToken;
-
+  remoteDebug('autoScroller: message received', message)
   previousWindowScrollY = -1;
   consecutiveRuntimeErrors = 0;
 
@@ -132,12 +132,12 @@ export function autoScroller(message: AutoScrollerMessage): void {
     screenCollectionCount = 0;
     capturedHeight = window.scrollY || 0;
   } else {
+    remoteDebug('autoScroller:hard stopped', message)
     state = STATE_STOPPED;
   }
 
   if (state === STATE_STOPPED) {
-    void debug("Autoscroller stopped", message);
-    void processAutomation("Automation stopped");
+    remoteDebug('autoScroller:stopped', message);
     return;
   }
 
@@ -146,8 +146,8 @@ export function autoScroller(message: AutoScrollerMessage): void {
   const loop = (): void => {
     // Cancelled or stopped?
     if (myToken !== runToken || state !== STATE_ACTIVE) {
-      void debug("Autoscroller stopped/cancelled", { myToken, runToken, state });
-      void processAutomation("Automation stopped");
+      void remoteDebug("Autoscroller stopped/cancelled", { myToken, runToken, state });
+      void remoteDebug("Automation stopped");
       return;
     }
 
@@ -160,7 +160,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
       // Bail out on repeated runtime failures (e.g., MV3 service worker asleep/no listener).
       if (consecutiveRuntimeErrors >= MAX_RUNTIME_ERRORS_BEFORE_STOP) {
         state = STATE_STOPPED;
-        await processAutomation("Automation stopped due to repeated runtime errors");
+        await remoteDebug("Automation stopped due to repeated runtime errors");
         return;
       }
 
@@ -171,15 +171,14 @@ export function autoScroller(message: AutoScrollerMessage): void {
           cmd: AUTO_COLLECT_SCROLLBAR_STOPPED,
           pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
-        await processAutomation("Automation finished, non-scrollable page");
+        await remoteDebug("Automation finished, non-scrollable page");
         return;
       }
 
       const visibleText = normalizeVisibleText(getVisibleText());
       if (!visibleText) {
         state = STATE_STOPPED;
-        await debug("could not capture text");
-        await processAutomation("Text could not be read in.");
+        await remoteDebug("Text could not be read in.");
 
         await safeSendMessage({
           cmd: NO_VISIBLE_TEXT,
@@ -197,8 +196,8 @@ export function autoScroller(message: AutoScrollerMessage): void {
 
       if (!hasCompleted(captureResp)) {
         state = STATE_STOPPED;
-        await processAutomation("Failed to save");
-        await debug("Could not save rapport, stopping loop", { pageInfo: await getPageInfo(), captureResp });
+        await remoteDebug("Failed to save");
+        await remoteDebug("Could not save rapport, stopping loop", { pageInfo: await getPageInfo(), captureResp });
         return;
       }
 
@@ -214,7 +213,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
           cmd: AUTO_COLLECT_SCROLLBAR_STOPPED,
           pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
-        await processAutomation("Automation finished, reached bottom of page");
+        await remoteDebug("Automation finished, reached bottom of page");
         return;
       }
 
@@ -222,7 +221,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
       if (previousWindowScrollY !== window.scrollY) {
         previousWindowScrollY = window.scrollY;
       } else {
-        await debug("Window not scrolling");
+        await remoteDebug("Window not scrolling");
         state = STATE_STOPPED;
 
         await safeSendMessage({
@@ -230,7 +229,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
           pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
 
-        await processAutomation("Automation finished, window not scrolling");
+        await remoteDebug("Automation finished, window not scrolling");
         return;
       }
 
@@ -251,7 +250,7 @@ export function autoScroller(message: AutoScrollerMessage): void {
           cmd: AUTO_COLLECT_MAX_SCREENSHOTS,
           pageInfo: { ...(await getPageInfo()), automation, sequence: screenCollectionCount },
         });
-        await processAutomation("Max screenshots collected");
+        remoteDebug("Max screenshots collected");
         state = STATE_STOPPED;
         return;
       }
@@ -266,23 +265,17 @@ export function autoScroller(message: AutoScrollerMessage): void {
   loop();
 }
 
-/**
- * End the automation process, if there is one
- */
-async function processAutomation(description: string | null = null): Promise<void> {
-  if (!automation) {
-    state = STATE_STOPPED;
-    return;
-  }
+export async function remoteDebug(
+  message: string,
+  data: any = {},
+): Promise<void> {
+  message = 'contentScript:debug ' + message;
 
-  /*
-  await safeUpdateAutomation({
-    completedOn: Date.now(),
-    screenShotsCollected: screenCollectionCount,
-    description,
-    status: "done",
+  await debug(message, data)
+
+  await safeSendMessage({
+    cmd: 'remoteDebug',
+    message: message,
+    data: { ...(await getPageInfo()), sequence: screenCollectionCount, ...data }
   });
-  */
-
-  state = STATE_STOPPED;
 }

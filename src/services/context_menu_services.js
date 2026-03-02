@@ -14,6 +14,7 @@ import { debug } from '../services/logger_services';
 import { capture } from '../datasources/browser_capture';
 import { db } from '../models/db/dexieDb';
 import { ScheduledAutomation } from '../models/schemas/ScheduledAutomation';
+import { getActivePageInfo } from '../pages/Content/scripts/pageInfo';
 
 /**
  * Add the selectors as menu items
@@ -103,8 +104,7 @@ export async function initializeContextMenus() {
       case 'deepSave':
         (async() => {
           ExtensionPin.setTemporaryPin('SAVG');
-          const response = await chrome.tabs.sendMessage(tab.id, { cmd: PAGE_INFO, requestId: crypto.randomUUID() });
-          const { pageInfo } = response
+          const pageInfo = await getActivePageInfo(tab)
           await capture(tab, pageInfo, true);
         })()
         break;

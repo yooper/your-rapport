@@ -1,7 +1,5 @@
 // src/backgrounds/automation-queue.ts
-import { getLocalItem, setLocalItem, updateRecord } from '../models/db/local';
 import { processNotification } from '../utilities/loaders';
-import { IBulkAutomationRecord } from '../types';
 import { debug } from '../services/logger_services';
 import { db } from '../models/db/dexieDb';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
@@ -53,7 +51,9 @@ export async function fail(queuedJob: BulkAutomationUrl, reason: string) {
   if (queuedJob) {
     queuedJob.status = 'failed';
     queuedJob.failReason = reason;
+    queuedJob.description = reason;
     queuedJob.leaseUntil = null;
+    queuedJob.completedOn = new Date().getTime();
     await debug(`automation job failed`, queuedJob);
     await db.bulkAutomation.put(queuedJob);
 

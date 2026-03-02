@@ -13,10 +13,11 @@ import { getActiveTab, sleep } from '../utilities/loaders';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { DuplicateDetectedError } from '../errors/DuplicateDetectedError';
 import { initExtensionPage } from '../services/init_services';
+import { Tag } from '../models/schemas/Tag';
+import { isAutomationBlockerDetectedFromHtml } from '../pages/Content/modules/automationBlockerDetection';
 
 
 let _lastRapport: Rapport|null = null;
-
 
 export async function capture(
   tab: chrome.tabs.Tab,
@@ -30,10 +31,8 @@ export async function capture(
   let retryLimit: number = 3;;
 
   ExtensionPin.setDefaultNotSaved(tab);
-  // always force close the sidePanel upon save
 
-
-  // will close the sidePanel if its open
+  // should close the sidePanel if its open
   initExtensionPage();
 
   do {
@@ -45,12 +44,15 @@ export async function capture(
     catch (err) {
       if (err instanceof FastDrawError) {
         // TODO: ?
+        await sleep(500);
       }
       else if (err instanceof DeepSaveError) {
         // TODO: ?
+        await sleep(500);
       }
       else if(err instanceof NotFoundError) {
         // TODO: ?
+        await sleep(500);
       }
       else if(err instanceof DuplicateDetectedError) {
         // TODO: Improve duplicate logic
@@ -60,7 +62,7 @@ export async function capture(
       else{
         processing = true;
         await debug('capture:retrying', {pageInfo, deepSave, bulkAutomation})
-        await sleep(1000);
+        await sleep(500);
       }
     } finally {
       counter++
@@ -70,7 +72,7 @@ export async function capture(
   // indicate to the end user the save failed
   if(processing && counter >= retryLimit){
     await debug('capture:error', {pageInfo, deepSave, bulkAutomation});
-    ExtensionPin.setTempErrorPin({pageInfo, deepSave, bulkAutomation})
+    //ExtensionPin.setTempErrorPin({pageInfo, deepSave, bulkAutomation})
   }
   else {
     ExtensionPin.setDefaultSaved(tab);
@@ -80,6 +82,7 @@ export async function capture(
 /**
  * Capture the tab and persist it into local storage.
  * TODO: the wrong screen is captured if the end user toggles too quick between the tabs
+ * TODO: wrap in transaction
  */
 async function _capture(
   pageInfo: any = {},
@@ -150,11 +153,18 @@ async function _capture(
         record.artifacts.push(Artifact.getAttachment(htmlArtifact));
         await debug('saveHTML:completed');
 
+        record.tags = [new Tag('deep-save')];
       } catch (e) {
         await debug(String(e))
         throw new DeepSaveError();
       }
     }
+
+    // if the rapport wasn't captured correctly, label it with a tag.
+    if(isAutomationBlockerDetectedFromHtml(pageInfo.html, pageInfo.url)){
+      record.tags.push(new Tag('automation-blocked'));
+    }
+
     // persist the record
     await Rapport.add(record);
     _lastRapport = record;
