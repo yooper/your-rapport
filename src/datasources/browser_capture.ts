@@ -28,7 +28,7 @@ export async function capture(
 
   let processing: boolean = true;
   let counter: number = 0;
-  let retryLimit: number = 3;;
+  let retryLimit: number = 3;
 
   ExtensionPin.setDefaultNotSaved(tab);
 
@@ -175,9 +175,11 @@ async function _capture(
     await Configuration.setConfiguration(configuration);
     return record;
   }
-  catch (error) {
+  catch (error: any) {
+    if(error.message !== "Either the '<all_urls>' or 'activeTab' permission is required."){
       await debug(String(error));
       throw new FastDrawError();
+    }
   }
   finally {
     setTimeout(() => {
