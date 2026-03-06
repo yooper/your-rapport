@@ -17,41 +17,40 @@ import {
   UUID
 } from '../../services/constants';
 import { debug } from '../../services/logger_services';
-import { sortByField } from '../../utilities/transformers';
+import { sha256, sortByField } from '../../utilities/transformers';
 import { db } from '../../models/db/dexieDb';
 import ExtensionPin from '../../utilities/ExtensionPin';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [cacheHash, setCacheHash] = useState('');
 
   async function fetchData() {
     showLoader();
-    setIsLoading(true);
     const start = performance.now();
     const data = await db.bulkAutomation.toArray();
-    sortByField(data, 'createdOn')
-
-    if (data.length !== rows.length) {
-      setRows(data);
-    }
+    setCacheHash(await sha256(JSON.stringify(data)));
     const elapsed = performance.now() - start;
     debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-    setIsLoading(false)
     hideLoader();
   }
 
   useEffect(() => {
-    fetchData();
-
+    fetchData()
     /**
      * Check if any updates occurred
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-      // TODO: improve reload algorithm
-      fetchData();
-    }, 10000); // wait 10 seconds before re-renders
+      const data = await db.bulkAutomation.toArray();
+      const currentHash = await sha256(JSON.stringify(data));
+      if(currentHash !== cacheHash){
+        setCacheHash(currentHash)
+        sortByField(data, 'createdOn')
+        setRows(data);
+      }
+    }, 5000); // wait 5 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
 

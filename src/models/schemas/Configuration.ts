@@ -18,12 +18,13 @@ export interface IConfiguration {
   packageCacheHash: string;
   screenShotCount: number;
   updatedOn: number;
-  syncBackgroundMode: 'sync' | 'batch' | string,
-  syncBackgroundEnabled: boolean,
-  syncBackgroundHardDelete: boolean,
-  syncBackgroundPath: 'your_rapport/sync/' | string,
-  syncBackgroundArtifactResolution: 'highRes' | 'lowRes' | string
-
+  syncBackgroundMode: 'sync' | 'batch' | string;
+  syncBackgroundEnabled: boolean
+  syncBackgroundHardDelete: boolean;
+  syncBackgroundPath: 'your_rapport/sync/' | string;
+  syncBackgroundArtifactResolution: 'highRes' | 'lowRes' | string;
+  geminiModelEnabled: boolean;
+  geminiModelDownloaded: boolean;
   // Allow future unknown keys without breaking
   [key: string]: unknown;
 }
@@ -51,8 +52,11 @@ export class Configuration {
       syncBackgroundEnabled: true,
       syncBackgroundHardDelete: true,
       syncBackgroundPath: 'your_rapport/sync/',
-      syncBackgroundArtifactResolution: 'highRes'
+      syncBackgroundArtifactResolution: 'highRes',
       // END
+      // gemini related info
+      geminiModelEnabled: false,
+      geminiModelDownloaded: false
     };
   }
 

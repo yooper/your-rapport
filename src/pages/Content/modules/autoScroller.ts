@@ -18,6 +18,7 @@ const STATE_ACTIVE = "active" as const;
 
 export type AutoScrollState = typeof STATE_STOPPED | typeof STATE_INITIALIZED | typeof STATE_ACTIVE;
 export let state: AutoScrollState = STATE_INITIALIZED;
+let hasConnection: boolean = true;
 
 type Direction = "down" | "up";
 
@@ -72,6 +73,11 @@ function setAutomation(msg: AutoScrollerMessage): void {
 }
 
 async function safeSendMessage<T = unknown>(payload: AnyRecord): Promise<T | null> {
+  if(!hasConnection){
+    debug('Cannot send message', payload);
+    return null;
+  }
+
   try {
     const res = (await chrome.runtime.sendMessage(payload)) as T;
     consecutiveRuntimeErrors = 0;
@@ -83,6 +89,7 @@ async function safeSendMessage<T = unknown>(payload: AnyRecord): Promise<T | nul
       consecutiveRuntimeErrors,
       payload,
     });
+    hasConnection = false;
     return null;
   }
 }
@@ -272,10 +279,10 @@ export async function remoteDebug(
   message = 'contentScript:debug ' + message;
 
   await debug(message, data)
-
   await safeSendMessage({
     cmd: 'remoteDebug',
     message: message,
     data: { ...(await getPageInfo()), sequence: screenCollectionCount, ...data }
   });
+
 }
