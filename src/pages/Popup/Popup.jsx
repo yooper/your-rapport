@@ -20,7 +20,6 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { getLocalItem } from '../../models/db/local';
 import { debug } from '../../services/logger_services';
 import { db } from '../../models/db/dexieDb';
 
@@ -90,10 +89,21 @@ function LargeButtonGrid() {
     {
       title: 'Automations',
       toolTipTitle: `Tired of doing it the hard way? Try out the automation features; like bulk collect.`,
-      onClick: async () =>
+      onClick: async () => {
+        // stop all automations from running
+        const automations = await db.bulkAutomation.toArray();
+        automations.forEach(a => {
+          // flagged to run
+          if(a.active && !a.ranOn){
+            a.active = false;
+          }
+        })
+        await db.bulkAutomation.bulkPut(automations);
+
         await chrome.tabs.create({
           url: chrome.runtime.getURL('automation.html'),
-        }),
+        })
+      }
     },
     {
       title: 'Quick Scan (Alt+Q)',
