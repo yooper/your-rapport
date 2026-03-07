@@ -24,13 +24,15 @@ import ExtensionPin from '../../utilities/ExtensionPin';
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [cacheHash, setCacheHash] = useState('');
+  let cacheHash = '';
 
   async function fetchData() {
     showLoader();
     const start = performance.now();
     const data = await db.bulkAutomation.toArray();
-    setCacheHash(await sha256(JSON.stringify(data)));
+    cacheHash = await sha256(JSON.stringify(data));
+    sortByField(data, 'createdOn')
+    setRows(data);
     const elapsed = performance.now() - start;
     debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
     hideLoader();
@@ -46,7 +48,7 @@ export default function BulkAutomationTable(props) {
       const data = await db.bulkAutomation.toArray();
       const currentHash = await sha256(JSON.stringify(data));
       if(currentHash !== cacheHash){
-        setCacheHash(currentHash)
+        cacheHash = currentHash;
         sortByField(data, 'createdOn')
         setRows(data);
       }

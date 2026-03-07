@@ -12,6 +12,7 @@ import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { Tag } from '../models/schemas/Tag';
 import { getUtc, getUtcNow } from '../utilities/transformers';
+import { getActivePageInfo } from '../pages/Content/scripts/pageInfo';
 
 
 let processing: boolean = false;
@@ -142,13 +143,9 @@ async function processQueue() {
 
       // Wait for load or DNS failure (ERR_NAME_NOT_RESOLVED)
       await waitForCompleteOrDnsError(tabId);
-      const response = await chrome.tabs.sendMessage(tabId, { cmd: PAGE_INFO });
-      const { pageInfo } = response
       await focusTab(tabId);
-
       // wait for the page to finish loading
       // TODO: add configurable delay
-      await sleep(2000)
 
       // the automation requires scrolling through the page
       if (!job.isDeepSave) {
@@ -158,10 +155,10 @@ async function processQueue() {
           })
         do {
 
-          await sleep(1000)
+          await sleep(3000)
           const refreshedJob = await db.bulkAutomation.get(job.uuid)
-
           if (!refreshedJob) {
+            await debug('Unknown automation job', job)
             throw Error('Unknown job')
           }
 
@@ -177,12 +174,12 @@ async function processQueue() {
           }
           job.screenShotsCollected = refreshedJob.screenShotsCollected
           ExtensionPin.setAutomationRunning(await getQueue());
-          await sleep(1000);
         }
         while (['running', 'queued'].includes(job.status));
       }
       // deep save
       else {
+        const pageInfo = await getActivePageInfo(tab);
         await capture(tab, pageInfo, true, job as BulkAutomationUrl);
       }
       await complete(job);
@@ -200,8 +197,9 @@ async function processQueue() {
       if (!job.keepTabOpen && job.status !== 'failed' && tabId) {
         try {
           await chrome.tabs.remove(tabId);
-        } catch {
-
+        }
+        catch {
+          // error closing the tab, ignore it
         }
       }
     }
