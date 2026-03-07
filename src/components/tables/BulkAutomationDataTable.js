@@ -20,6 +20,7 @@ import { debug } from '../../services/logger_services';
 import { sha256, sortByField } from '../../utilities/transformers';
 import { db } from '../../models/db/dexieDb';
 import ExtensionPin from '../../utilities/ExtensionPin';
+import { requestAllSitesAccess } from '../../services/manifest_permissions';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
@@ -316,6 +317,12 @@ export default function BulkAutomationTable(props) {
             <Tooltip title={'Re run the automation on this url'}>
               <IconButton
                 onClick={async () => {
+                  const hasPermission = await requestAllSitesAccess();
+
+                  if(!hasPermission){
+                    alert('Automations do not work unless your approve the permission request.');
+                    return;
+                  }
                   db.transaction('rw', db.bulkAutomation, async () => {
                     const automation = await db.bulkAutomation.get(record.uuid);
                     automation.active = true;
@@ -373,7 +380,16 @@ export default function BulkAutomationTable(props) {
               'Start Automation Process, do not interact with your browser while automation is running.'
             }
           >
-            <IconButton onClick={() => startAutomationProcess()}>
+            <IconButton onClick={async() => {
+              const hasPermission = await requestAllSitesAccess();
+              if(hasPermission){
+                startAutomationProcess()
+              }
+              else{
+                alert('Automations do not work unless your approve the permission request.')
+              }
+            }}>
+
               <DirectionsRunIcon />
             </IconButton>
           </Tooltip>
