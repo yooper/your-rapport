@@ -8,16 +8,16 @@ import { getUtcNow } from '../utilities/transformers';
 import BulkAutomationUrl from '../models/schemas/BulkAutomationUrl';
 import { applyBackgroundJobs } from '../services/discovery_plugin_services';
 import { DeepSaveError } from '../errors/DeepSaveError';
-import { FastDrawError } from '../errors/FastDrawError';
-import { getActiveTab, sleep } from '../utilities/loaders';
 import { NoChangeDetectedError } from '../errors/NoChangeDetectedError';
 import { DuplicateDetectedError } from '../errors/DuplicateDetectedError';
 import { initExtensionPage } from '../services/init_services';
 import { Tag } from '../models/schemas/Tag';
-import { isAutomationBlockerDetectedFromHtml } from '../pages/Content/modules/automationBlockerDetection';
+import { sleep } from '../utilities/loaders';
 
 
 let _lastRapport: Rapport|null = null;
+let _captureProcessing: boolean = false;
+let _queue: any = []
 
 export async function capture(
   tab: chrome.tabs.Tab,
@@ -26,57 +26,33 @@ export async function capture(
   bulkAutomation: BulkAutomationUrl | null = null
 ): Promise<void> {
 
-  let processing: boolean = true;
-  let counter: number = 0;
-  let retryLimit: number = 3;
+  _queue.push({tab, pageInfo, deepSave, bulkAutomation});
 
-  ExtensionPin.setDefaultNotSaved(tab);
+  if(_captureProcessing){
+    return;
+  }
+  await initExtensionPage();
+  _captureProcessing = true;
+  let current:any = null
+  do{
+    const current = _queue.shift()
+    ExtensionPin.setDefaultSaved(current.tab);
 
-  // should close the sidePanel if its open
-  initExtensionPage();
-
-  do {
     try {
       // call the get active tab in _capture
-      await _capture(pageInfo, deepSave, bulkAutomation);
-      processing = false;
+      await _capture(current.tab, current.pageInfo, current.deepSave, current.bulkAutomation);
+      ExtensionPin.setDefaultSaved(current.tab);
     }
     catch (err) {
-      if (err instanceof FastDrawError) {
-        // TODO: ?
-        await sleep(500);
-      }
-      else if (err instanceof DeepSaveError) {
-        // TODO: ?
-        await sleep(500);
-      }
-      else if(err instanceof NotFoundError) {
-        // TODO: ?
-        await sleep(500);
-      }
-      else if(err instanceof DuplicateDetectedError) {
-        // TODO: Improve duplicate logic
-        processing = false;
-        break;
-      }
-      else{
-        processing = true;
-        await debug('capture:retrying', {pageInfo, deepSave, bulkAutomation})
-        await sleep(500);
-      }
-    } finally {
-      counter++
-    }
-  }while(processing && counter <= retryLimit);
+      await debug('capture:error', {pageInfo: current.pageInfo, deepSave: current.deepSave, bulkAutomation: current.bulkAutomation})
 
-  // indicate to the end user the save failed
-  if(processing && counter >= retryLimit){
-    await debug('capture:error', {pageInfo, deepSave, bulkAutomation});
-    //ExtensionPin.setTempErrorPin({pageInfo, deepSave, bulkAutomation})
-  }
-  else {
-    ExtensionPin.setDefaultSaved(tab);
-  }
+    }
+    finally {
+      if(_queue.length === 0){
+        _captureProcessing = false;
+      }
+    }
+  } while(_captureProcessing);
 }
 
 /**
@@ -85,12 +61,11 @@ export async function capture(
  * TODO: wrap in transaction
  */
 async function _capture(
+  tab: chrome.tabs.Tab,
   pageInfo: any = {},
   deepSave = false,
   bulkAutomation: BulkAutomationUrl | null = null
 ): Promise<Rapport> {
-
-  const tab = await getActiveTab();
 
   try {
 
@@ -98,9 +73,8 @@ async function _capture(
     // search the saved record for keywords
     const selectors = await db.selector.toArray();
     await debug('Calling screenshot capture', { tab, pageInfo });
-
-    // Screenshot of the visible tab; returns a data URL (string)
-    const screenshot: string = await chrome.tabs.captureVisibleTab();
+    await chrome.windows.update(tab.windowId, { focused: true });
+    const screenshot: string = await chrome.tabs.captureVisibleTab(tab.windowId, {format:'png'});
     const record = await Rapport.createFromTab(
       tab,
       pageInfo,
@@ -123,18 +97,31 @@ async function _capture(
     }
 
     // save the mhtml artifact (deepSave)
+    // TODO: abstract this out
     if (deepSave && tab.id != null) {
       // TODO: implement retry strategy to mitigate errors when saving
       try {
         record.artifacts = []
         await debug('saveAsMHTML:starting');
-        const blob: Promise<Blob> = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
-        const mhtmlArtifact = await Artifact.create(
-          blob,
-          record.uuid,
-          record.url,
-          'multipart/related'
-        );
+        let mhtmlArtifact: Promise<Artifact> | null = null;
+        let retry = 0
+        do{
+          try {
+            const blob: Blob = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id });
+            mhtmlArtifact = await Artifact.create(
+              blob,
+              record.uuid,
+              record.url,
+              'multipart/related'
+            );
+          }
+          catch(error){
+            retry++;
+            await sleep(600 * retry)
+            await debug('saveAsMHTML:error retry:'+retry, error);
+          }
+        } while(retry < 5 && !mhtmlArtifact)
+
         await db.artifact.add(mhtmlArtifact);
         // attach reference to record
         record.artifacts.push(Artifact.getAttachment(mhtmlArtifact));
@@ -154,15 +141,9 @@ async function _capture(
         await debug('saveHTML:completed');
 
         record.tags = [new Tag('deep-save')];
-      } catch (e) {
-        await debug(String(e))
-        throw new DeepSaveError();
+      } catch (e: any) {
+        await debug(e.message, {e})
       }
-    }
-
-    // if the rapport wasn't captured correctly, label it with a tag.
-    if(isAutomationBlockerDetectedFromHtml(pageInfo.html, pageInfo.url)){
-      record.tags.push(new Tag('automation-blocked'));
     }
 
     // persist the record
@@ -176,10 +157,7 @@ async function _capture(
     return record;
   }
   catch (error: any) {
-    if(error.message !== "Either the '<all_urls>' or 'activeTab' permission is required."){
-      await debug(String(error));
-      throw new FastDrawError();
-    }
+    await debug('capture:error_caught');
   }
   finally {
     setTimeout(() => {

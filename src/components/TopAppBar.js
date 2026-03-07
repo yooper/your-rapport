@@ -17,6 +17,8 @@ import SyncDisabledIcon from '@mui/icons-material/SyncDisabled';
 import { Configuration } from '../models/schemas/Configuration';
 import SecurityIcon from '@mui/icons-material/Security';
 import { allSitesAccessApproved, removeAllSitesAccess, requestAllSitesAccess } from '../services/manifest_permissions';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { db } from '../models/db/dexieDb';
 
 export default function TopAppBar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -24,6 +26,8 @@ export default function TopAppBar() {
   const [auth, setAuth] = React.useState(true);
   const [configuration, setConfiguration] = useState({})
   const [hasPermission, setHasPermission] = useState(true);
+  const [hasGeminiEnabled, setHasGeminiEnabled] = useState(false);
+  const [geminiTooltip, setGeminiTooltip] = useState('')
 
   useEffect(() => {
     async function fetchData(){
@@ -31,6 +35,9 @@ export default function TopAppBar() {
       setAuth(user && user.verify() ? true : false);
       setConfiguration(await Configuration.getConfiguration());
       setHasPermission(await allSitesAccessApproved());
+      const result = await LanguageModel.availability({ languages: ["en"] })
+      setGeminiTooltip(result)
+      setHasGeminiEnabled(result === 'available');
     }
     fetchData();
   }, []);
@@ -69,6 +76,19 @@ export default function TopAppBar() {
     if(found){
       createTab(found.url, '_blank');
     }
+
+    if(found.name === 'automations'){
+      // stop all automations from running
+      const automations = await db.bulkAutomation.toArray();
+      automations.forEach(a => {
+        // flagged to run
+        if(a.active && !a.ranOn){
+          a.active = false;
+        }
+      })
+      await db.bulkAutomation.bulkPut(automations);
+    }
+
   }
 
   return (
@@ -129,6 +149,23 @@ export default function TopAppBar() {
               }}
             >
               <SecurityIcon color={ hasPermission ? 'primary' : 'error'}/>
+            </IconButton>
+          </Tooltip>
+
+
+          <Tooltip
+            title={ 'Gemini Nano is ' + geminiTooltip}>
+            <IconButton
+              size="large"
+              aria-label=""
+              color="inherit"
+              onClick={async() => {
+                if(geminiTooltip === 'downloadable') {
+                  chrome.runtime.sendMessage({cmd: 'installGemini'})
+                }
+              }}
+            >
+              <AutoAwesomeIcon color={ ['available', 'downloading'].includes(geminiTooltip) ? 'info' : 'error'}/>
             </IconButton>
           </Tooltip>
 

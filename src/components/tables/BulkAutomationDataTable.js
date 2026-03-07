@@ -17,41 +17,43 @@ import {
   UUID
 } from '../../services/constants';
 import { debug } from '../../services/logger_services';
-import { sortByField } from '../../utilities/transformers';
+import { sha256, sortByField } from '../../utilities/transformers';
 import { db } from '../../models/db/dexieDb';
 import ExtensionPin from '../../utilities/ExtensionPin';
+import { requestAllSitesAccess } from '../../services/manifest_permissions';
 
 export default function BulkAutomationTable(props) {
   const [rows, setRows] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  let cacheHash = '';
 
   async function fetchData() {
     showLoader();
-    setIsLoading(true);
     const start = performance.now();
     const data = await db.bulkAutomation.toArray();
+    cacheHash = await sha256(JSON.stringify(data));
     sortByField(data, 'createdOn')
-
-    if (data.length !== rows.length) {
-      setRows(data);
-    }
+    setRows(data);
     const elapsed = performance.now() - start;
     debug(`Finished after ${Math.max(elapsed).toFixed(0)}ms`);
-    setIsLoading(false)
     hideLoader();
   }
 
   useEffect(() => {
-    fetchData();
-
+    fetchData()
     /**
      * Check if any updates occurred
      * @type {number}
      */
     const intervalId = setInterval(async () => {
-      // TODO: improve reload algorithm
-      fetchData();
-    }, 10000); // wait 10 seconds before re-renders
+      const data = await db.bulkAutomation.toArray();
+      const currentHash = await sha256(JSON.stringify(data));
+      if(currentHash !== cacheHash){
+        cacheHash = currentHash;
+        sortByField(data, 'createdOn')
+        setRows(data);
+      }
+    }, 5000); // wait 5 seconds before re-renders
     return () => clearInterval(intervalId);
   }, []);
 
@@ -315,6 +317,12 @@ export default function BulkAutomationTable(props) {
             <Tooltip title={'Re run the automation on this url'}>
               <IconButton
                 onClick={async () => {
+                  const hasPermission = await requestAllSitesAccess();
+
+                  if(!hasPermission){
+                    alert('Automations do not work unless your approve the permission request.');
+                    return;
+                  }
                   db.transaction('rw', db.bulkAutomation, async () => {
                     const automation = await db.bulkAutomation.get(record.uuid);
                     automation.active = true;
@@ -372,7 +380,16 @@ export default function BulkAutomationTable(props) {
               'Start Automation Process, do not interact with your browser while automation is running.'
             }
           >
-            <IconButton onClick={() => startAutomationProcess()}>
+            <IconButton onClick={async() => {
+              const hasPermission = await requestAllSitesAccess();
+              if(hasPermission){
+                startAutomationProcess()
+              }
+              else{
+                alert('Automations do not work unless your approve the permission request.')
+              }
+            }}>
+
               <DirectionsRunIcon />
             </IconButton>
           </Tooltip>

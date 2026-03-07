@@ -23,6 +23,7 @@ import ScheduleAutomationDialog from '../dialogs/automations/ScheduledAutomation
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import EditIcon from '@mui/icons-material/Edit';
 import { CronExpressionParser } from 'cron-parser';
+import { requestAllSitesAccess } from '../../services/manifest_permissions';
 
 
 export default function ScheduledAutomationDataTable(): JSX.Element {
@@ -349,7 +350,15 @@ export default function ScheduledAutomationDataTable(): JSX.Element {
         customToolbar: () => (
           <>
             <Tooltip title={'Add a new scheduled automation'}>
-              <IconButton onClick={() => { setIsOpen(true)}}>
+              <IconButton onClick={async() => {
+                  const hasPermission = await requestAllSitesAccess();
+                  if(!hasPermission){
+                    alert('Automations do not work unless your approve the permission request.');
+                    return;
+                  }
+
+                setIsOpen(true)
+              }}>
                 <AlarmAddIcon />
               </IconButton>
             </Tooltip>

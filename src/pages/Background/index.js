@@ -13,7 +13,7 @@ import {
   BULK_AUTOMATION,
   CAPTURE_VISIBLE_TAB,
   NO_VISIBLE_TEXT,
-  ENQUEUE_BULK_AUTOMATION_URL, PAGE_INFO, UUID,
+  ENQUEUE_BULK_AUTOMATION_URL, PAGE_INFO, UUID, AUTO_COLLECT_SCROLLBAR_STOPPED,
 } from '../../services/constants';
 
 import { debug } from '../../services/logger_services';
@@ -41,6 +41,12 @@ export function getJobQueue(){
   return _jobQueue
 }
 
+let _session = null;
+
+export function getSession(){
+
+}
+
 /**
  * Add in support for short-cut keys
  */
@@ -52,9 +58,9 @@ chrome.commands.onCommand.addListener(async(command) => {
     debug('Command lock on', {command});
     return;
   }
-
+  _commandLock = true
   // resolves multiple commands sent via keyboard
-  setTimeout(() => _commandLock = false, 500);
+  setTimeout(() => _commandLock = false, 750);
 
   // This has to be done this way because of way Chrome determines gestures correctly
   if(command === 'initScanPage'){
@@ -95,9 +101,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
+  else if(message.cmd === 'installGemini'){
+
+  }
+
   else if (message.cmd === 'remoteDebug'){
     (async () => {
-        await debug(message.message, message.data, false);
+      await debug(message.message, message.data, false);
+      sendResponse({ completed: true });
     })();
     return true;
   }
@@ -136,6 +147,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   })();
     return true;
   }
+
+  else if(message.cmd === AUTO_COLLECT_SCROLLBAR_STOPPED){
+    (async () => {
+      sendResponse({ completed: true });
+    })();
+    return true;
+  }
+
+
   else if(message.cmd === AUTO_COLLECT_STARTING) {
     (async () => {
       const tab = await getActiveTab();
