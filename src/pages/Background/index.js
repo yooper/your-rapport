@@ -24,6 +24,7 @@ import { db } from '../../models/db/dexieDb';
 import { Rapport } from '../../models/schemas/Rapport';
 import { ScheduledAutomation } from '../../models/schemas/ScheduledAutomation';
 import { getActivePageInfo } from '../Content/scripts/pageInfo';
+import { requestAllSitesAccess } from '../../services/manifest_permissions';
 
 /**
  * Initialize services when the extension is installed / activated
@@ -220,11 +221,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   debug('onMessageExternal:start', {message, sender});
 
+  let hasPermission = false;
   try {
     (async () => {
       switch (message.cmd) {
-        case 'singleCollect': // TODO: Deprecated remove after 1/1/26
         case 'deepSave':
+          hasPermission = await requestAllSitesAccess()
+          if(!hasPermission){
+            sendResponse({completed: false, message: 'You must accept the permissions change in order to enable this automation.'})
+            break;
+          }
           await createTab(message.url);
           const activeTab = await getActiveTab();
           // wait for page contents to load
@@ -233,13 +239,22 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           // TODO: make this configurable or dynamic based on the domain
           await capture(activeTab, pageInfo, true);
           sendResponse({completed: true})
+          try{
+            await chrome.tabs.remove(activeTab.id);
+          }
+          catch(error){
+            // could not close the tab
+          }
           break;
         case AUTO_COLLECT_STARTING:
-        case 'autoscrollCollect': // TODO: Deprecated remove after 1/1/26
+          hasPermission = await requestAllSitesAccess()
+          if(!hasPermission){
+            sendResponse({completed: false, message: 'You must accept the permissions change in order to enable this automation.'})
+            break;
+          }
           await createTab(message.url);
           await sleep(3000);
           sendResponse({completed: true})
-
           chrome.tabs.sendMessage((await getActiveTab()).id, { cmd: ACTIVATE_CAPTURE, requestId: crypto.randomUUID() })
             .then(response => {
               debug(ACTIVATE_CAPTURE + ':', response);
@@ -247,6 +262,11 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           break;
         case ENQUEUE_BULK_AUTOMATION_URL:
         case 'enqueueBulkAutomation':
+          hasPermission = await requestAllSitesAccess()
+          if(!hasPermission){
+            sendResponse({completed: false, message: 'You must accept the permissions change in order to enable this automation.'})
+            break;
+          }
           const record = await BulkAutomationUrl.createBulkAutomationJob(message.url);
           await db.bulkAutomation.add(record);
           break;
@@ -254,7 +274,13 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
           sendResponse({completed: true});
           break;
         case 'monitorHourly':
+          hasPermission = await requestAllSitesAccess()
+          if(!hasPermission){
+            sendResponse({completed: false, message: 'You must accept the permissions change in order to enable this automation.'})
+            break;
+          }
           await ScheduledAutomation.addMonitor(message.url, '0 0 * * * *');
+          sendResponse({completed: true})
           break;
         default:
           return false;
@@ -262,7 +288,7 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
     })()
     return false;
   } catch (e) {
-    debug('onMessageExternal:failure', { message, sender })
+    debug('onMessageExternal:failure', { message, sender, e })
   }
 })
 
