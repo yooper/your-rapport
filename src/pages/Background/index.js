@@ -119,6 +119,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         const activeTab = await getActiveTab();
         const pageInfo = await getActivePageInfo(activeTab);
+        sendResponse(pageInfo);
       } catch (e) {
         debug(String(e) + ' Slide Panel error');
       }
